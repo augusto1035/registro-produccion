@@ -76,3 +76,4 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary"):
             st.rerun()
         except Exception as e:
             st.error(f"Error detectado: {str(e).encode('ascii', 'ignore').decode('ascii')}")
+
