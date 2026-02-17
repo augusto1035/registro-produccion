@@ -4,7 +4,7 @@ from datetime import datetime
 from streamlit_gsheets import GSheetsConnection
 
 # URL de tu Google Sheet
-SHEET_URL = "https://docs.google.com/spreadsheets/d/1sE01duwpnHp2NmsBoJIOP7Csm-wEpe1M/edit?usp=sharing&ouid=106427842999101731073&rtpof=true&sd=true"
+SHEET_URL ="https://docs.google.com/spreadsheets/d/1sE01duwpnHp2NmsBoJIOP7Csm-wEpe1M/edit?usp=sharing&ouid=106427842999101731073&rtpof=true&sd=true"
 
 st.set_page_config(page_title="Registro de produccion", layout="wide")
 
@@ -76,4 +76,5 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary"):
             st.rerun()
         except Exception as e:
             st.error(f"Error detectado: {str(e).encode('ascii', 'ignore').decode('ascii')}")
+
 
