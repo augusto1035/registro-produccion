@@ -6,7 +6,7 @@ import base64
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
 
-# --- CSS (ESTILO ESTABLE) ---
+# --- CSS DEFINITIVO (ESTILO APILADO MÓVIL / COLUMNAS WEB) ---
 st.markdown("""
     <style>
     /* 1. BLINDAJE VISUAL: TODO BLANCO Y NEGRO */
@@ -36,7 +36,7 @@ st.markdown("""
         text-align: center;
         border-radius: 4px;
         font-size: 14px;
-        min-height: 42px; /* Misma altura que los inputs */
+        min-height: 42px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -66,24 +66,16 @@ st.markdown("""
     }
     .stButton > button:hover { background-color: #2a8a3b !important; }
 
-    /* -----------------------------------------------------------
-       REGLAS PARA MÓVIL (APILAMIENTO CONTROLADO)
-       ----------------------------------------------------------- */
+    /* 7. REGLAS PARA MÓVIL (APILAMIENTO) */
     @media (max-width: 640px) {
-        /* Separación entre elementos apilados */
-        [data-testid="column"] {
-            margin-bottom: 5px !important;
-        }
-
+        [data-testid="column"] { margin-bottom: 5px !important; }
+        
         /* BOTÓN X: CUADRADO Y ROJO EN MÓVIL */
         div[data-testid="column"] .stButton button {
             background-color: #dc3545 !important;
-            width: 100% !important; /* Ocupa ancho completo en móvil para ser fácil de tocar */
+            width: 100% !important;
             margin-top: 5px;
         }
-        
-        /* Ajuste de textos */
-        p { font-size: 14px !important; font-weight: bold; margin-bottom: 2px !important; }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -196,6 +188,22 @@ SECCIONES_ORDEN = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POS
 if 'secciones_data' not in st.session_state:
     st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
 
+# --- FUNCIÓN CLAVE: CALLBACK PARA ACTUALIZAR AL INSTANTE ---
+def actualizar_producto(seccion_key, index_key, selectbox_key):
+    """
+    Esta función se ejecuta AUTOMÁTICAMENTE cuando cambias el selectbox.
+    Actualiza el código en memoria ANTES de que la página se vuelva a pintar.
+    """
+    # 1. Obtenemos el nuevo nombre seleccionado
+    nuevo_nombre = st.session_state[selectbox_key]
+    
+    # 2. Buscamos el código correspondiente en el DataFrame
+    nuevo_codigo = df_productos[df_productos['Descripcion'] == nuevo_nombre]['Codigo'].values[0]
+    
+    # 3. Actualizamos la memoria (session_state) directamente
+    st.session_state.secciones_data[seccion_key][index_key]['Descripcion'] = nuevo_nombre
+    st.session_state.secciones_data[seccion_key][index_key]['Codigo'] = nuevo_codigo
+
 # SUPERVISOR Y FECHA
 col_sup, col_fec = st.columns(2)
 with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"], label_visibility="visible")
@@ -209,21 +217,43 @@ for seccion in SECCIONES_ORDEN:
 
     for i, item in enumerate(st.session_state.secciones_data[seccion]):
         
-        # En Móvil se apilarán. En Web serán columnas.
+        # Layout Responsive (Col en Web / Stack en Móvil)
         c1, c2, c3, c4 = st.columns([2, 6, 2, 1]) 
         
         with c1:
             st.markdown(f"**Código:**")
+            # Muestra el código que ya está actualizado en memoria
             st.markdown(f'<div class="codigo-box">{item["Codigo"]}</div>', unsafe_allow_html=True)
+            
         with c2:
             st.markdown(f"**Descripción:**")
-            seleccion = st.selectbox(f"s_{seccion}_{i}", options=opciones, key=f"sel_{seccion}_{i}", label_visibility="collapsed")
-            item['Descripcion'] = seleccion
-            # ACTUALIZAR EL CÓDIGO BASADO EN LA SELECCIÓN
-            item['Codigo'] = df_productos[df_productos['Descripcion'] == seleccion]['Codigo'].values[0]
+            
+            # --- AQUÍ ESTÁ LA MAGIA DEL CALLBACK ---
+            # 1. Definimos una clave única para este selectbox
+            key_sel = f"sel_{seccion}_{i}"
+            
+            # 2. Calculamos el índice actual para que el selectbox muestre lo correcto
+            try:
+                idx_actual = opciones.index(item['Descripcion'])
+            except:
+                idx_actual = 0
+            
+            # 3. Creamos el selectbox con 'on_change'
+            st.selectbox(
+                label="desc",
+                options=opciones,
+                index=idx_actual,
+                key=key_sel,
+                label_visibility="collapsed",
+                # Esto llama a la función de arriba CADA VEZ que cambias el valor
+                on_change=actualizar_producto, 
+                args=(seccion, i, key_sel)
+            )
+
         with c3:
             st.markdown(f"**Cantidad:**")
             item['Cantidad'] = st.number_input(f"q_{seccion}_{i}", min_value=0, step=1, key=f"q_{seccion}_{i}", label_visibility="collapsed")
+            
         with c4:
             st.markdown("**Acción:**")
             if st.button("X", key=f"x_{seccion}_{i}"):
@@ -232,15 +262,12 @@ for seccion in SECCIONES_ORDEN:
         
         st.markdown('<hr style="margin: 5px 0; border-top: 1px solid #ddd;">', unsafe_allow_html=True)
 
-    # AQUÍ ESTABA EL ERROR DE LÓGICA ANTES, AHORA CORREGIDO:
     if st.button(f"➕ Añadir Producto", key=f"btn_{seccion}"):
-        # 1. Buscamos el código REAL del primer producto de la lista
         primer_producto = opciones[0]
         codigo_real = df_productos[df_productos['Descripcion'] == primer_producto]['Codigo'].values[0]
         
-        # 2. Añadimos el objeto con el CÓDIGO CORRECTO, no con el nombre
         st.session_state.secciones_data[seccion].append({
-            "Codigo": codigo_real,  # <--- CORRECCIÓN AQUÍ
+            "Codigo": codigo_real,
             "Descripcion": primer_producto,
             "Cantidad": 0
         })
