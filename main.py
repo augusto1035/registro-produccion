@@ -7,43 +7,53 @@ import base64
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Gerencia de Alimentos Procesados", layout="wide")
 
-# --- BLINDAJE TOTAL Y OPTIMIZACIÓN MÓVIL (UNA SOLA LÍNEA) ---
+# --- INYECCIÓN DE ESTILO "FUERZA BRUTA" (MÓVIL HORIZONTAL + COLORES) ---
 st.markdown("""
     <style>
-    /* 1. Reset Global y Forzado de Fondo Blanco */
+    /* 1. FORZAR COLUMNAS HORIZONTALES EN MÓVIL */
+    /* Este código evita que las columnas se apilen verticalmente en el celular */
+    [data-testid="column"] {
+        flex: 1 1 auto !important;
+        min-width: 0px !important;
+    }
+    
+    [data-testid="stHorizontalBlock"] {
+        flex-wrap: nowrap !important;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 2px !important;
+    }
+
+    /* 2. BLINDAJE DE COLORES (Calendario, Cantidad, Selectores) */
     html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: #FFFFFF !important;
         color: #000000 !important;
     }
 
-    /* 2. ATAQUE DIRECTO A LOS CUADROS NEGROS (Selectores y Inputs) */
-    /* Forzamos el fondo blanco y texto negro en el contenedor de selección */
-    div[data-baseweb="select"] > div, 
-    div[data-baseweb="select"] * {
+    /* Forzar números de cantidad y fechas a Negro sobre Blanco */
+    input, [data-testid="stNumberInput"] input, [data-testid="stDateInput"] input {
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+        border: 1px solid #CCCCCC !important;
+    }
+
+    /* Forzar Calendario desplegado */
+    div[data-baseweb="calendar"] *, div[data-baseweb="popover"] * {
         background-color: #FFFFFF !important;
         color: #000000 !important;
         -webkit-text-fill-color: #000000 !important;
     }
 
-    /* Forzamos que la lista desplegable sea blanca al abrirse */
-    div[role="listbox"], div[role="listbox"] * {
+    /* Selectores de Supervisor y Producto */
+    div[data-baseweb="select"] > div, div[data-baseweb="select"] * {
         background-color: #FFFFFF !important;
         color: #000000 !important;
         -webkit-text-fill-color: #000000 !important;
     }
 
-    /* 3. OPTIMIZACIÓN PARA MÓVIL (Una sola línea) */
-    [data-testid="column"] {
-        padding: 0px 1px !important;
-        margin: 0px !important;
-    }
-    
-    /* Reducir altura para que sea más compacto */
-    .stSelectbox, .stNumberInput, .codigo-box-forzado {
-        margin-bottom: 0px !important;
-    }
-
-    /* 4. ENCABEZADO PLAZA'S */
+    /* 3. ENCABEZADO PLAZA'S */
     .header-container {
         display: flex;
         align-items: center;
@@ -51,16 +61,16 @@ st.markdown("""
         margin-bottom: 20px;
         border-bottom: 3px solid #36b04b;
     }
-    .logo-img { height: 80px; margin-right: 20px; }
-    .main-title { font-family: 'Segoe UI', sans-serif; color: #1a3a63 !important; font-size: 28px; font-weight: 800; margin: 0; }
-    .sub-title { color: #444444 !important; font-size: 16px; margin: 0; }
+    .logo-img { height: 70px; margin-right: 15px; }
+    .main-title { font-family: 'Segoe UI', sans-serif; color: #1a3a63 !important; font-size: 24px; font-weight: 800; margin: 0; }
+    .sub-title { color: #444444 !important; font-size: 14px; margin: 0; }
 
-    /* 5. CAJA DE CÓDIGOS COMPACTA */
+    /* 4. CAJA DE CÓDIGOS COMPACTA */
     .codigo-box-forzado {
         background-color: #f0f0f0 !important;
         color: #000000 !important;
         -webkit-text-fill-color: #000000 !important;
-        padding: 8px 2px;
+        padding: 5px 2px;
         border: 1px solid #cccccc;
         text-align: center;
         font-weight: bold;
@@ -72,7 +82,7 @@ st.markdown("""
         font-size: 11px;
     }
 
-    /* 6. BOTONES VERDES */
+    /* 5. BOTONES VERDES */
     .stButton > button {
         background-color: #36b04b !important;
         color: #FFFFFF !important;
@@ -81,16 +91,7 @@ st.markdown("""
     }
     .stButton > button * { color: #FFFFFF !important; -webkit-text-fill-color: #FFFFFF !important; }
 
-    /* 7. TEXTO DE ETIQUETAS */
-    label, p, span, .section-header { color: #000000 !important; font-weight: bold !important; }
-    .section-header { background-color: #f0f2f6 !important; padding: 5px; text-align: center; border-radius: 4px; margin-top: 10px;}
-    
-    /* Forzar que el área de observaciones sea blanca */
-    textarea {
-        background-color: #FFFFFF !important;
-        color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
-    }
+    .section-header { background-color: #f0f2f6 !important; color: #000 !important; padding: 5px; text-align: center; font-weight: bold; border-radius: 4px; margin-top: 10px;}
     </style>
     """, unsafe_allow_html=True)
 
@@ -109,11 +110,11 @@ def render_header(logo_path):
             </div>
             """, unsafe_allow_html=True)
     except:
-        st.write("### Registro de Producción - Plaza's")
+        st.write("### Plaza's - Registro de Producción")
 
 render_header("logo_plaza.png")
 
-# --- BASE DE DATOS MAESTRA ---
+# --- BASE DE DATOS (LISTA COMPLETA) ---
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -203,6 +204,7 @@ SECCIONES_ORDEN = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POS
 if 'secciones_data' not in st.session_state:
     st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
 
+# Fila Superior
 col_sup, col_fec = st.columns([1, 1])
 with col_sup:
     supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
@@ -217,8 +219,8 @@ for seccion in SECCIONES_ORDEN:
     if not opciones: continue
 
     for i, item in enumerate(st.session_state.secciones_data[seccion]):
-        # DISTRIBUCIÓN DE UNA SOLA LÍNEA
-        c1, c2, c3, c4 = st.columns([0.8, 2.8, 1.2, 0.4])
+        # DISTRIBUCIÓN HORIZONTAL FORZADA
+        c1, c2, c3, c4 = st.columns([0.8, 2.5, 1.2, 0.4])
         with c2:
             seleccion = st.selectbox(f"S_{seccion}_{i}", options=opciones, key=f"sel_{seccion}_{i}", label_visibility="collapsed")
             item['Descripcion'] = seleccion
