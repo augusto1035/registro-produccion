@@ -7,16 +7,43 @@ import base64
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Gerencia de Alimentos Procesados", layout="wide")
 
-# --- INYECCIÓN DE ESTILO RADICAL (BLINDAJE Y OPTIMIZACIÓN MÓVIL) ---
+# --- BLINDAJE TOTAL Y OPTIMIZACIÓN MÓVIL (UNA SOLA LÍNEA) ---
 st.markdown("""
     <style>
-    /* 1. Reset Global y Blindaje contra Modo Oscuro */
+    /* 1. Reset Global y Forzado de Fondo Blanco */
     html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: #FFFFFF !important;
         color: #000000 !important;
     }
 
-    /* 2. ENCABEZADO TIPO PLAZA'S */
+    /* 2. ATAQUE DIRECTO A LOS CUADROS NEGROS (Selectores y Inputs) */
+    /* Forzamos el fondo blanco y texto negro en el contenedor de selección */
+    div[data-baseweb="select"] > div, 
+    div[data-baseweb="select"] * {
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+    }
+
+    /* Forzamos que la lista desplegable sea blanca al abrirse */
+    div[role="listbox"], div[role="listbox"] * {
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+    }
+
+    /* 3. OPTIMIZACIÓN PARA MÓVIL (Una sola línea) */
+    [data-testid="column"] {
+        padding: 0px 1px !important;
+        margin: 0px !important;
+    }
+    
+    /* Reducir altura para que sea más compacto */
+    .stSelectbox, .stNumberInput, .codigo-box-forzado {
+        margin-bottom: 0px !important;
+    }
+
+    /* 4. ENCABEZADO PLAZA'S */
     .header-container {
         display: flex;
         align-items: center;
@@ -25,47 +52,14 @@ st.markdown("""
         border-bottom: 3px solid #36b04b;
     }
     .logo-img { height: 80px; margin-right: 20px; }
-    .main-title { 
-        font-family: 'Segoe UI', sans-serif;
-        color: #1a3a63 !important; 
-        font-size: 28px; 
-        font-weight: 800;
-        margin: 0;
-    }
+    .main-title { font-family: 'Segoe UI', sans-serif; color: #1a3a63 !important; font-size: 28px; font-weight: 800; margin: 0; }
     .sub-title { color: #444444 !important; font-size: 16px; margin: 0; }
 
-    /* 3. OPTIMIZACIÓN DE ESPACIO PARA MÓVIL (Una sola línea) */
-    /* Reducimos el padding de las columnas para que quepan más cosas */
-    [data-testid="column"] {
-        padding: 0px 2px !important;
-    }
-
-    /* Ajuste de selectores y cajas para que sean más compactos */
-    div[data-baseweb="select"] > div, input {
-        height: 38px !important;
-        font-size: 14px !important;
-        color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
-    }
-
-    /* 4. BLINDAJE DE VISIBILIDAD */
-    div[data-baseweb="select"] * { color: #000000 !important; }
-    div[role="listbox"] * { color: #000000 !important; background-color: #FFFFFF !important; }
-
-    /* 5. BOTONES VERDES CORPORATIVOS */
-    .stButton > button {
-        background-color: #36b04b !important;
-        color: #FFFFFF !important;
-        border: none !important;
-        font-weight: bold !important;
-        width: 100% !important;
-    }
-    .stButton > button p { color: #FFFFFF !important; -webkit-text-fill-color: #FFFFFF !important; }
-
-    /* 6. CAJA DE CÓDIGOS COMPACTA */
+    /* 5. CAJA DE CÓDIGOS COMPACTA */
     .codigo-box-forzado {
         background-color: #f0f0f0 !important;
         color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
         padding: 8px 2px;
         border: 1px solid #cccccc;
         text-align: center;
@@ -75,10 +69,28 @@ st.markdown("""
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 12px;
+        font-size: 11px;
     }
 
-    .section-header { background-color: #f0f2f6 !important; color: #333 !important; padding: 5px; font-weight: bold; text-align: center; border-radius: 4px; margin-top: 15px;}
+    /* 6. BOTONES VERDES */
+    .stButton > button {
+        background-color: #36b04b !important;
+        color: #FFFFFF !important;
+        border: none !important;
+        font-weight: bold !important;
+    }
+    .stButton > button * { color: #FFFFFF !important; -webkit-text-fill-color: #FFFFFF !important; }
+
+    /* 7. TEXTO DE ETIQUETAS */
+    label, p, span, .section-header { color: #000000 !important; font-weight: bold !important; }
+    .section-header { background-color: #f0f2f6 !important; padding: 5px; text-align: center; border-radius: 4px; margin-top: 10px;}
+    
+    /* Forzar que el área de observaciones sea blanca */
+    textarea {
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -101,7 +113,7 @@ def render_header(logo_path):
 
 render_header("logo_plaza.png")
 
-# --- BASE DE DATOS MAESTRA COMPLETA ---
+# --- BASE DE DATOS MAESTRA ---
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -191,7 +203,6 @@ SECCIONES_ORDEN = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POS
 if 'secciones_data' not in st.session_state:
     st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
 
-# 1. Supervisor y Fecha (en una sola fila)
 col_sup, col_fec = st.columns([1, 1])
 with col_sup:
     supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
@@ -206,8 +217,8 @@ for seccion in SECCIONES_ORDEN:
     if not opciones: continue
 
     for i, item in enumerate(st.session_state.secciones_data[seccion]):
-        # DISTRIBUCIÓN COMPACTA PARA UNA SOLA LÍNEA
-        c1, c2, c3, c4 = st.columns([0.8, 2.5, 1.2, 0.4])
+        # DISTRIBUCIÓN DE UNA SOLA LÍNEA
+        c1, c2, c3, c4 = st.columns([0.8, 2.8, 1.2, 0.4])
         with c2:
             seleccion = st.selectbox(f"S_{seccion}_{i}", options=opciones, key=f"sel_{seccion}_{i}", label_visibility="collapsed")
             item['Descripcion'] = seleccion
@@ -231,4 +242,4 @@ obs = st.text_area("", placeholder="Notas...", label_visibility="collapsed")
 
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
     # Lógica de guardado...
-    st.success("¡Registro exitoso!"); st.balloons()
+    st.success("¡Registro completado!"); st.balloons()
