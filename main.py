@@ -7,63 +7,78 @@ import base64
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Gerencia de Alimentos Procesados", layout="wide")
 
-# --- INYECCIÓN DE ESTILO "NUCLEAR" PARA ANCHO REAL ---
+# --- ESTILO GLOBAL Y BLINDAJE ---
 st.markdown("""
     <style>
-    /* 1. Fondo Blanco e Invariable */
+    /* 1. Fondo Blanco Forzado */
     html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: #FFFFFF !important;
         color: #000000 !important;
     }
 
-    /* 2. FORZAR COLUMNAS A AJUSTARSE AL CONTENIDO (SIN ANCHO MÍNIMO) */
-    [data-testid="stHorizontalBlock"] {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        align-items: center !important;
-        width: 100% !important;
-        gap: 4px !important;
+    /* 2. CINTILLO SUPERIOR PLAZA'S */
+    .header-container {
+        display: flex;
+        align-items: center;
+        padding: 10px 0px;
+        margin-bottom: 20px;
+        border-bottom: 3px solid #36b04b;
+        width: 100%;
     }
+    .logo-img { height: 60px; margin-right: 15px; }
+    .main-title { font-family: 'Segoe UI', sans-serif; color: #1a3a63 !important; font-size: 22px; font-weight: 800; margin: 0; }
+    .sub-title { color: #444444 !important; font-size: 13px; margin: 0; }
 
-    /* Quitamos el ancho mínimo que Streamlit pone por defecto */
-    [data-testid="column"] {
-        min-width: 0px !important;
-        flex-grow: 0 !important; /* Por defecto no crecen */
-    }
-
-    /* Definimos anchos específicos para que NO se desborde */
-    /* Columna 1 (Código) */
-    [data-testid="stHorizontalBlock"] > div:nth-child(1) { width: 15% !important; flex-basis: 15% !important; }
-    /* Columna 2 (Descripción) - Esta es la que permitimos que crezca */
-    [data-testid="stHorizontalBlock"] > div:nth-child(2) { width: 55% !important; flex-basis: 55% !important; flex-grow: 1 !important; }
-    /* Columna 3 (Cantidad) */
-    [data-testid="stHorizontalBlock"] > div:nth-child(3) { width: 20% !important; flex-basis: 20% !important; }
-    /* Columna 4 (Botón X) */
-    [data-testid="stHorizontalBlock"] > div:nth-child(4) { width: 10% !important; flex-basis: 10% !important; }
-
-    /* 3. AJUSTE DE INPUTS PARA QUE NO SE SALGAN DE SU CELDA */
-    input, div[data-baseweb="select"] > div, .codigo-box-forzado {
-        width: 100% !important;
-        height: 35px !important;
-        font-size: 11px !important;
-        padding: 0px 2px !important;
+    /* 3. BLINDAJE DE COMPONENTES CONTRA MODO OSCURO */
+    div[data-baseweb="select"] > div, input, textarea, [data-testid="stNumberInput"] input {
         background-color: #FFFFFF !important;
         color: #000000 !important;
         -webkit-text-fill-color: #000000 !important;
+        border: 1px solid #CCCCCC !important;
+        font-size: 12px !important;
     }
 
-    /* 4. ENCABEZADO Y BOTONES */
-    .header-container { display: flex; align-items: center; padding: 10px 5px; border-bottom: 3px solid #36b04b; width: 100%; }
-    .logo-img { height: 55px; margin-right: 10px; }
-    .main-title { color: #1a3a63 !important; font-size: 20px; font-weight: 800; margin: 0; line-height: 1.1; }
-    .sub-title { color: #444444 !important; font-size: 12px; margin: 0; }
+    /* Forzar que la lista desplegable sea blanca al abrirse */
+    div[role="listbox"], div[role="listbox"] * {
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+    }
 
-    .stButton > button { background-color: #36b04b !important; color: #FFFFFF !important; border: none !important; width: 100% !important; height: 35px !important; }
-    .stButton > button p, .stButton > button span { color: #FFFFFF !important; -webkit-text-fill-color: #FFFFFF !important; }
+    /* 4. BOTONES VERDES */
+    .stButton > button {
+        background-color: #36b04b !important;
+        color: #FFFFFF !important;
+        font-weight: bold !important;
+        border: none !important;
+    }
+    .stButton > button * { color: #FFFFFF !important; -webkit-text-fill-color: #FFFFFF !important; }
 
-    .codigo-box-forzado { background-color: #f0f0f0 !important; border: 1px solid #cccccc; border-radius: 4px; font-weight: bold; font-size: 10px; display: flex; align-items: center; justify-content: center; }
-    .section-header { background-color: #f0f2f6 !important; color: #000 !important; padding: 4px; text-align: center; font-weight: bold; font-size: 12px; border-radius: 4px; margin-top: 10px;}
+    /* 5. TÍTULOS DE SECCIÓN */
+    .section-header { 
+        background-color: #f0f2f6 !important; 
+        color: #000 !important; 
+        padding: 5px; 
+        text-align: center; 
+        font-weight: bold; 
+        border-radius: 4px; 
+        font-size: 13px; 
+        margin-top: 15px;
+    }
+
+    /* 6. CAJA DE CÓDIGOS SAP */
+    .codigo-box-forzado {
+        background-color: #f0f0f0 !important;
+        color: #000000 !important;
+        border: 1px solid #cccccc;
+        text-align: center;
+        font-weight: bold;
+        border-radius: 4px;
+        height: 35px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -82,11 +97,11 @@ def render_header(logo_path):
             </div>
             """, unsafe_allow_html=True)
     except:
-        st.write("### Plaza's - Producción")
+        st.write("### Plaza's - Registro de Producción")
 
 render_header("logo_plaza.png")
 
-# --- BASE DE DATOS MAESTRA ---
+# --- BASE DE DATOS MAESTRA (79 PRODUCTOS) ---
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -172,26 +187,24 @@ PRODUCTOS_DATA = [
 df_productos = pd.DataFrame(PRODUCTOS_DATA)
 SECCIONES_ORDEN = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POSTRE", "RELLENOS Y CREMAS"]
 
-# --- LÓGICA DE ESTADO ---
 if 'secciones_data' not in st.session_state:
     st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
 
+# Fila Superior
 col_sup, col_fec = st.columns([1, 1])
-with col_sup:
-    supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
-with col_fec:
-    fecha_sel = st.date_input("Fecha", datetime.now())
+with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
+with col_fec: fecha_sel = st.date_input("Fecha", datetime.now())
 
-# --- RENDERIZADO ---
+# --- RENDERIZADO CON CONTROL DE ANCHO FIJO ---
 for seccion in SECCIONES_ORDEN:
     st.markdown(f'<div class="section-header">{seccion}</div>', unsafe_allow_html=True)
     opciones = df_productos[df_productos['Seccion'] == seccion]['Descripcion'].tolist()
-    
     if not opciones: continue
 
     for i, item in enumerate(st.session_state.secciones_data[seccion]):
-        # Usamos las 4 columnas de Streamlit para el backend
-        c1, c2, c3, c4 = st.columns([1, 1, 1, 1])
+        # USAMOS 4 COLUMNAS CON EL ANCHO MÁS AGRESIVO POSIBLE
+        c1, c2, c3, c4 = st.columns([0.5, 2.5, 0.8, 0.2])
+        
         with c1:
             st.markdown(f'<div class="codigo-box-forzado">{item["Codigo"]}</div>', unsafe_allow_html=True)
         with c2:
