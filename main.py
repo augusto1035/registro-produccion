@@ -3,7 +3,6 @@ import pandas as pd
 from datetime import datetime
 import base64
 from streamlit_gsheets import GSheetsConnection
-import streamlit.components.v1 as components
 
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
@@ -16,7 +15,7 @@ st.markdown("""
     input, textarea, select, div[data-baseweb="select"] > div {
         background-color: #ffffff !important; color: #000000 !important; border: 1px solid #ced4da !important;
     }
-    .block-container { padding-top: 2rem !important; max-width: 100% !important; }
+    .block-container { padding-top: 1rem !important; max-width: 100% !important; }
     .codigo-box {
         background-color: #e9ecef; border: 1px solid #ced4da; color: #495057;
         font-weight: bold; padding: 5px; text-align: center; border-radius: 4px;
@@ -37,17 +36,30 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- TRUCO DE SCROLL FORZADO ---
-if st.session_state.get('exito'):
-    # Este componente se ejecuta al cargar la página tras el rerun
-    components.html(
-        """
+# --- PUNTO DE ANCLA (PARA EL AUTO-SCROLL) ---
+# Ponemos un div vacío al inicio con un ID específico
+st.markdown('<div id="inicio"></div>', unsafe_allow_html=True)
+
+# --- INICIALIZACIÓN DE ESTADOS ---
+if 'secciones_data' not in st.session_state:
+    st.session_state.secciones_data = {sec: [] for sec in ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POSTRE", "RELLENOS Y CREMAS"]}
+if 'exito' not in st.session_state:
+    st.session_state.exito = False
+if 'texto_obs' not in st.session_state:
+    st.session_state.texto_obs = ""
+
+# --- LÓGICA DE ÉXITO ---
+if st.session_state.exito:
+    st.success("✅ ¡Registro guardado exitosamente!")
+    st.balloons()
+    # TRUCO DE ANCLA: Inyectamos un link invisible que se auto-ejecuta para saltar al ID "inicio"
+    st.markdown("""
+        <a id="link_inicio" href="#inicio" target="_self" style="display: none;">subir</a>
         <script>
-            window.parent.document.querySelector('section.main').scrollTo(0, 0);
+            document.getElementById('link_inicio').click();
         </script>
-        """,
-        height=0,
-    )
+    """, unsafe_allow_html=True)
+    st.session_state.exito = False
 
 # --- HEADER ---
 def render_header(logo_path):
@@ -68,7 +80,7 @@ def render_header(logo_path):
 
 render_header("logo_plaza.png")
 
-# --- DATA PRODUCTOS (Lista original mantenida) ---
+# --- PRODUCTOS Y SECCIONES ---
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -154,21 +166,7 @@ PRODUCTOS_DATA = [
 df_productos = pd.DataFrame(PRODUCTOS_DATA)
 SECCIONES_ORDEN = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POSTRE", "RELLENOS Y CREMAS"]
 
-# --- INICIALIZACIÓN ---
-if 'secciones_data' not in st.session_state:
-    st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
-if 'exito' not in st.session_state:
-    st.session_state.exito = False
-if 'texto_observaciones' not in st.session_state:
-    st.session_state.texto_observaciones = ""
-
-# MENSAJE DE ÉXITO
-if st.session_state.exito:
-    st.success("✅ ¡Registro guardado exitosamente!")
-    st.balloons()
-    st.session_state.exito = False # Se apaga para que no se repita el scroll al interactuar después
-
-# CALLBACKS
+# CALLBACK
 def actualizar_producto(seccion_key, index_key, selectbox_key):
     nuevo_nombre = st.session_state[selectbox_key]
     nuevo_codigo = df_productos[df_productos['Descripcion'] == nuevo_nombre]['Codigo'].values[0]
@@ -215,33 +213,23 @@ for seccion in SECCIONES_ORDEN:
 
 st.write("---")
 st.header("Observaciones")
-obs = st.text_area(
-    "", 
-    value=st.session_state.texto_observaciones,
-    placeholder="Notas...", 
-    label_visibility="collapsed", 
-    key="obs_input"
-)
+obs = st.text_area("", value=st.session_state.texto_obs, placeholder="Notas...", label_visibility="collapsed", key="obs_input")
 
 # --- LÓGICA DE GUARDADO ---
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
     conn = st.connection("gsheets", type=GSheetsConnection)
     registros = []
     timestamp_id = datetime.now().strftime("%Y%m%d%H%M%S")
-    
     texto_final_obs = st.session_state.obs_input
 
     for seccion, items in st.session_state.secciones_data.items():
         for item in items:
             if item['Cantidad'] > 0:
                 registros.append({
-                    "ID_Registro": timestamp_id,
-                    "Supervisor": supervisor,
+                    "ID_Registro": timestamp_id, "Supervisor": supervisor,
                     "Fecha_Hora": fecha_sel.strftime("%d/%m/%Y") + " " + datetime.now().strftime("%I:%M %p"),
-                    "Codigo_Articulo": item['Codigo'],
-                    "Descripcion": item['Descripcion'],
-                    "Cantidad": item['Cantidad'],
-                    "Observaciones": texto_final_obs
+                    "Codigo_Articulo": item['Codigo'], "Descripcion": item['Descripcion'],
+                    "Cantidad": item['Cantidad'], "Observaciones": texto_final_obs
                 })
     
     if not registros:
@@ -256,8 +244,7 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
             # --- RESETEO TOTAL ---
             st.session_state.exito = True
             st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
-            st.session_state.texto_observaciones = ""
-            
+            st.session_state.texto_obs = ""
             st.rerun()
             
         except Exception as e:
