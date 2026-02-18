@@ -7,25 +7,26 @@ import base64
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
 
-# --- CSS CORRECTIVO (SIN DESBORDE + BOTONES VERDES) ---
+# --- CSS CORRECTIVO EXTREMO (SIN MÁRGENES + TODOS VERDES) ---
 st.markdown("""
     <style>
-    /* 1. ELIMINAR MÁRGENES DE LA APP PARA GANAR ESPACIO LATERAL */
+    /* 1. GANAR ESPACIO LATERAL (CRUCIAL PARA QUE QUEPA) */
     .block-container {
         padding-top: 1rem !important;
-        padding-bottom: 1rem !important;
-        padding-left: 0.5rem !important;
-        padding-right: 0.5rem !important;
+        padding-bottom: 2rem !important;
+        padding-left: 0.2rem !important; /* Casi al borde */
+        padding-right: 0.2rem !important;
     }
 
-    /* 2. FORZAR FILA ÚNICA EN MÓVIL (NO WRAP) */
+    /* 2. FORZAR FILA HORIZONTAL PERFECTA */
     [data-testid="stHorizontalBlock"] {
         flex-wrap: nowrap !important;
-        gap: 1px !important; /* Espacio mínimo entre elementos */
+        gap: 2px !important;
         align-items: center !important;
+        width: 100% !important;
     }
 
-    /* 3. COLUMNAS SIN ANCHO MÍNIMO (CRUCIAL PARA QUE NO DESBORDE) */
+    /* 3. COLUMNAS SIN RELLENO */
     [data-testid="column"] {
         min-width: 0px !important;
         width: auto !important;
@@ -34,18 +35,18 @@ st.markdown("""
         overflow: hidden !important;
     }
 
-    /* 4. COMPONENTES ULTRA-COMPACTOS */
+    /* 4. COMPONENTES MINÚSCULOS PARA QUE QUEPAN */
     div[data-baseweb="select"] > div, 
     input, 
     [data-testid="stNumberInput"] input {
         min-height: 35px !important;
         height: 35px !important;
-        font-size: 11px !important;
-        padding: 0px 2px !important;
+        font-size: 10px !important; /* Letra pequeña obligatoria */
+        padding: 0px 1px !important; /* Sin relleno interno */
         background-color: #FFFFFF !important;
         color: #000000 !important;
         -webkit-text-fill-color: #000000 !important;
-        border: 1px solid #CCCCCC !important;
+        border: 1px solid #999 !important;
     }
 
     /* 5. CAJA DE CÓDIGO (GRIS) */
@@ -60,7 +61,7 @@ st.markdown("""
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 10px;
+        font-size: 9px;
         line-height: 1;
         white-space: nowrap;
         overflow: hidden;
@@ -76,6 +77,8 @@ st.markdown("""
         padding: 0px !important;
         width: 100% !important;
         font-weight: bold !important;
+        font-size: 14px !important;
+        line-height: 1 !important;
     }
     .stButton > button:hover {
         color: #FFFFFF !important;
@@ -84,15 +87,15 @@ st.markdown("""
     .stButton > button p { color: #FFFFFF !important; }
 
     /* 7. ENCABEZADO */
-    .header-container { display: flex; align-items: center; padding: 5px; border-bottom: 3px solid #36b04b; width: 100%; margin-bottom: 10px; }
-    .logo-img { height: 45px; margin-right: 8px; }
-    .main-title { color: #1a3a63 !important; font-size: 18px; font-weight: 800; margin: 0; line-height: 1.1; }
+    .header-container { display: flex; align-items: center; padding: 5px; border-bottom: 3px solid #36b04b; width: 100%; margin-bottom: 5px; }
+    .logo-img { height: 40px; margin-right: 5px; }
+    .main-title { color: #1a3a63 !important; font-size: 16px; font-weight: 800; margin: 0; line-height: 1.1; }
     .sub-title { color: #444444 !important; font-size: 10px; margin: 0; }
     
-    .section-header { background-color: #f0f2f6 !important; color: #000 !important; padding: 2px; text-align: center; font-weight: bold; font-size: 12px; margin-top: 10px;}
+    .section-header { background-color: #f0f2f6 !important; color: #000 !important; padding: 2px; text-align: center; font-weight: bold; font-size: 12px; margin-top: 5px;}
     
-    /* Corrección para listas desplegables */
-    div[role="listbox"] * { font-size: 14px !important; }
+    /* Ajuste para que el calendario no se rompa */
+    [data-testid="stDateInput"] input { font-size: 12px !important; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -217,9 +220,9 @@ for seccion in SECCIONES_ORDEN:
 
     for i, item in enumerate(st.session_state.secciones_data[seccion]):
         
-        # PROPORCIÓN ESTRICTA PARA MÓVIL (15% | 55% | 20% | 10%)
-        # El CSS 'flex-wrap: nowrap' impide que se rompa la fila
-        c1, c2, c3, c4 = st.columns([1.5, 5.5, 2.0, 1.0])
+        # PROPORCIÓN ESTRICTA PARA MÓVIL
+        # 12% Código | 60% Desc | 16% Cant | 12% X (Todos verdes)
+        c1, c2, c3, c4 = st.columns([1.2, 6.0, 1.6, 1.2])
         
         with c1:
             st.markdown(f'<div class="codigo-box">{item["Codigo"]}</div>', unsafe_allow_html=True)
