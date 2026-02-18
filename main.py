@@ -6,111 +6,132 @@ import base64
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
 
-# --- CSS MAESTRO (GRID SYSTEM) ---
+# --- CSS INTELIGENTE (WEB NORMAL / MÓVIL COMPACTO) ---
 st.markdown("""
     <style>
-    /* 1. BLINDAJE DE COLOR (TODO BLANCO Y NEGRO) */
+    /* 1. MODO CLARO OBLIGATORIO (GLOBAL) */
     :root { color-scheme: light; }
     html, body, [data-testid="stAppViewContainer"] { background-color: #ffffff !important; color: black !important; }
 
-    /* 2. ARREGLO DEL CINTILLO CORTADO */
+    /* 2. HEADER Y CINTILLO (GLOBAL) */
     .block-container {
-        padding-top: 3.5rem !important; /* ESPACIO PARA QUE QUEPA EL LOGO */
-        padding-left: 0.5rem !important;
-        padding-right: 0.5rem !important;
+        padding-top: 3.5rem !important;
         padding-bottom: 3rem !important;
-        max-width: 100% !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
     }
 
-    /* 3. SISTEMA DE GRILLA INTELIGENTE */
-    
-    /* CASO A: FILAS DE PRODUCTOS (4 COLUMNAS) */
-    /* Detectamos si el bloque tiene 4 hijos y aplicamos medidas exactas */
-    [data-testid="stHorizontalBlock"]:has(> [data-testid="column"]:nth-child(4)) {
-        display: grid !important;
-        grid-template-columns: 45px 1fr 50px 35px !important; /* MEDIDAS EXACTAS */
-        gap: 3px !important;
-        width: 100% !important;
-    }
-
-    /* CASO B: FILTROS SUPERIORES (2 COLUMNAS) */
-    /* Si no tiene 4 hijos, asumimos que es el header de filtros (50% / 50%) */
-    [data-testid="stHorizontalBlock"]:not(:has(> [data-testid="column"]:nth-child(4))) {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
-        gap: 10px !important;
-    }
-
-    /* 4. RESETEO DE COLUMNAS DE STREAMLIT */
-    [data-testid="column"] {
-        width: auto !important;
-        min-width: 0 !important;
-        flex: none !important;
-        padding: 0 !important;
-        overflow: visible !important;
-    }
-
-    /* 5. CAJAS Y INPUTS (COMPACTOS Y VISIBLES) */
+    /* 3. ESTILOS DE COMPONENTES (GLOBAL - BLANCO Y NEGRO) */
     div[data-baseweb="select"] > div, 
     [data-testid="stNumberInput"] input,
     [data-testid="stDateInput"] input {
-        min-height: 38px !important;
-        height: 38px !important;
-        padding: 0px 4px !important;
-        font-size: 11px !important;
         background-color: white !important;
-        border: 1px solid #999 !important;
         color: black !important;
+        border: 1px solid #ccc !important;
         border-radius: 4px !important;
+        font-size: 14px !important; /* Letra legible en Web */
     }
 
-    /* Caja de Código (Gris) */
+    /* Caja de Código (Estilo Base) */
     .codigo-box {
         background-color: #e0e0e0;
-        border: 1px solid #999;
+        border: 1px solid #aaa;
         color: black;
         font-weight: bold;
-        height: 38px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 10px;
         border-radius: 4px;
         width: 100%;
+        height: 100%;
+        min-height: 40px;
     }
 
-    /* Botones Verdes (Plaza's) */
+    /* Botones Verdes (Global) */
     .stButton > button {
         background-color: #36b04b !important;
         color: white !important;
         border: none !important;
-        height: 38px !important;
-        min-height: 38px !important;
         width: 100% !important;
-        padding: 0 !important;
-        border-radius: 4px;
-        font-weight: bold !important;
     }
     .stButton > button:hover { background-color: #2a8a3b !important; }
-    
-    /* 6. HEADER GRANDE (HTML PURO) */
-    .header-layout {
-        display: flex; 
-        align-items: center; 
-        padding-bottom: 10px; 
-        border-bottom: 3px solid #36b04b; 
-        margin-bottom: 15px;
+
+    /* ============================================================
+       4. REGLAS EXCLUSIVAS PARA MÓVIL (PANTALLAS PEQUEÑAS)
+       Aquí es donde ocurre la magia para que quepa en una fila.
+       ============================================================ */
+    @media (max-width: 640px) {
+        
+        /* Reducir márgenes laterales al mínimo */
+        .block-container {
+            padding-left: 0.2rem !important;
+            padding-right: 0.2rem !important;
+        }
+
+        /* FORZAR FILA ÚNICA (NO WRAP) SOLO EN LAS FILAS DE PRODUCTOS */
+        /* Detectamos filas que tengan 4 columnas */
+        [data-testid="stHorizontalBlock"]:has(> [data-testid="column"]:nth-child(4)) {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important; /* OBLIGATORIO: NO BAJAR DE LINEA */
+            gap: 2px !important;
+            align-items: center !important;
+        }
+
+        /* AJUSTE QUIRÚRGICO DE ANCHOS (SOLO MÓVIL) */
+        
+        /* COL 1: CÓDIGO -> 45px (Lo justo para el número) */
+        [data-testid="stHorizontalBlock"]:has(> [data-testid="column"]:nth-child(4)) > [data-testid="column"]:nth-child(1) {
+            flex: 0 0 45px !important;
+            width: 45px !important;
+            min-width: 45px !important;
+            padding: 0 !important;
+        }
+
+        /* COL 2: DESCRIPCIÓN -> Flexible (Todo el espacio sobrante) */
+        [data-testid="stHorizontalBlock"]:has(> [data-testid="column"]:nth-child(4)) > [data-testid="column"]:nth-child(2) {
+            flex: 1 1 auto !important;
+            min-width: 50px !important; /* Para que no desaparezca */
+            padding: 0 !important;
+        }
+
+        /* COL 3: CANTIDAD -> 50px (Lo justo para 4 dígitos) */
+        [data-testid="stHorizontalBlock"]:has(> [data-testid="column"]:nth-child(4)) > [data-testid="column"]:nth-child(3) {
+            flex: 0 0 50px !important;
+            width: 50px !important;
+            min-width: 50px !important;
+            padding: 0 !important;
+        }
+
+        /* COL 4: BOTÓN X -> 35px */
+        [data-testid="stHorizontalBlock"]:has(> [data-testid="column"]:nth-child(4)) > [data-testid="column"]:nth-child(4) {
+            flex: 0 0 35px !important;
+            width: 35px !important;
+            min-width: 35px !important;
+            padding: 0 !important;
+        }
+
+        /* COMPONENTES MÁS PEQUEÑOS SOLO EN MÓVIL */
+        div[data-baseweb="select"] > div, 
+        [data-testid="stNumberInput"] input,
+        .codigo-box,
+        .stButton > button {
+            min-height: 35px !important;
+            height: 35px !important;
+            font-size: 11px !important;
+            padding: 0px 2px !important;
+        }
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- HEADER ---
+# --- HEADER (HTML Puro) ---
 def render_header(logo_path):
     try:
         with open(logo_path, "rb") as f:
             data = base64.b64encode(f.read()).decode()
         st.markdown(f"""
-            <div class="header-layout">
+            <div style="display: flex; align-items: center; padding-bottom: 10px; border-bottom: 3px solid #36b04b; margin-bottom: 20px;">
                 <img src="data:image/png;base64,{data}" style="height: 70px; margin-right: 15px;">
                 <div>
                     <div style="color:#1a3a63; font-size:22px; font-weight:800; line-height:1.1;">Registro de Producción</div>
@@ -123,7 +144,7 @@ def render_header(logo_path):
 
 render_header("logo_plaza.png")
 
-# --- DATOS ---
+# --- DATA ---
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -212,7 +233,7 @@ SECCIONES_ORDEN = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POS
 if 'secciones_data' not in st.session_state:
     st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
 
-# SUPERVISOR Y FECHA (2 Columnas = 50% / 50%)
+# SUPERVISOR Y FECHA (Estos usan columnas estándar de Streamlit)
 col_sup, col_fec = st.columns(2)
 with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
 with col_fec: fecha_sel = st.date_input("Fecha", datetime.now())
@@ -225,8 +246,9 @@ for seccion in SECCIONES_ORDEN:
     if not opciones: continue
 
     for i, item in enumerate(st.session_state.secciones_data[seccion]):
-        # STREAMLIT COLUMNS + CSS GRID MAGIA
-        c1, c2, c3, c4 = st.columns(4) 
+        # DEFINICIÓN DE COLUMNAS PYTHON (EN WEB SE VE NORMAL)
+        # La media query en CSS reescribirá estos anchos SOLO en móvil
+        c1, c2, c3, c4 = st.columns([1, 6, 1, 1]) 
         
         with c1:
             st.markdown(f'<div class="codigo-box">{item["Codigo"]}</div>', unsafe_allow_html=True)
