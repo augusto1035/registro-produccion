@@ -6,96 +6,124 @@ import base64
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
 
-# --- CSS DE FUERZA BRUTA (SOLUCIÓN DEFINITIVA) ---
+# --- CSS NUCLEAR (CONTRA EL TAMAÑO DE LAS CAJAS) ---
 st.markdown("""
     <style>
-    /* 1. BLINDAJE DE COLORES (BLANCO Y NEGRO SIEMPRE) */
+    /* 1. MODO CLARO Y SIN MARGENES EXTRAS */
     :root { color-scheme: light; }
     html, body, [data-testid="stAppViewContainer"] { background-color: #ffffff !important; color: black !important; }
 
-    /* 2. ESPACIO DEL CINTILLO (4rem PARA QUE NO SE CORTE) */
+    /* Espacio para el cintillo */
     .block-container {
-        padding-top: 4rem !important; 
-        padding-left: 0.5rem !important;
-        padding-right: 0.5rem !important;
-        padding-bottom: 3rem !important;
+        padding-top: 4rem !important;
+        padding-left: 0.2rem !important;
+        padding-right: 0.2rem !important;
+        padding-bottom: 2rem !important;
+        max-width: 100vw !important;
     }
 
-    /* 3. REGLA MAESTRA PARA MÓVIL (MAX-WIDTH 640px) */
+    /* -----------------------------------------------------------
+       MEDIA QUERY: MÓVIL (LA ZONA DE GUERRA)
+       ----------------------------------------------------------- */
     @media (max-width: 640px) {
-        
-        /* OBLIGAR A FILA ÚNICA (NO WRAP) */
-        [data-testid="stHorizontalBlock"] {
-            display: flex !important;
-            flex-wrap: nowrap !important; /* CRUCIAL: NO BAJAR LÍNEA */
-            align-items: center !important;
+
+        /* 1. LAYOUT: GRID MILIMÉTRICA (42px | AUTO | 45px | 35px) */
+        [data-testid="stHorizontalBlock"]:has(> [data-testid="column"]:nth-child(4)) {
+            display: grid !important;
+            grid-template-columns: 42px 1fr 45px 35px !important;
             gap: 2px !important;
+            align-items: center !important;
+            width: 100% !important;
         }
 
-        /* ANULAR EL ANCHO MÍNIMO DE STREAMLIT (ESTO CAUSABA EL APILAMIENTO) */
+        /* 2. MATAR EL RELLENO DE LAS COLUMNAS */
         [data-testid="column"] {
-            min-width: 0px !important; /* LA CLAVE */
+            min-width: 0 !important;
             width: auto !important;
-            padding: 0px !important;
-            flex-grow: 0 !important; 
-            flex-shrink: 0 !important;
-        }
-
-        /* --- ANCHOS EXACTOS PARA CADA CAJA (SOLO MÓVIL) --- */
-
-        /* CAJA 1: CÓDIGO (45px) */
-        [data-testid="column"]:nth-of-type(1) {
-            flex-basis: 45px !important;
-            width: 45px !important;
+            padding: 0 !important;
+            margin: 0 !important;
             overflow: hidden !important;
         }
 
-        /* CAJA 2: DESCRIPCIÓN (Flexible - llena el hueco) */
-        [data-testid="column"]:nth-of-type(2) {
-            flex-grow: 1 !important; /* Crece */
-            flex-shrink: 1 !important; /* Encoje si hace falta */
-            flex-basis: auto !important;
-            width: auto !important;
+        /* 3. ATACAR LAS CAJAS INTERNAS (INPUTS) - ESTO ES LO QUE PEDISTE */
+        
+        /* CAJA DE CANTIDAD (NUMBER INPUT) */
+        [data-testid="stNumberInput"] {
+            min-width: 0px !important;
+            width: 100% !important;
+        }
+        [data-testid="stNumberInput"] input {
+            min-width: 0px !important;
+            width: 100% !important;
+            padding: 0px !important; /* Sin aire interno */
+            text-align: center !important;
+            font-size: 11px !important;
+        }
+        /* Ocultar botones +/- del input numero en algunos navegadores para ganar espacio */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; margin: 0; 
         }
 
-        /* CAJA 3: CANTIDAD (50px) */
-        [data-testid="column"]:nth-of-type(3) {
-            flex-basis: 50px !important;
-            width: 50px !important;
+        /* CAJA DE DESCRIPCIÓN (SELECTBOX) */
+        div[data-baseweb="select"] {
+            min-width: 0px !important;
+            width: 100% !important;
+        }
+        div[data-baseweb="select"] > div {
+            padding-left: 2px !important;
+            padding-right: 2px !important;
+            background-color: white !important;
+        }
+        div[data-baseweb="select"] span {
+            font-size: 10px !important;
+            white-space: nowrap !important; /* No bajar linea */
+            text-overflow: ellipsis !important; /* Poner ... */
+            overflow: hidden !important;
         }
 
-        /* CAJA 4: X (40px) */
-        [data-testid="column"]:nth-of-type(4) {
-            flex-basis: 40px !important;
-            width: 40px !important;
+        /* CAJA DE CÓDIGO */
+        .codigo-box {
+            font-size: 9px !important;
+            padding: 0 !important;
+            letter-spacing: -0.5px; /* Apretar numeros */
         }
 
-        /* REDUCIR ALTURA DE TODO EN MÓVIL */
+        /* BOTÓN X */
+        .stButton > button {
+            padding: 0 !important;
+            min-width: 0 !important;
+        }
+
+        /* ALTURA UNIFICADA DE LAS CAJAS EN MÓVIL */
         div[data-baseweb="select"] > div, 
         [data-testid="stNumberInput"] input,
         .codigo-box,
         .stButton > button {
-            min-height: 35px !important;
             height: 35px !important;
-            font-size: 11px !important;
-            padding: 0px 2px !important;
+            min-height: 35px !important;
+            line-height: 35px !important;
         }
     }
+    /* -----------------------------------------------------------
+       FIN MEDIA QUERY
+       ----------------------------------------------------------- */
 
-    /* 4. ESTILOS GENERALES (WEB Y MÓVIL) */
+    /* ESTILOS GENERALES (WEB Y BASE) */
+    
+    /* Bordes y colores de las cajas */
     div[data-baseweb="select"] > div, 
     [data-testid="stNumberInput"] input {
-        background-color: white !important;
-        color: black !important;
-        border: 1px solid #999 !important;
+        border: 1px solid #aaa !important;
         border-radius: 4px !important;
-        font-size: 13px;
+        color: black !important;
+        background: white !important;
     }
 
-    /* Caja Código */
+    /* Estilo Caja Código */
     .codigo-box {
         background-color: #e0e0e0;
-        border: 1px solid #999;
+        border: 1px solid #aaa;
         color: black;
         font-weight: bold;
         display: flex;
@@ -104,29 +132,28 @@ st.markdown("""
         border-radius: 4px;
         width: 100%;
         height: 100%;
-        min-height: 38px;
+        min-height: 38px; /* Altura Web */
         font-size: 11px;
     }
 
-    /* Botones Verdes */
+    /* Estilo Botones */
     .stButton > button {
         background-color: #36b04b !important;
         color: white !important;
         border: none !important;
         width: 100% !important;
+        font-weight: bold !important;
     }
     .stButton > button:hover { background-color: #2a8a3b !important; }
-    
-    /* Arreglo para que los filtros de arriba no se rompan por las reglas de abajo */
-    /* Si el bloque NO tiene 4 columnas, usa flex normal */
+
+    /* header filtros */
     [data-testid="stHorizontalBlock"]:not(:has(> [data-testid="column"]:nth-child(4))) > [data-testid="column"] {
         flex: 1 1 50% !important;
-        min-width: 100px !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- HEADER (HTML) ---
+# --- HEADER ---
 def render_header(logo_path):
     try:
         with open(logo_path, "rb") as f:
@@ -145,7 +172,7 @@ def render_header(logo_path):
 
 render_header("logo_plaza.png")
 
-# --- DATOS ---
+# --- DATA ---
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -247,7 +274,7 @@ for seccion in SECCIONES_ORDEN:
     if not opciones: continue
 
     for i, item in enumerate(st.session_state.secciones_data[seccion]):
-        # COLUMNAS: Streamlit normal (Web). En Móvil, CSS entra en acción.
+        # EN MÓVIL SE ACTIVARÁ EL GRID CSS
         c1, c2, c3, c4 = st.columns(4) 
         
         with c1:
@@ -273,5 +300,3 @@ obs = st.text_area("", placeholder="Notas...", label_visibility="collapsed")
 
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
     st.success("¡Registro completado!"); st.balloons()
-
-
