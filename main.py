@@ -7,74 +7,86 @@ import base64
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Gerencia de Alimentos Procesados", layout="wide")
 
-# --- INYECCIÓN DE ESTILO "MICRO-AJUSTE" (MATEMÁTICAMENTE EXACTO) ---
+# --- INYECCIÓN DE ESTILO "TAMAÑO MICRO" (CON MEDIA QUERY) ---
 st.markdown("""
     <style>
-    /* 1. RESET GLOBAL DE COLORES (BLANCO/NEGRO) */
+    /* 1. BLINDAJE DE COLORES (FONDO BLANCO / TEXTO NEGRO) */
     html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: #FFFFFF !important;
         color: #000000 !important;
     }
 
-    /* 2. FORZAR FILA HORIZONTAL EXACTA (SIN DESBORDE) */
-    [data-testid="stHorizontalBlock"] {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        align-items: center !important;
-        width: 100% !important;
-        gap: 1px !important; /* Espacio casi nulo entre elementos */
-        padding: 0 !important;
+    /* 2. REGLA MAESTRA PARA MÓVIL: PROHIBIDO APILAR COLUMNAS */
+    @media (max-width: 640px) {
+        [data-testid="stHorizontalBlock"] {
+            flex-direction: row !important; /* Mantiene la fila horizontal */
+            flex-wrap: nowrap !important; /* No permite bajar de línea */
+            gap: 2px !important;
+            overflow-x: hidden !important; /* Evita el scroll horizontal */
+        }
+        
+        [data-testid="column"] {
+            min-width: 0px !important; /* Permite que la columna se encoja al máximo */
+            width: auto !important;
+            flex-shrink: 1 !important;
+            padding: 0px !important;
+        }
     }
 
-    /* 3. CONTROL DE COLUMNAS (PORCENTAJES FIJOS) */
-    /* Esto obliga a que la suma sea 100% y no se salga de la pantalla */
-    [data-testid="column"] {
-        min-width: 0px !important;
-        padding: 0px !important;
-        flex-grow: 0 !important;
-        flex-shrink: 1 !important;
-    }
-
-    /* 4. COMPONENTES ULTRA-COMPACTOS PARA MÓVIL */
+    /* 3. COMPONENTES ULTRA-COMPACTOS (TEXTO DE 10PX) */
     div[data-baseweb="select"] > div, 
     input, 
     .codigo-box-forzado,
-    .stButton > button {
-        height: 32px !important; /* Altura reducida */
+    [data-testid="stNumberInput"] input {
+        height: 32px !important;
         min-height: 32px !important;
-        font-size: 11px !important; /* Letra pequeña para que quepa la descripción */
+        font-size: 10px !important; /* Letra muy pequeña para ganar espacio */
         padding: 0px 2px !important;
-        margin: 0px !important;
         background-color: #FFFFFF !important;
         color: #000000 !important;
         -webkit-text-fill-color: #000000 !important;
         border: 1px solid #CCCCCC !important;
-        line-height: 1 !important;
     }
 
-    /* 5. BOTÓN X (Blanco sobre Verde) */
+    /* 4. BOTONES VERDES (X BLANCA) */
     .stButton > button {
         background-color: #36b04b !important;
         color: #FFFFFF !important;
         border: none !important;
+        height: 32px !important;
+        min-height: 32px !important;
+        padding: 0px !important;
+        font-size: 12px !important;
     }
     .stButton > button * { color: #FFFFFF !important; -webkit-text-fill-color: #FFFFFF !important; }
 
-    /* 6. LISTAS DESPLEGABLES (BLINDAJE VISUAL) */
-    div[data-baseweb="popover"] *, div[role="listbox"] * {
-        background-color: #FFFFFF !important;
-        color: #000000 !important;
-        font-size: 14px !important; /* Al desplegar sí queremos letra grande */
-    }
-
-    /* 7. ENCABEZADO */
-    .header-container { display: flex; align-items: center; padding: 5px; margin-bottom: 10px; border-bottom: 3px solid #36b04b; width: 100%; }
-    .logo-img { height: 50px; margin-right: 10px; }
+    /* 5. CINTILLO Y LOGO */
+    .header-container { display: flex; align-items: center; padding: 5px; border-bottom: 3px solid #36b04b; width: 100%; margin-bottom: 10px; }
+    .logo-img { height: 50px; margin-right: 8px; }
     .main-title { color: #1a3a63 !important; font-size: 18px; font-weight: 800; margin: 0; line-height: 1; }
     .sub-title { color: #444444 !important; font-size: 10px; margin: 0; }
+
+    /* 6. LISTAS DESPLEGABLES (LETRA GRANDE AL ABRIR) */
+    div[data-baseweb="popover"] *, div[role="listbox"] * {
+        font-size: 14px !important; 
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+    }
     
-    .section-header { background-color: #f0f2f6 !important; color: #000 !important; padding: 4px; text-align: center; font-weight: bold; border-radius: 4px; font-size: 12px; margin-top: 10px;}
+    .section-header { background-color: #f0f2f6 !important; color: #000 !important; padding: 3px; text-align: center; font-weight: bold; font-size: 12px; border-radius: 4px; margin-top: 10px;}
+    
+    /* 7. CAJA DE CÓDIGOS */
+    .codigo-box-forzado {
+        background-color: #f0f0f0 !important;
+        color: #000000 !important;
+        border: 1px solid #cccccc;
+        text-align: center;
+        font-weight: bold;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -97,7 +109,7 @@ def render_header(logo_path):
 
 render_header("logo_plaza.png")
 
-# --- BASE DE DATOS (Mantenemos tu lista de 79 productos) ---
+# --- BASE DE DATOS MAESTRA ---
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -186,10 +198,12 @@ SECCIONES_ORDEN = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POS
 if 'secciones_data' not in st.session_state:
     st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
 
-# SUPERVISOR Y FECHA (FILA SUPERIOR COMPACTA)
+# SUPERVISOR Y FECHA (EN DOS COLUMNAS DE 50%)
 col_sup, col_fec = st.columns(2)
-with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
-with col_fec: fecha_sel = st.date_input("Fecha", datetime.now())
+with col_sup:
+    supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
+with col_fec:
+    fecha_sel = st.date_input("Fecha", datetime.now())
 
 # RENDERIZADO
 for seccion in SECCIONES_ORDEN:
@@ -199,9 +213,9 @@ for seccion in SECCIONES_ORDEN:
 
     for i, item in enumerate(st.session_state.secciones_data[seccion]):
         # COLUMNAS PORCENTUALES ESTRICTAS PARA QUE SUMEN 100%
-        # Código (12%) - Desc (63%) - Cant (15%) - X (10%)
-        # Streamlit usa 'ratios', no px. Estos números fuerzan la proporción.
-        c1, c2, c3, c4 = st.columns([1.2, 6.3, 1.5, 1.0])
+        # Código (12%) - Desc (60%) - Cant (18%) - X (10%)
+        # La media query de arriba evitará que se apilen
+        c1, c2, c3, c4 = st.columns([1.2, 6.0, 1.8, 1.0])
         
         with c1:
             st.markdown(f'<div class="codigo-box-forzado">{item["Codigo"]}</div>', unsafe_allow_html=True)
