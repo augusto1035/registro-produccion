@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime
 from streamlit_gsheets import GSheetsConnection
 
-# 1. BASE DE DATOS MAESTRA
+# 1. BASE DE DATOS MAESTRA (Aseguramos que la data esté limpia)
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -88,16 +88,6 @@ PRODUCTOS_DATA = [
 
 df_productos = pd.DataFrame(PRODUCTOS_DATA)
 
-# --- FUNCIÓN PARA ACTUALIZAR CÓDIGO (CALLBACK) ---
-def update_code(sec, idx):
-    # Esta función se activa ANTES de que la página se redibuje
-    desc = st.session_state[f"sel_{sec}_{idx}"]
-    match = df_productos[df_productos['Descripcion'] == desc]
-    if not match.empty:
-        # Actualizamos el valor en el estado de la sesión directamente
-        st.session_state[sec][idx]['Codigo'] = match['Codigo'].values[0]
-        st.session_state[sec][idx]['Descripcion'] = desc
-
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Gerencia de Alimentos Procesados", layout="wide")
 
@@ -106,6 +96,8 @@ st.markdown("""
     html, body, [data-testid="stAppViewContainer"] { background-color: white !important; }
     .header { background-color: #36b04b; color: white; padding: 15px; text-align: center; font-weight: bold; font-size: 24px; border-radius: 5px; }
     .section-header { background-color: #f0f2f6; color: #333; padding: 10px; font-weight: bold; text-align: center; margin-top: 25px; border-radius: 5px; border: 1px solid #ddd; }
+    /* Estilo para que el código se vea limpio */
+    .codigo-box { background-color: #eeeeee; padding: 8px; border-radius: 4px; text-align: center; font-family: monospace; border: 1px solid #ccc; color: #333; height: 38px; display: flex; align-items: center; justify-content: center; }
     .stButton > button { width: 100% !important; border: 1px solid #ccc !important; background-color: white !important; }
     </style>
     <div class="header">Registro de producción <br><span style="font-size: 14px;">Gerencia de Alimentos Procesados</span></div>
@@ -131,25 +123,22 @@ for seccion in SECCIONES:
         c1, c2, c3, c4 = st.columns([1, 3.2, 1, 0.3])
         
         with c2:
-            # USAMOS ON_CHANGE PARA DISPARAR LA FUNCIÓN DE ACTUALIZACIÓN
-            st.selectbox(
+            # Capturamos la selección
+            seleccion = st.selectbox(
                 f"S_{seccion}_{i}", 
                 options=opciones, 
                 key=f"sel_{seccion}_{i}", 
-                label_visibility="collapsed",
-                on_change=update_code,
-                args=(seccion, i)
-            )
-
-        with c1:
-            # Leemos el código directamente del Session State
-            st.text_input(
-                f"C_{seccion}_{i}", 
-                value=item['Codigo'], 
-                disabled=True, 
-                key=f"disp_{seccion}_{i}", 
                 label_visibility="collapsed"
             )
+            item['Descripcion'] = seleccion
+            # Buscamos el código asociado
+            match = df_productos[df_productos['Descripcion'] == seleccion]
+            item['Codigo'] = match['Codigo'].values[0] if not match.empty else "N/A"
+
+        with c1:
+            # SOLUCIÓN: Usamos HTML directo para mostrar el código. 
+            # El HTML no tiene "memoria de input", por lo que se actualizará SIEMPRE.
+            st.markdown(f'<div class="codigo-box">{item["Codigo"]}</div>', unsafe_allow_html=True)
             
         with c3:
             item['Cantidad'] = st.number_input(f"Q_{seccion}_{i}", min_value=0, value=item['Cantidad'], key=f"q_{seccion}_{i}", label_visibility="collapsed")
@@ -193,3 +182,5 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
             for sec in SECCIONES: st.session_state[sec] = []
             st.rerun()
         except Exception as e: st.error(f"Error: {e}")
+    else:
+        st.warning("Ingrese al menos una cantidad mayor a 0.")
