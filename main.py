@@ -91,26 +91,27 @@ df_productos = pd.DataFrame(PRODUCTOS_DATA)
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Gerencia de Alimentos Procesados", layout="wide")
 
-# CSS AGRESIVO PARA FORZAR COLORES EN CUALQUIER MODO
+# CSS AGRESIVO: SOBREESCRIBE CUALQUIER MODO OSCURO DEL SISTEMA
 st.markdown("""
     <style>
-    /* 1. Fondo principal siempre blanco */
-    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+    /* 1. Fondo principal y barra lateral siempre blanco */
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stSidebar"] {
         background-color: white !important;
         color: black !important;
     }
 
     /* 2. Encabezado Verde Plazas */
-    .header { background-color: #36b04b; color: white; padding: 15px; text-align: center; font-weight: bold; font-size: 24px; border-radius: 5px; }
-    .section-header { background-color: #f0f2f6; color: #333; padding: 10px; font-weight: bold; text-align: center; margin-top: 25px; border-radius: 5px; border: 1px solid #ddd; }
+    .header { background-color: #36b04b; color: white !important; padding: 15px; text-align: center; font-weight: bold; font-size: 24px; border-radius: 5px; }
+    .section-header { background-color: #f0f2f6; color: #333 !important; padding: 10px; font-weight: bold; text-align: center; margin-top: 25px; border-radius: 5px; border: 1px solid #ddd; }
     
-    /* 3. Forzar texto negro en etiquetas, párrafos y spans (Calendario, Supervisor, etc) */
-    label, p, span, div { color: black !important; }
+    /* 3. Forzar texto negro en todo el cuerpo (Especialmente Calendario y Supervisor) */
+    * { color: black !important; font-family: 'Segoe UI', sans-serif; }
+    .header * { color: white !important; }
 
-    /* 4. Caja de código: siempre texto negro sobre gris */
-    .codigo-box { background-color: #f0f0f0; padding: 8px; border-radius: 4px; text-align: center; font-family: monospace; border: 1px solid #ccc; color: black !important; height: 38px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+    /* 4. Caja de código: Texto negro sobre fondo gris claro */
+    .codigo-box { background-color: #f0f0f0 !important; color: black !important; padding: 8px; border-radius: 4px; text-align: center; font-family: monospace; border: 1px solid #ccc; height: 38px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
     
-    /* 5. BOTONES: Fondo Negro, Texto Blanco (Añadir y Finalizar) */
+    /* 5. BOTONES: Fondo Negro, Texto Blanco */
     .stButton > button { 
         width: 100% !important; 
         border: none !important; 
@@ -118,37 +119,34 @@ st.markdown("""
         color: white !important; 
         font-weight: bold !important;
     }
-    .stButton > button:hover { background-color: #333 !important; color: white !important; }
-    
-    /* Forzar que el texto de adentro del botón sea blanco */
-    .stButton > button div, .stButton > button p { color: white !important; }
-
-    /* 6. INPUTS: Fondo Blanco, Texto Negro (Incluso en modo oscuro) */
-    input, textarea, div[data-baseweb="select"], div[data-baseweb="input"] {
-        background-color: white !important;
-        color: black !important;
-        border: 1px solid #ccc !important;
+    /* Forzar texto blanco dentro de botones */
+    .stButton > button p, .stButton > button div, .stButton > button span { 
+        color: white !important; 
     }
 
-    /* 7. CALENDARIO Y DESPLEGABLES: Forzar visibilidad */
-    /* Este selector ayuda a que el pop-up del calendario se vea sobre blanco */
-    div[data-baseweb="popover"], div[role="listbox"] {
+    /* 6. INPUTS Y SELECTORES: Fondo Blanco forzado */
+    div[data-baseweb="select"], div[data-baseweb="input"], input, textarea {
         background-color: white !important;
         color: black !important;
     }
-    
-    /* Asegurar que el texto dentro de los selectores sea negro */
-    div[data-testid="stSelectbox"] div, div[data-testid="stDateInput"] div {
+
+    /* 7. POP-UPS (Calendario y Lista de productos) */
+    div[data-baseweb="popover"], div[role="listbox"], div[data-baseweb="calendar"] {
+        background-color: white !important;
+        color: black !important;
+    }
+    /* Forzar visibilidad de días en calendario */
+    div[data-baseweb="calendar"] * {
         color: black !important;
     }
 
-    /* 8. Botón Finalizar (Primary) forzado a negro */
+    /* 8. Botón Finalizar (Primary) */
     div.stButton > button[kind="primary"] {
         background-color: black !important;
         color: white !important;
     }
     </style>
-    <div class="header">Registro de producción <br><span style="font-size: 14px;">Gerencia de Alimentos Procesados</span></div>
+    <div class="header">Registro de producción <br><span style="font-size: 14px; color: white !important;">Gerencia de Alimentos Procesados</span></div>
     """, unsafe_allow_html=True)
 
 SECCIONES = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POSTRE", "RELLENOS Y CREMAS"]
@@ -180,7 +178,6 @@ for seccion in SECCIONES:
             st.markdown(f'<div class="codigo-box">{item["Codigo"]}</div>', unsafe_allow_html=True)
             
         with c3:
-            # Los números también deben verse negros
             item['Cantidad'] = st.number_input(f"Q_{seccion}_{i}", min_value=0, value=item['Cantidad'], key=f"q_{seccion}_{i}", label_visibility="collapsed")
             
         with c4:
