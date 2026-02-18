@@ -237,4 +237,16 @@ for seccion in SECCIONES_ORDEN:
                 st.rerun()
 
     if st.button(f"➕ Añadir a {seccion.lower()}", key=f"btn_{seccion}"):
+        st.session_state.secciones_data[seccion].append({"Codigo": opciones[0], "Descripcion": opciones[0], "Cantidad": 0})
+        st.rerun()
+
+st.write("---")
+st.markdown('<p style="color:black !important; font-weight:bold; font-size:12px;">Observaciones:</p>', unsafe_allow_html=True)
+obs = st.text_area("", placeholder="Notas...", label_visibility="collapsed")
+
+if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
+    # Lógica de guardado...
+    st.success("¡Registro exitoso!"); st.balloons()
+    if st.button(f"➕ Añadir a {seccion.lower()}", key=f"btn_{seccion}"):
         st.session_state.secciones_data[seccion].append({"Codigo": opciones[0], "Descripcion": opciones[0], "Cantidad":
+
