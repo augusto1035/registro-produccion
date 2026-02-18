@@ -2,31 +2,27 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 import base64
+from streamlit_gsheets import GSheetsConnection  # Importación DIRECTA, sin miedos
 
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
 
-# --- CSS DEFINITIVO (ESTILO APILADO MÓVIL / COLUMNAS WEB) ---
+# --- CSS VISUAL (MANTENIENDO LO QUE YA ARREGLAMOS) ---
 st.markdown("""
     <style>
-    /* 1. BLINDAJE VISUAL: TODO BLANCO Y NEGRO */
     :root { color-scheme: light; }
     html, body, [data-testid="stAppViewContainer"] { background-color: #f8f9fa !important; color: black !important; }
-
-    /* 2. FORZAR INPUTS A BLANCO */
+    
+    /* Inputs Blancos */
     input, textarea, select, div[data-baseweb="select"] > div {
         background-color: #ffffff !important;
         color: #000000 !important;
         border: 1px solid #ced4da !important;
     }
     
-    /* 3. ESPACIADO DEL CINTILLO */
-    .block-container {
-        padding-top: 2rem !important;
-        max-width: 100% !important;
-    }
+    .block-container { padding-top: 2rem !important; max-width: 100% !important; }
 
-    /* 4. CAJA DE CÓDIGO (GRIS) */
+    /* Caja Código */
     .codigo-box {
         background-color: #e9ecef;
         border: 1px solid #ced4da;
@@ -42,7 +38,7 @@ st.markdown("""
         justify-content: center;
     }
 
-    /* 5. TÍTULOS DE SECCIÓN */
+    /* Headers */
     .section-header {
         background: #36b04b;
         color: white;
@@ -55,7 +51,7 @@ st.markdown("""
         font-size: 16px;
     }
 
-    /* 6. BOTONES */
+    /* Botones */
     .stButton > button {
         background-color: #36b04b !important;
         color: white !important;
@@ -66,11 +62,9 @@ st.markdown("""
     }
     .stButton > button:hover { background-color: #2a8a3b !important; }
 
-    /* 7. REGLAS PARA MÓVIL (APILAMIENTO) */
+    /* Móvil */
     @media (max-width: 640px) {
         [data-testid="column"] { margin-bottom: 5px !important; }
-        
-        /* BOTÓN X: CUADRADO Y ROJO EN MÓVIL */
         div[data-testid="column"] .stButton button {
             background-color: #dc3545 !important;
             width: 100% !important;
@@ -99,7 +93,7 @@ def render_header(logo_path):
 
 render_header("logo_plaza.png")
 
-# --- DATA ---
+# --- DATA (PRODUCTOS) ---
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -188,26 +182,17 @@ SECCIONES_ORDEN = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POS
 if 'secciones_data' not in st.session_state:
     st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
 
-# --- FUNCIÓN CLAVE: CALLBACK PARA ACTUALIZAR AL INSTANTE ---
+# CALLBACK (Corrige el retraso)
 def actualizar_producto(seccion_key, index_key, selectbox_key):
-    """
-    Esta función se ejecuta AUTOMÁTICAMENTE cuando cambias el selectbox.
-    Actualiza el código en memoria ANTES de que la página se vuelva a pintar.
-    """
-    # 1. Obtenemos el nuevo nombre seleccionado
     nuevo_nombre = st.session_state[selectbox_key]
-    
-    # 2. Buscamos el código correspondiente en el DataFrame
     nuevo_codigo = df_productos[df_productos['Descripcion'] == nuevo_nombre]['Codigo'].values[0]
-    
-    # 3. Actualizamos la memoria (session_state) directamente
     st.session_state.secciones_data[seccion_key][index_key]['Descripcion'] = nuevo_nombre
     st.session_state.secciones_data[seccion_key][index_key]['Codigo'] = nuevo_codigo
 
 # SUPERVISOR Y FECHA
 col_sup, col_fec = st.columns(2)
-with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"], label_visibility="visible")
-with col_fec: fecha_sel = st.date_input("Fecha", datetime.now(), label_visibility="visible")
+with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
+with col_fec: fecha_sel = st.date_input("Fecha", datetime.now())
 
 # RENDERIZADO
 for seccion in SECCIONES_ORDEN:
@@ -216,66 +201,76 @@ for seccion in SECCIONES_ORDEN:
     if not opciones: continue
 
     for i, item in enumerate(st.session_state.secciones_data[seccion]):
-        
-        # Layout Responsive (Col en Web / Stack en Móvil)
         c1, c2, c3, c4 = st.columns([2, 6, 2, 1]) 
         
         with c1:
             st.markdown(f"**Código:**")
-            # Muestra el código que ya está actualizado en memoria
             st.markdown(f'<div class="codigo-box">{item["Codigo"]}</div>', unsafe_allow_html=True)
-            
         with c2:
             st.markdown(f"**Descripción:**")
-            
-            # --- AQUÍ ESTÁ LA MAGIA DEL CALLBACK ---
-            # 1. Definimos una clave única para este selectbox
             key_sel = f"sel_{seccion}_{i}"
+            try: idx_actual = opciones.index(item['Descripcion'])
+            except: idx_actual = 0
             
-            # 2. Calculamos el índice actual para que el selectbox muestre lo correcto
-            try:
-                idx_actual = opciones.index(item['Descripcion'])
-            except:
-                idx_actual = 0
-            
-            # 3. Creamos el selectbox con 'on_change'
-            st.selectbox(
-                label="desc",
-                options=opciones,
-                index=idx_actual,
-                key=key_sel,
-                label_visibility="collapsed",
-                # Esto llama a la función de arriba CADA VEZ que cambias el valor
-                on_change=actualizar_producto, 
-                args=(seccion, i, key_sel)
-            )
-
+            st.selectbox(label="d", options=opciones, index=idx_actual, key=key_sel, label_visibility="collapsed", on_change=actualizar_producto, args=(seccion, i, key_sel))
         with c3:
             st.markdown(f"**Cantidad:**")
             item['Cantidad'] = st.number_input(f"q_{seccion}_{i}", min_value=0, step=1, key=f"q_{seccion}_{i}", label_visibility="collapsed")
-            
         with c4:
             st.markdown("**Acción:**")
             if st.button("X", key=f"x_{seccion}_{i}"):
                 st.session_state.secciones_data[seccion].pop(i)
                 st.rerun()
-        
         st.markdown('<hr style="margin: 5px 0; border-top: 1px solid #ddd;">', unsafe_allow_html=True)
 
     if st.button(f"➕ Añadir Producto", key=f"btn_{seccion}"):
         primer_producto = opciones[0]
         codigo_real = df_productos[df_productos['Descripcion'] == primer_producto]['Codigo'].values[0]
-        
-        st.session_state.secciones_data[seccion].append({
-            "Codigo": codigo_real,
-            "Descripcion": primer_producto,
-            "Cantidad": 0
-        })
+        st.session_state.secciones_data[seccion].append({"Codigo": codigo_real, "Descripcion": primer_producto, "Cantidad": 0})
         st.rerun()
 
 st.write("---")
 st.header("Observaciones")
-obs = st.text_area("", placeholder="Escriba aquí sus notas...", label_visibility="collapsed")
+obs = st.text_area("", placeholder="Notas...", label_visibility="collapsed")
 
+# --- LÓGICA DE GUARDADO (REAL CON ST.CONNECTION) ---
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
-    st.success("¡Registro completado!"); st.balloons()
+    # 1. Crear conexión
+    conn = st.connection("gsheets", type=GSheetsConnection)
+    
+    # 2. Recopilar datos
+    registros = []
+    timestamp_id = datetime.now().strftime("%Y%m%d%H%M%S") # Generar ID Único por lote
+    
+    for seccion, items in st.session_state.secciones_data.items():
+        for item in items:
+            if item['Cantidad'] > 0: # Solo guardamos si hay cantidad (opcional)
+                registros.append({
+                    "ID_Registro": timestamp_id,
+                    "Supervisor": supervisor,
+                    "Fecha_Hora": fecha_sel.strftime("%d/%m/%Y") + " " + datetime.now().strftime("%I:%M %p"),
+                    "Codigo_Articulo": item['Codigo'],
+                    "Descripcion": item['Descripcion'],
+                    "Cantidad": item['Cantidad'],
+                    "Observaciones": obs
+                })
+    
+    if not registros:
+        st.warning("No hay productos con cantidad > 0 para guardar.")
+    else:
+        df_nuevo = pd.DataFrame(registros)
+        
+        try:
+            # 3. Leer y Actualizar Google Sheet (Hoja1)
+            df_existente = conn.read(worksheet="Hoja1")
+            df_total = pd.concat([df_existente, df_nuevo], ignore_index=True)
+            conn.update(worksheet="Hoja1", data=df_total)
+            
+            st.success("¡Datos guardados exitosamente en Google Sheets!")
+            st.balloons()
+            
+            # Limpiar datos después de guardar
+            st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
+            
+        except Exception as e:
+            st.error(f"Error al guardar: {e}")
