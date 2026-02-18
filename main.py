@@ -6,10 +6,10 @@ import base64
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
 
-# --- CSS INTELIGENTE (WEB NORMAL / MÓVIL COMPACTO) ---
+# --- CSS INTELIGENTE (WEB NORMAL vs MÓVIL FORZADO) ---
 st.markdown("""
     <style>
-    /* 1. MODO CLARO OBLIGATORIO (GLOBAL) */
+    /* 1. MODO CLARO OBLIGATORIO */
     :root { color-scheme: light; }
     html, body, [data-testid="stAppViewContainer"] { background-color: #ffffff !important; color: black !important; }
 
@@ -17,25 +17,25 @@ st.markdown("""
     .block-container {
         padding-top: 3.5rem !important;
         padding-bottom: 3rem !important;
-        padding-left: 1rem !important;
-        padding-right: 1rem !important;
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
     }
 
-    /* 3. ESTILOS DE COMPONENTES (GLOBAL - BLANCO Y NEGRO) */
+    /* 3. ESTILOS DE COMPONENTES (BLANCO Y NEGRO) */
     div[data-baseweb="select"] > div, 
     [data-testid="stNumberInput"] input,
     [data-testid="stDateInput"] input {
         background-color: white !important;
         color: black !important;
-        border: 1px solid #ccc !important;
+        border: 1px solid #999 !important;
         border-radius: 4px !important;
-        font-size: 14px !important; /* Letra legible en Web */
+        font-size: 13px !important;
     }
 
-    /* Caja de Código (Estilo Base) */
+    /* Caja de Código Base */
     .codigo-box {
         background-color: #e0e0e0;
-        border: 1px solid #aaa;
+        border: 1px solid #999;
         color: black;
         font-weight: bold;
         display: flex;
@@ -45,9 +45,10 @@ st.markdown("""
         width: 100%;
         height: 100%;
         min-height: 40px;
+        font-size: 11px;
     }
 
-    /* Botones Verdes (Global) */
+    /* Botones Verdes */
     .stButton > button {
         background-color: #36b04b !important;
         color: white !important;
@@ -57,68 +58,61 @@ st.markdown("""
     .stButton > button:hover { background-color: #2a8a3b !important; }
 
     /* ============================================================
-       4. REGLAS EXCLUSIVAS PARA MÓVIL (PANTALLAS PEQUEÑAS)
-       Aquí es donde ocurre la magia para que quepa en una fila.
+       4. MEDIA QUERY: REGLAS SOLO PARA MÓVIL (< 640px)
+       Aquí prohibimos el apilamiento
        ============================================================ */
     @media (max-width: 640px) {
         
-        /* Reducir márgenes laterales al mínimo */
-        .block-container {
-            padding-left: 0.2rem !important;
-            padding-right: 0.2rem !important;
-        }
-
-        /* FORZAR FILA ÚNICA (NO WRAP) SOLO EN LAS FILAS DE PRODUCTOS */
-        /* Detectamos filas que tengan 4 columnas */
+        /* A. DETECTAR FILAS DE 4 COLUMNAS (PRODUCTOS) Y FORZAR FILA ÚNICA */
         [data-testid="stHorizontalBlock"]:has(> [data-testid="column"]:nth-child(4)) {
+            flex-direction: row !important; /* OBLIGAR HORIZONTAL */
+            flex-wrap: nowrap !important;   /* PROHIBIR APILAR */
             display: flex !important;
-            flex-direction: row !important;
-            flex-wrap: nowrap !important; /* OBLIGATORIO: NO BAJAR DE LINEA */
             gap: 2px !important;
-            align-items: center !important;
         }
 
-        /* AJUSTE QUIRÚRGICO DE ANCHOS (SOLO MÓVIL) */
+        /* B. PERMITIR QUE LAS COLUMNAS SE ENCOJAN AL MÁXIMO */
+        [data-testid="column"] {
+            min-width: 0px !important;
+            width: auto !important;
+            padding: 0px !important;
+        }
+
+        /* C. ANCHOS EXACTOS PIXEL POR PIXEL (SOLO MÓVIL) */
         
-        /* COL 1: CÓDIGO -> 45px (Lo justo para el número) */
+        /* Columna 1: CÓDIGO (45px - Solo el numero) */
         [data-testid="stHorizontalBlock"]:has(> [data-testid="column"]:nth-child(4)) > [data-testid="column"]:nth-child(1) {
             flex: 0 0 45px !important;
             width: 45px !important;
-            min-width: 45px !important;
-            padding: 0 !important;
+            overflow: hidden !important;
         }
 
-        /* COL 2: DESCRIPCIÓN -> Flexible (Todo el espacio sobrante) */
+        /* Columna 2: DESCRIPCIÓN (Flexible - Todo lo que sobra) */
         [data-testid="stHorizontalBlock"]:has(> [data-testid="column"]:nth-child(4)) > [data-testid="column"]:nth-child(2) {
             flex: 1 1 auto !important;
-            min-width: 50px !important; /* Para que no desaparezca */
-            padding: 0 !important;
+            overflow: hidden !important;
         }
 
-        /* COL 3: CANTIDAD -> 50px (Lo justo para 4 dígitos) */
+        /* Columna 3: CANTIDAD (50px - Solo 4 digitos) */
         [data-testid="stHorizontalBlock"]:has(> [data-testid="column"]:nth-child(4)) > [data-testid="column"]:nth-child(3) {
             flex: 0 0 50px !important;
             width: 50px !important;
-            min-width: 50px !important;
-            padding: 0 !important;
         }
 
-        /* COL 4: BOTÓN X -> 35px */
+        /* Columna 4: X (35px) */
         [data-testid="stHorizontalBlock"]:has(> [data-testid="column"]:nth-child(4)) > [data-testid="column"]:nth-child(4) {
             flex: 0 0 35px !important;
             width: 35px !important;
-            min-width: 35px !important;
-            padding: 0 !important;
         }
 
-        /* COMPONENTES MÁS PEQUEÑOS SOLO EN MÓVIL */
+        /* D. REDUCIR ALTURA DE COMPONENTES EN MÓVIL */
         div[data-baseweb="select"] > div, 
         [data-testid="stNumberInput"] input,
         .codigo-box,
         .stButton > button {
             min-height: 35px !important;
             height: 35px !important;
-            font-size: 11px !important;
+            font-size: 10px !important;
             padding: 0px 2px !important;
         }
     }
@@ -246,9 +240,8 @@ for seccion in SECCIONES_ORDEN:
     if not opciones: continue
 
     for i, item in enumerate(st.session_state.secciones_data[seccion]):
-        # DEFINICIÓN DE COLUMNAS PYTHON (EN WEB SE VE NORMAL)
-        # La media query en CSS reescribirá estos anchos SOLO en móvil
-        c1, c2, c3, c4 = st.columns([1, 6, 1, 1]) 
+        # COLUMNAS: En Web se verá normal, en móvil el CSS las fuerza.
+        c1, c2, c3, c4 = st.columns(4) 
         
         with c1:
             st.markdown(f'<div class="codigo-box">{item["Codigo"]}</div>', unsafe_allow_html=True)
@@ -273,3 +266,4 @@ obs = st.text_area("", placeholder="Notas...", label_visibility="collapsed")
 
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
     st.success("¡Registro completado!"); st.balloons()
+
