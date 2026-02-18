@@ -88,37 +88,48 @@ PRODUCTOS_DATA = [
 
 df_productos = pd.DataFrame(PRODUCTOS_DATA)
 
+# --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Gerencia de Alimentos Procesados", layout="wide")
 
-# CSS para forzar colores negros y visibilidad
+# CSS "Fuerza Bruta" para modo oscuro
 st.markdown("""
     <style>
-    /* Forzar fondo blanco */
-    [data-testid="stAppViewContainer"] { background-color: white !important; color: black !important; }
+    /* Forzar fondo blanco y texto negro en TODO */
+    * { color: black !important; }
     
-    .header { background-color: #36b04b; color: white !important; padding: 15px; text-align: center; font-weight: bold; font-size: 24px; border-radius: 5px; }
-    .section-header { background-color: #f0f2f6; color: #333 !important; padding: 10px; font-weight: bold; text-align: center; margin-top: 25px; border-radius: 5px; border: 1px solid #ddd; }
-    
-    /* Caja de código: Fondo gris claro, letras negras */
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+        background-color: white !important;
+    }
+
+    .header { background-color: #36b04b !important; color: white !important; padding: 15px; text-align: center; font-weight: bold; font-size: 24px; border-radius: 5px; }
+    .header * { color: white !important; }
+
+    .section-header { background-color: #f0f2f6 !important; color: #333 !important; padding: 10px; font-weight: bold; text-align: center; margin-top: 25px; border-radius: 5px; border: 1px solid #ddd; }
+
     .codigo-box { background-color: #f0f0f0 !important; color: black !important; padding: 8px; border-radius: 4px; text-align: center; font-family: monospace; border: 1px solid #ccc; height: 38px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
     
-    /* BOTONES: Fondo Negro, Texto Blanco */
+    /* Botones Negros */
     .stButton > button { 
         background-color: black !important; 
         color: white !important; 
         border: none !important;
-        font-weight: bold !important;
     }
-    /* Forzar texto blanco en botones para modo oscuro */
-    .stButton > button p, .stButton > button div { color: white !important; }
+    .stButton > button * { color: white !important; }
 
-    /* Inputs y Selectores: Forzar texto negro */
-    input, textarea, [data-baseweb="select"] * { color: black !important; }
-    
-    /* Calendario: Forzar visibilidad de números */
-    [data-baseweb="calendar"] * { color: black !important; }
+    /* Forzar visibilidad en inputs */
+    input, textarea, [data-baseweb="select"] {
+        background-color: white !important;
+        color: black !important;
+    }
+
+    /* Estilo para los textos de ayuda (labels) */
+    .stSelectbox label, .stDateInput label, .stTextArea label {
+        background-color: #ffffff !important;
+        padding: 2px 5px !important;
+        border-radius: 3px !important;
+    }
     </style>
-    <div class="header">Registro de producción <br><span style="font-size: 14px; color: white !important;">Gerencia de Alimentos Procesados</span></div>
+    <div class="header">Registro de producción <br><span style="font-size: 14px;">Gerencia de Alimentos Procesados</span></div>
     """, unsafe_allow_html=True)
 
 SECCIONES = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POSTRE", "RELLENOS Y CREMAS"]
@@ -126,26 +137,35 @@ SECCIONES = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POSTRE", 
 if 'secciones_data' not in st.session_state:
     st.session_state.secciones_data = {sec: [] for sec in SECCIONES}
 
-col_sup, col_fec = st.columns(2)
-with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
-with col_fec: fecha_sel = st.date_input("Fecha", datetime.now())
+# Envolvemos los labels en HTML para asegurar visibilidad
+st.markdown("<b style='color:black;'>Supervisor</b>", unsafe_allow_html=True)
+supervisor = st.selectbox("", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"], key="sup_main", label_visibility="collapsed")
 
+st.markdown("<b style='color:black;'>Fecha de Registro</b>", unsafe_allow_html=True)
+fecha_sel = st.date_input("", datetime.now(), key="fec_main", label_visibility="collapsed")
+
+# --- RENDERIZADO ---
 for seccion in SECCIONES:
     st.markdown(f'<div class="section-header">{seccion}</div>', unsafe_allow_html=True)
     opciones = df_productos[df_productos['Seccion'] == seccion]['Descripcion'].tolist()
+    
     if not opciones: continue
 
     for i, item in enumerate(st.session_state.secciones_data[seccion]):
         c1, c2, c3, c4 = st.columns([1, 3.2, 1, 0.3])
+        
         with c2:
             seleccion = st.selectbox(f"S_{seccion}_{i}", options=opciones, key=f"sel_{seccion}_{i}", label_visibility="collapsed")
             item['Descripcion'] = seleccion
             match = df_productos[df_productos['Descripcion'] == seleccion]
             item['Codigo'] = match['Codigo'].values[0] if not match.empty else "N/A"
+
         with c1:
             st.markdown(f'<div class="codigo-box">{item["Codigo"]}</div>', unsafe_allow_html=True)
+            
         with c3:
             item['Cantidad'] = st.number_input(f"Q_{seccion}_{i}", min_value=0, value=item['Cantidad'], key=f"q_{seccion}_{i}", label_visibility="collapsed")
+            
         with c4:
             if st.button("X", key=f"x_{seccion}_{i}"):
                 st.session_state.secciones_data[seccion].pop(i)
@@ -158,7 +178,8 @@ for seccion in SECCIONES:
         st.rerun()
 
 st.write("---")
-obs = st.text_area("Observaciones", placeholder="Escriba aquí sus notas...")
+st.markdown("<b style='color:black;'>Observaciones</b>", unsafe_allow_html=True)
+obs = st.text_area("", placeholder="Escriba aquí sus notas...", key="obs_main", label_visibility="collapsed")
 
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
     all_data = []
@@ -174,6 +195,7 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
                     "Cantidad": row['Cantidad'],
                     "Observaciones": obs
                 })
+    
     if all_data:
         try:
             conn = st.connection("gsheets", type=GSheetsConnection)
@@ -184,3 +206,5 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
             for sec in SECCIONES: st.session_state.secciones_data[sec] = []
             st.rerun()
         except Exception as e: st.error(f"Error: {e}")
+    else:
+        st.warning("Ingrese al menos una cantidad mayor a 0.")
