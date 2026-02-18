@@ -7,7 +7,7 @@ import base64
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Gerencia de Alimentos Procesados", layout="wide")
 
-# --- INYECCIÓN DE ESTILO "A MEDIDA" (AJUSTE AL CINTILLO) ---
+# --- INYECCIÓN DE ESTILO (CONTROL TOTAL DE ANCHO Y COLOR) ---
 st.markdown("""
     <style>
     /* 1. Fondo Blanco e Invariable */
@@ -23,7 +23,7 @@ st.markdown("""
         flex-wrap: nowrap !important;
         align-items: center !important;
         justify-content: space-between !important;
-        gap: 2px !important; /* Espacio mínimo entre elementos */
+        gap: 2px !important;
         width: 100% !important;
     }
 
@@ -33,10 +33,10 @@ st.markdown("""
         padding: 0px !important;
     }
 
-    /* 3. COMPONENTES COMPACTOS */
-    div[data-baseweb="select"] > div, input {
+    /* 3. COMPONENTES COMPACTOS Y BLINDADOS */
+    div[data-baseweb="select"] > div, input, textarea {
         height: 35px !important;
-        font-size: 12px !important; /* Texto pequeño para que quepa todo */
+        font-size: 12px !important;
         background-color: #FFFFFF !important;
         color: #000000 !important;
         -webkit-text-fill-color: #000000 !important;
@@ -71,22 +71,20 @@ st.markdown("""
         font-size: 10px;
     }
 
-    /* 6. BOTONES VERDES (INCLUYENDO LA X) */
+    /* 6. BOTONES VERDES (X BLANCA) */
     .stButton > button {
         background-color: #36b04b !important;
         color: #FFFFFF !important;
         border: none !important;
         font-weight: bold !important;
-        padding: 0px !important;
         height: 35px !important;
     }
-    /* Forzar que el texto (o la X) dentro del botón sea blanco */
     .stButton > button p, .stButton > button span, .stButton > button div {
         color: #FFFFFF !important;
         -webkit-text-fill-color: #FFFFFF !important;
     }
 
-    /* 7. CALENDARIO Y OTROS */
+    /* 7. CALENDARIO Y LISTAS */
     div[data-baseweb="popover"] *, div[role="listbox"] * {
         background-color: #FFFFFF !important;
         color: #000000 !important;
@@ -115,7 +113,6 @@ def render_header(logo_path):
 render_header("logo_plaza.png")
 
 # --- BASE DE DATOS MAESTRA ---
-# (Aquí incluyo la lista que me pasaste completa)
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -219,8 +216,7 @@ for seccion in SECCIONES_ORDEN:
     if not opciones: continue
 
     for i, item in enumerate(st.session_state.secciones_data[seccion]):
-        # DISTRIBUCIÓN MILIMÉTRICA PARA MÓVIL
-        # Código (0.6), Descripción (2.3), Cantidad (0.8), X (0.3)
+        # DISTRIBUCIÓN PARA MÓVIL (SIN DESBORDE)
         c1, c2, c3, c4 = st.columns([0.6, 2.3, 0.8, 0.3])
         with c1:
             st.markdown(f'<div class="codigo-box-forzado">{item["Codigo"]}</div>', unsafe_allow_html=True)
@@ -231,7 +227,6 @@ for seccion in SECCIONES_ORDEN:
         with c3:
             item['Cantidad'] = st.number_input(f"Q_{seccion}_{i}", min_value=0, step=1, key=f"q_{seccion}_{i}", label_visibility="collapsed")
         with c4:
-            # Botón X ahora siempre blanco
             if st.button("X", key=f"x_{seccion}_{i}"):
                 st.session_state.secciones_data[seccion].pop(i)
                 st.rerun()
@@ -245,8 +240,29 @@ st.markdown('<p style="color:black !important; font-weight:bold; font-size:12px;
 obs = st.text_area("", placeholder="Notas...", label_visibility="collapsed")
 
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
-    # Lógica de guardado...
-    st.success("¡Registro exitoso!"); st.balloons()
-    if st.button(f"➕ Añadir a {seccion.lower()}", key=f"btn_{seccion}"):
-        st.session_state.secciones_data[seccion].append({"Codigo": opciones[0], "Descripcion": opciones[0], "Cantidad":
-
+    all_data = []
+    for sec in SECCIONES_ORDEN:
+        for row in st.session_state.secciones_data[sec]:
+            if row['Cantidad'] > 0:
+                all_data.append({
+                    "ID": datetime.now().strftime("%Y%m%d%H%M%S"),
+                    "Supervisor": supervisor,
+                    "Fecha": fecha_sel.strftime("%d/%m/%Y"),
+                    "Seccion": sec,
+                    "Codigo": row['Codigo'],
+                    "Descripcion": row['Descripcion'],
+                    "Cantidad": row['Cantidad'],
+                    "Observaciones": obs
+                })
+    
+    if all_data:
+        try:
+            conn = st.connection("gsheets", type=GSheetsConnection)
+            df_actual = conn.read()
+            df_nuevo = pd.concat([df_actual, pd.DataFrame(all_data)], ignore_index=True)
+            conn.update(data=df_nuevo)
+            st.success("¡Registro guardado!"); st.balloons()
+            for sec in SECCIONES_ORDEN: st.session_state.secciones_data[sec] = []
+            st.rerun()
+        except Exception as e:
+            st.error(f"Error: {e}")
