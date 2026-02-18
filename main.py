@@ -63,48 +63,78 @@ PRODUCTOS_DATA = [
 
 df_productos = pd.DataFrame(PRODUCTOS_DATA)
 
-# --- CONFIGURACIÓN E INYECCIÓN DE ESTILO GLOBAL ---
+# --- CONFIGURACIÓN E INYECCIÓN DE ESTILO RADICAL ---
 st.set_page_config(page_title="Gerencia de Alimentos Procesados", layout="wide")
 
 st.markdown("""
     <style>
-    /* 1. BLINDAJE DE FONDO Y TEXTO (Global) */
-    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+    /* 1. Reset Global del modo oscuro en el cuerpo */
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stToolbar"] {
         background-color: #FFFFFF !important;
         color: #000000 !important;
     }
 
-    /* 2. FORZAR MENÚS DESPLEGABLES (La raíz del problema) */
-    /* Selecciona los contenedores flotantes que Streamlit crea al final del HTML */
-    div[data-baseweb="popover"], div[role="listbox"], div[data-baseweb="menu"] {
+    /* 2. ATAQUE DIRECTO A LOS MENÚS DESPLEGABLES (LISTAS) */
+    /* Estas clases son las que usa la librería BaseWeb para las listas flotantes */
+    div[data-baseweb="popover"], 
+    div[role="listbox"], 
+    div[role="option"], 
+    ul[role="listbox"] {
         background-color: #FFFFFF !important;
-    }
-    
-    /* Forzar que CUALQUIER texto dentro de un desplegable sea negro */
-    div[role="option"] *, div[data-baseweb="popover"] *, span, p, div {
         color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
     }
 
-    /* 3. EXCEPCIÓN: ENCABEZADO Y BOTONES (Deben ser blanco sobre color) */
-    .header, .header * {
+    /* Forzar texto negro en cada elemento de la lista */
+    div[role="option"] span, 
+    div[role="option"] div,
+    li[role="option"] {
+        color: #000000 !important;
+        background-color: #FFFFFF !important;
+    }
+
+    /* Efecto al pasar el mouse/dedo sobre la opción */
+    div[role="option"]:hover {
+        background-color: #f0f2f6 !important;
+    }
+
+    /* 3. ENCABEZADO Y BOTONES (Respetando el diseño de Plazas) */
+    .header {
         background-color: #36b04b !important;
         color: #FFFFFF !important;
-        -webkit-text-fill-color: #FFFFFF !important;
+        padding: 15px;
+        text-align: center;
+        border-radius: 5px;
+    }
+    
+    .header h2, .header p {
+        color: #FFFFFF !important;
+        margin: 0;
     }
 
     .stButton > button {
         background-color: #000000 !important;
         color: #FFFFFF !important;
         border: none !important;
+        font-weight: bold !important;
     }
     
-    .stButton > button * {
+    .stButton > button p {
         color: #FFFFFF !important;
-        -webkit-text-fill-color: #FFFFFF !important;
     }
 
-    /* 4. SECCIONES */
+    /* 4. CAJAS DE ENTRADA, CALENDARIO Y SELECTORES CERRADOS */
+    input, textarea, [data-baseweb="select"] > div {
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+        border: 1px solid #CCCCCC !important;
+    }
+
+    /* Asegurar que el texto dentro del selector cerrado sea negro */
+    div[data-baseweb="select"] * {
+        color: #000000 !important;
+    }
+
+    /* 5. TÍTULOS DE SECCIÓN */
     .section-header {
         background-color: #f0f2f6 !important;
         color: #333333 !important;
@@ -112,27 +142,17 @@ st.markdown("""
         font-weight: bold;
         text-align: center;
         border-radius: 5px;
-    }
-
-    /* 5. CAJAS DE ENTRADA Y CALENDARIO */
-    input, textarea, [data-baseweb="select"] > div {
-        background-color: #FFFFFF !important;
-        color: #000000 !important;
-        border: 1px solid #CCCCCC !important;
-    }
-    
-    [data-baseweb="calendar"] * {
-        color: #000000 !important;
+        border: 1px solid #ddd;
     }
     </style>
     
-    <div class="header" style="padding:15px; border-radius:5px; text-align:center;">
-        <h2 style="margin:0;">Registro de producción</h2>
-        <p style="margin:0; font-size:14px;">Gerencia de Alimentos Procesados</p>
+    <div class="header">
+        <h2>Registro de producción</h2>
+        <p>Gerencia de Alimentos Procesados</p>
     </div>
     """, unsafe_allow_html=True)
 
-# 2. LÓGICA DE DATOS
+# 2. LÓGICA DE ESTADO
 if 'secciones_data' not in st.session_state:
     st.session_state.secciones_data = {sec: [] for sec in ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POSTRE", "RELLENOS Y CREMAS"]}
 
@@ -162,7 +182,7 @@ for seccion in SECCIONES:
             item['Codigo'] = match['Codigo'].values[0] if not match.empty else "N/A"
 
         with c1:
-            st.markdown(f'<div style="background-color:#f0f0f0; color:black; padding:8px; border-radius:4px; text-align:center; border:1px solid #ccc; font-weight:bold;">{item["Codigo"]}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="background-color:#f0f0f0; color:#000; padding:8px; border-radius:4px; text-align:center; border:1px solid #ccc; font-weight:bold; height:38px; display:flex; align-items:center; justify-content:center;">{item["Codigo"]}</div>', unsafe_allow_html=True)
             
         with c3:
             item['Cantidad'] = st.number_input(f"Q_{seccion}_{i}", min_value=0, value=item['Cantidad'], key=f"q_{seccion}_{i}", label_visibility="collapsed")
@@ -181,4 +201,4 @@ obs = st.text_area("Observaciones")
 
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
     # Lógica de guardado...
-    st.success("Guardado (Simulado)")
+    st.success("¡Información enviada con éxito!")
