@@ -91,58 +91,56 @@ df_productos = pd.DataFrame(PRODUCTOS_DATA)
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Gerencia de Alimentos Procesados", layout="wide")
 
-# CSS "CONTRASTE TOTAL" PARA SELECTORES
+# CSS "CONTRASTE TOTAL" MEJORADO
 st.markdown("""
     <style>
-    /* Forzar fondo blanco en toda la app */
+    /* 1. Fondo principal forzado blanco */
     html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: white !important;
-        color: black !important;
     }
 
-    /* FORZAR TEXTO NEGRO EN SELECTBOX (Supervisor y Descripción) */
-    /* Atacamos directamente los elementos internos de Baseweb (la librería de Streamlit) */
-    div[data-baseweb="select"] * {
+    /* 2. FORZAR TEXTO NEGRO EN SELECTBOX (Cuando está cerrado) */
+    /* Usamos el selector de Streamlit para el valor seleccionado */
+    [data-testid="stSelectbox"] div[data-baseweb="select"] > div {
         color: black !important;
         -webkit-text-fill-color: black !important;
     }
-    
-    /* Atacamos el texto cuando la lista está cerrada */
-    .stSelectbox div[data-baseweb="select"] > div {
+
+    /* 3. FORZAR TEXTO EN LAS LISTAS DESPLEGABLES (Cuando está abierto) */
+    div[role="listbox"] ul li {
         color: black !important;
     }
+    
+    /* 4. CALENDARIO: Asegurar visibilidad de números y flechas */
+    div[data-baseweb="calendar"] * {
+        color: black !important;
+    }
+    /* El día seleccionado (círculo rojo) lo dejamos resaltar */
+    div[data-baseweb="calendar"] [aria-selected="true"] {
+        color: white !important;
+    }
 
-    /* Atacamos las etiquetas de los campos */
+    /* 5. Etiquetas generales (Supervisor, Fecha, etc.) */
     label, p, span {
         color: black !important;
     }
 
-    /* Estilo del Encabezado Verde */
+    /* 6. Encabezado y Secciones */
     .header { background-color: #36b04b !important; color: white !important; padding: 15px; text-align: center; font-weight: bold; font-size: 24px; border-radius: 5px; }
     .section-header { background-color: #f0f2f6 !important; color: #333 !important; padding: 10px; font-weight: bold; text-align: center; margin-top: 25px; border-radius: 5px; border: 1px solid #ddd; }
 
-    /* Caja de Código gris */
+    /* 7. Caja de Código */
     .codigo-box { background-color: #f0f0f0 !important; color: black !important; padding: 8px; border-radius: 4px; text-align: center; font-family: monospace; border: 1px solid #ccc; height: 38px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
     
-    /* Botones Negros con Texto Blanco */
-    .stButton > button { 
-        background-color: black !important; 
-        color: white !important; 
-        border: none !important;
-        font-weight: bold !important;
-    }
-    .stButton > button * { color: white !important; }
+    /* 8. Botones Negros con Texto Blanco */
+    .stButton > button { background-color: black !important; color: white !important; border: none !important; font-weight: bold !important; }
+    .stButton > button p { color: white !important; }
 
-    /* Forzar que el Calendario siga viéndose bien */
-    [data-baseweb="calendar"] * {
-        color: black !important;
-    }
-    
-    /* Inputs numéricos y otros */
+    /* 9. Inputs (Cantidad y Observaciones) */
     input, textarea {
         background-color: white !important;
         color: black !important;
-        -webkit-text-fill-color: black !important;
+        border: 1px solid #ccc !important;
     }
     </style>
     <div class="header">Registro de producción <br><span style="font-size: 14px; color: white !important;">Gerencia de Alimentos Procesados</span></div>
@@ -221,4 +219,5 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
             for sec in SECCIONES: st.session_state.secciones_data[sec] = []
             st.rerun()
         except Exception as e: st.error(f"Error: {e}")
-            
+
+        
