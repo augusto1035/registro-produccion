@@ -91,64 +91,57 @@ df_productos = pd.DataFrame(PRODUCTOS_DATA)
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Gerencia de Alimentos Procesados", layout="wide")
 
-# CSS "TOTAL OVERRIDE": ESTA ES LA CLAVE
 st.markdown("""
     <style>
-    /* 1. Reset Global del modo oscuro */
-    html, body, [data-testid="stAppViewContainer"] {
+    /* 1. Fondo principal forzado blanco */
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: white !important;
         color: black !important;
     }
 
-    /* 2. FORZAR TEXTO NEGRO EN SELECTORES (SUPERVISOR Y PRODUCTOS) */
-    /* Target específico a la base de Streamlit */
-    div[data-baseweb="select"] * {
+    /* 2. FORZADO DE SELECTORES (Cajas de Supervisor y Productos) */
+    /* Este selector ataca específicamente el valor seleccionado */
+    div[data-baseweb="select"] > div {
+        background-color: white !important;
         color: black !important;
         -webkit-text-fill-color: black !important;
+    }
+
+    /* Forzar que el texto interno de la caja de selección sea negro */
+    div[data-testid="stSelectbox"] div, div[data-testid="stDateInput"] div {
+        color: black !important;
+        -webkit-text-fill-color: black !important;
+    }
+
+    /* 3. FORZADO DE LISTAS DESPLEGABLES (Menú al abrir) */
+    div[data-baseweb="popover"], div[role="listbox"], div[role="option"] {
+        background-color: white !important;
     }
     
-    /* Cuando la lista está abierta (popover) */
-    div[data-baseweb="popover"] *, div[role="listbox"] *, div[role="option"] * {
-        background-color: white !important;
+    div[role="option"] *, div[role="listbox"] * {
         color: black !important;
         -webkit-text-fill-color: black !important;
     }
 
-    /* 3. Encabezado */
+    /* 4. Encabezado Verde */
     .header { background-color: #36b04b !important; color: white !important; padding: 15px; text-align: center; font-weight: bold; font-size: 24px; border-radius: 5px; }
-    .header * { color: white !important; }
-
-    /* 4. Títulos de secciones */
     .section-header { background-color: #f0f2f6 !important; color: #333 !important; padding: 10px; font-weight: bold; text-align: center; margin-top: 25px; border-radius: 5px; border: 1px solid #ddd; }
 
-    /* 5. BOTONES: Fondo Negro, Texto Blanco */
-    .stButton > button { 
-        background-color: black !important; 
-        color: white !important; 
-        border: none !important;
-        font-weight: bold !important;
-    }
-    .stButton > button * { color: white !important; }
+    /* 5. Etiquetas (Labels) */
+    label, p, span { color: black !important; }
 
-    /* 6. Caja de Código SAP */
+    /* 6. Caja de Código gris */
     .codigo-box { background-color: #f0f0f0 !important; color: black !important; padding: 8px; border-radius: 4px; text-align: center; font-family: monospace; border: 1px solid #ccc; height: 38px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+    
+    /* 7. Botones Negros */
+    .stButton > button { background-color: black !important; color: white !important; border: none !important; font-weight: bold !important; }
+    .stButton > button p { color: white !important; }
 
-    /* 7. CALENDARIO */
-    div[data-baseweb="calendar"] * {
-        color: black !important;
-        -webkit-text-fill-color: black !important;
-    }
-
-    /* 8. Forzar etiquetas de campos (Supervisor, Fecha) */
-    label, p, span {
-        color: black !important;
-    }
+    /* 8. Calendario */
+    div[data-baseweb="calendar"] * { color: black !important; }
     </style>
     
-    <div class="header">
-        Registro de producción <br>
-        <span style="font-size: 14px; color: white !important;">Gerencia de Alimentos Procesados</span>
-    </div>
+    <div class="header">Registro de producción <br><span style="size: 14px; color: white !important;">Gerencia de Alimentos Procesados</span></div>
     """, unsafe_allow_html=True)
 
 SECCIONES = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POSTRE", "RELLENOS Y CREMAS"]
@@ -156,7 +149,7 @@ SECCIONES = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POSTRE", 
 if 'secciones_data' not in st.session_state:
     st.session_state.secciones_data = {sec: [] for sec in SECCIONES}
 
-# Supervisor y Fecha
+# Columnas Supervisor y Fecha
 col_sup, col_fec = st.columns(2)
 with col_sup:
     supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
