@@ -18,7 +18,7 @@ PRODUCTOS_DATA = [
     {"Codigo": "27198", "Descripcion": "TORTA CHOCO MANI VAINILLA PLAZAS PEQ", "Seccion": "DECORACIÓN"},
     {"Codigo": "27216", "Descripcion": "PAN DULCE PLAZAS", "Seccion": "PANES"},
     {"Codigo": "27284", "Descripcion": "TORTA DE NARANJA PEQUEÑA", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
-    {"Codigo": "27285", "Descripcion": "TORTA DE AREQUIPE PEQUEÑA", "Seccion": "DECORACIÓN"}, # Cambio solicitado
+    {"Codigo": "27285", "Descripcion": "TORTA DE AREQUIPE PEQUEÑA", "Seccion": "DECORACIÓN"},
     {"Codigo": "27287", "Descripcion": "TORTA DE ZANAHORIA CON NUECES PEQUEÑA", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
     {"Codigo": "27289", "Descripcion": "TORTA DE PIÑA PEQUEÑA", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
     {"Codigo": "27290", "Descripcion": "TORTA DE VAINILLA CON CHOCOLATE PEQUEÑA", "Seccion": "DECORACIÓN"},
@@ -101,7 +101,7 @@ st.markdown("""
     <div class="header">Registro de producción <br><span style="font-size: 14px;">Gerencia de Alimentos Procesados</span></div>
     """, unsafe_allow_html=True)
 
-# 3. SECCIONES (Pastelería eliminada)
+# 3. SECCIONES (Sin Pastelería)
 SECCIONES = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POSTRE", "RELLENOS Y CREMAS"]
 
 for sec in SECCIONES:
@@ -111,7 +111,7 @@ col_sup, col_fec = st.columns(2)
 with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
 with col_fec: fecha_sel = st.date_input("Fecha", datetime.now())
 
-# 4. RENDERIZADO CON BUSCADOR Y AUTO-ACTUALIZACIÓN
+# 4. RENDERIZADO CON BUSCADOR Y LÓGICA DE ACTUALIZACIÓN FORZADA
 for seccion in SECCIONES:
     st.markdown(f'<div class="section-header">{seccion}</div>', unsafe_allow_html=True)
     opciones = df_productos[df_productos['Seccion'] == seccion]['Descripcion'].tolist()
@@ -122,28 +122,21 @@ for seccion in SECCIONES:
         c1, c2, c3, c4 = st.columns([1, 3.2, 1, 0.3])
         
         with c2:
-            # st.selectbox incluye buscador por defecto. 
-            # Al usar 'index', forzamos a que si el item ya tiene una descripción, se mantenga.
-            try:
-                idx_actual = opciones.index(item['Descripcion'])
-            except:
-                idx_actual = 0
-
+            # Seleccionamos la descripción. st.selectbox TIENE BUSCADOR POR DEFECTO.
+            # Simplemente haz clic y empieza a escribir "Vai" o "Areq".
             sel = st.selectbox(
                 f"S_{seccion}_{i}", 
                 options=opciones, 
-                index=idx_actual,
                 key=f"sel_{seccion}_{i}", 
                 label_visibility="collapsed"
             )
-            
-            # Actualizamos el estado del item con la nueva selección
             item['Descripcion'] = sel
-            match = df_productos[df_productos['Descripcion'] == sel]
-            item['Codigo'] = match['Codigo'].values[0] if not match.empty else "N/A"
+            
+            # ACTUALIZACIÓN CRÍTICA: Buscamos el código en cada renderizado
+            item['Codigo'] = df_productos[df_productos['Descripcion'] == sel]['Codigo'].values[0]
 
         with c1:
-            # Mostramos el código vinculado a la descripción actual
+            # Aquí mostramos el código vinculado. Se actualizará SIEMPRE al cambiar el selector.
             st.text_input(f"C_{seccion}_{i}", value=item['Codigo'], disabled=True, key=f"disp_{seccion}_{i}", label_visibility="collapsed")
             
         with c3:
@@ -155,8 +148,8 @@ for seccion in SECCIONES:
                 st.rerun()
 
     if st.button(f"➕ Añadir a {seccion.lower()}", key=f"btn_{seccion}"):
-        # Añadimos el primer producto de la lista por defecto
-        st.session_state[seccion].append({"Codigo": df_productos[df_productos['Descripcion'] == opciones[0]]['Codigo'].values[0], "Descripcion": opciones[0], "Cantidad": 0})
+        # Iniciamos con el primer producto de la lista para evitar errores de índice
+        st.session_state[seccion].append({"Codigo": "", "Descripcion": opciones[0], "Cantidad": 0})
         st.rerun()
 
 st.write("---")
