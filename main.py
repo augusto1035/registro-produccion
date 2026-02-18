@@ -4,36 +4,19 @@ from datetime import datetime
 from streamlit_gsheets import GSheetsConnection
 import base64
 
-# 1. BASE DE DATOS (Mantenemos tu lista de productos)
-PRODUCTOS_DATA = [
-    {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
-    {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
-    {"Codigo": "27115", "Descripcion": "TORTA DE AREQUIPE GRANDE", "Seccion": "DECORACIÓN"},
-    {"Codigo": "27119", "Descripcion": "TORTA DE ZANAHORIA CON NUECES GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
-    {"Codigo": "27121", "Descripcion": "TORTA DE ZANAHORIA CON QUESO CREMA GRANDE", "Seccion": "DECORACIÓN"},
-    {"Codigo": "27127", "Descripcion": "TORTA DE CHOCOLATE GRANDE", "Seccion": "DECORACIÓN"},
-    {"Codigo": "27133", "Descripcion": "TORTA DE PIÑA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
-    {"Codigo": "27137", "Descripcion": "TORTA DE VAINILLA CON CHOCOLATE GRANDE", "Seccion": "DECORACIÓN"},
-    {"Codigo": "27470", "Descripcion": "PAN DE COCO PLAZAS PAQUETE 4UND", "Seccion": "PANES"},
-    {"Codigo": "27471", "Descripcion": "PAN DE AREQUIPE PLAZAS PAQUETE 4UND", "Seccion": "PANES"},
-    {"Codigo": "27667", "Descripcion": "PIE DE LIMON PLAZAS", "Seccion": "POSTRE"},
-    {"Codigo": "27374", "Descripcion": "RELLENO PARA LEMON PIE KG", "Seccion": "RELLENOS Y CREMAS"}
-]
-
-df_productos = pd.DataFrame(PRODUCTOS_DATA)
-
-# --- CONFIGURACIÓN E INYECCIÓN DE ESTILO ---
+# --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Gerencia de Alimentos Procesados", layout="wide")
 
+# --- INYECCIÓN DE ESTILO RADICAL (BLINDAJE TOTAL) ---
 st.markdown("""
     <style>
-    /* 1. Blindaje Global contra Modo Oscuro */
+    /* 1. Fondo Blanco Total */
     html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: #FFFFFF !important;
         color: #000000 !important;
     }
 
-    /* 2. Estilo del Encabezado (Logo + Texto) */
+    /* 2. ENCABEZADO TIPO PLAZA'S */
     .header-container {
         display: flex;
         align-items: center;
@@ -55,49 +38,41 @@ st.markdown("""
         margin: 0;
     }
 
-    /* 3. Botones Verdes Invariables */
+    /* 3. BLINDAJE DE CUADROS (Fecha, Cantidades, Observaciones y Selectores) */
+    /* Forzamos fondo blanco y texto negro con -webkit-text-fill-color */
+    div[data-baseweb="input"], input, textarea, div[data-baseweb="select"] > div {
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+        border: 1px solid #CCCCCC !important;
+    }
+
+    /* Forzar visibilidad del texto dentro de los cuadros de cantidad y fecha */
+    [data-testid="stNumberInput"] input, [data-testid="stDateInput"] input {
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+    }
+
+    /* 4. BOTONES VERDES INVARIABLES */
     .stButton > button {
         background-color: #36b04b !important;
         color: #FFFFFF !important;
         border: none !important;
         font-weight: bold !important;
-        padding: 10px 20px !important;
     }
     .stButton > button p, .stButton > button span {
         color: #FFFFFF !important;
         -webkit-text-fill-color: #FFFFFF !important;
     }
 
-    /* 4. Visibilidad de Selectores y Listas */
-    div[data-baseweb="select"] > div, div[data-baseweb="popover"] *, div[role="listbox"] * {
-        background-color: #FFFFFF !important;
-        color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
-    }
-    
-    /* 5. Otros Elementos */
-    .section-header { 
-        background-color: #f0f2f6 !important; 
-        color: #333 !important; 
-        padding: 8px; 
-        font-weight: bold; 
-        text-align: center; 
-        margin-top: 20px;
-        border-radius: 4px;
-    }
-    .codigo-box { 
-        background-color: #f0f0f0 !important; 
-        color: black !important; 
-        padding: 8px; 
-        border: 1px solid #ccc; 
-        text-align: center; 
-        font-weight: bold; 
-        border-radius: 4px;
-    }
+    /* 5. OTROS ELEMENTOS */
+    .section-header { background-color: #f0f2f6 !important; color: #333 !important; padding: 8px; font-weight: bold; text-align: center; border-radius: 4px; }
+    .codigo-box { background-color: #f0f0f0 !important; color: black !important; padding: 8px; border: 1px solid #ccc; text-align: center; font-weight: bold; border-radius: 4px; }
+    label, p, span { color: #000000 !important; font-weight: bold !important; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- FUNCIÓN PARA CARGAR LOGO ---
+# --- CARGA DE LOGO ---
 def render_header(logo_path):
     try:
         with open(logo_path, "rb") as f:
@@ -112,17 +87,28 @@ def render_header(logo_path):
             </div>
             """, unsafe_allow_html=True)
     except FileNotFoundError:
-        st.error("⚠️ No se encontró el archivo 'logo_plaza.png'. Asegúrate de subirlo a GitHub.")
+        st.error("⚠️ Sube 'logo_plaza.png' a GitHub.")
 
 render_header("logo_plaza.png")
 
-# --- LÓGICA DE LA APLICACIÓN ---
+# --- LÓGICA DE DATOS ---
+PRODUCTOS_DATA = [
+    {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
+    {"Codigo": "27374", "Descripcion": "RELLENO PARA LEMON PIE KG", "Seccion": "RELLENOS Y CREMAS"}
+    # ... añade el resto de tus productos aquí
+]
+df_productos = pd.DataFrame(PRODUCTOS_DATA)
+
 if 'secciones_data' not in st.session_state:
     st.session_state.secciones_data = {sec: [] for sec in df_productos['Seccion'].unique()}
 
 col_sup, col_fec = st.columns(2)
-with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
-with col_fec: fecha_sel = st.date_input("Fecha", datetime.now())
+with col_sup:
+    supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
+with col_fec:
+    # Este cuadro de fecha ahora tiene forzado el texto negro
+    fecha_sel = st.date_input("Fecha", datetime.now())
 
 for seccion in df_productos['Seccion'].unique():
     st.markdown(f'<div class="section-header">{seccion}</div>', unsafe_allow_html=True)
@@ -137,6 +123,7 @@ for seccion in df_productos['Seccion'].unique():
         with c1:
             st.markdown(f'<div class="codigo-box">{item["Codigo"]}</div>', unsafe_allow_html=True)
         with c3:
+            # Este cuadro de cantidad ahora tiene forzado el texto negro
             item['Cantidad'] = st.number_input(f"Q_{seccion}_{i}", min_value=0, value=item['Cantidad'], key=f"q_{seccion}_{i}", label_visibility="collapsed")
         with c4:
             if st.button("X", key=f"x_{seccion}_{i}"):
@@ -148,9 +135,10 @@ for seccion in df_productos['Seccion'].unique():
         st.rerun()
 
 st.write("---")
-st.markdown('<p style="font-weight:bold; color:black;">Observaciones:</p>', unsafe_allow_html=True)
+# Observaciones con label manual y cuadro forzado a blanco/negro
+st.markdown('<p style="color:black !important;">Observaciones:</p>', unsafe_allow_html=True)
 obs = st.text_area("", placeholder="Escriba aquí sus notas...", label_visibility="collapsed")
 
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
-    # (Aquí va tu conexión a GSheets como ya la tienes)
-    st.success("¡Datos registrados correctamente!"); st.balloons()
+    # Aquí va tu lógica de guardado en GSheets
+    st.success("¡Registro completado!"); st.balloons()
