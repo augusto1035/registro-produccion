@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime
 from streamlit_gsheets import GSheetsConnection
 
-# 1. BASE DE DATOS
+# 1. BASE DE DATOS MAESTRA
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -88,7 +88,17 @@ PRODUCTOS_DATA = [
 
 df_productos = pd.DataFrame(PRODUCTOS_DATA)
 
-# 2. CONFIGURACIÓN Y ESTILO
+# --- FUNCIÓN PARA ACTUALIZAR CÓDIGO (CALLBACK) ---
+def update_code(sec, idx):
+    # Esta función se activa ANTES de que la página se redibuje
+    desc = st.session_state[f"sel_{sec}_{idx}"]
+    match = df_productos[df_productos['Descripcion'] == desc]
+    if not match.empty:
+        # Actualizamos el valor en el estado de la sesión directamente
+        st.session_state[sec][idx]['Codigo'] = match['Codigo'].values[0]
+        st.session_state[sec][idx]['Descripcion'] = desc
+
+# --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Gerencia de Alimentos Procesados", layout="wide")
 
 st.markdown("""
@@ -110,7 +120,7 @@ col_sup, col_fec = st.columns(2)
 with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
 with col_fec: fecha_sel = st.date_input("Fecha", datetime.now())
 
-# 4. RENDERIZADO CON LÓGICA DE ACTUALIZACIÓN REAL
+# --- RENDERIZADO ---
 for seccion in SECCIONES:
     st.markdown(f'<div class="section-header">{seccion}</div>', unsafe_allow_html=True)
     opciones = df_productos[df_productos['Seccion'] == seccion]['Descripcion'].tolist()
@@ -118,24 +128,28 @@ for seccion in SECCIONES:
     if not opciones: continue
 
     for i, item in enumerate(st.session_state[seccion]):
-        # Definimos las columnas
         c1, c2, c3, c4 = st.columns([1, 3.2, 1, 0.3])
         
-        # PASO 1: Dibujamos la columna 2 (El Selector) primero para capturar el cambio
         with c2:
-            sel = st.selectbox(
+            # USAMOS ON_CHANGE PARA DISPARAR LA FUNCIÓN DE ACTUALIZACIÓN
+            st.selectbox(
                 f"S_{seccion}_{i}", 
                 options=opciones, 
                 key=f"sel_{seccion}_{i}", 
+                label_visibility="collapsed",
+                on_change=update_code,
+                args=(seccion, i)
+            )
+
+        with c1:
+            # Leemos el código directamente del Session State
+            st.text_input(
+                f"C_{seccion}_{i}", 
+                value=item['Codigo'], 
+                disabled=True, 
+                key=f"disp_{seccion}_{i}", 
                 label_visibility="collapsed"
             )
-            item['Descripcion'] = sel
-            # Buscamos el código correspondiente
-            item['Codigo'] = df_productos[df_productos['Descripcion'] == sel]['Codigo'].values[0]
-
-        # PASO 2: Dibujamos la columna 1 (El Código) usando el valor YA actualizado
-        with c1:
-            st.text_input(f"C_{seccion}_{i}", value=item['Codigo'], disabled=True, key=f"disp_{seccion}_{i}", label_visibility="collapsed")
             
         with c3:
             item['Cantidad'] = st.number_input(f"Q_{seccion}_{i}", min_value=0, value=item['Cantidad'], key=f"q_{seccion}_{i}", label_visibility="collapsed")
@@ -146,7 +160,9 @@ for seccion in SECCIONES:
                 st.rerun()
 
     if st.button(f"➕ Añadir a {seccion.lower()}", key=f"btn_{seccion}"):
-        st.session_state[seccion].append({"Codigo": "", "Descripcion": opciones[0], "Cantidad": 0})
+        primera_desc = opciones[0]
+        primer_cod = df_productos[df_productos['Descripcion'] == primera_desc]['Codigo'].values[0]
+        st.session_state[seccion].append({"Codigo": primer_cod, "Descripcion": primera_desc, "Cantidad": 0})
         st.rerun()
 
 st.write("---")
