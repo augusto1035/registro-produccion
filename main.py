@@ -6,149 +6,93 @@ import base64
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
 
-# --- CSS NUCLEAR (CONTRA EL TAMAÑO DE LAS CAJAS) ---
+# --- CSS DE ESTABILIDAD (ACEPTANDO EL APILAMIENTO) ---
 st.markdown("""
     <style>
-    /* 1. MODO CLARO Y SIN MARGENES EXTRAS */
-    :root { color-scheme: light; }
-    html, body, [data-testid="stAppViewContainer"] { background-color: #ffffff !important; color: black !important; }
-
-    /* Espacio para el cintillo */
-    .block-container {
-        padding-top: 4rem !important;
-        padding-left: 0.2rem !important;
-        padding-right: 0.2rem !important;
-        padding-bottom: 2rem !important;
-        max-width: 100vw !important;
-    }
-
-    /* -----------------------------------------------------------
-       MEDIA QUERY: MÓVIL (LA ZONA DE GUERRA)
-       ----------------------------------------------------------- */
-    @media (max-width: 640px) {
-
-        /* 1. LAYOUT: GRID MILIMÉTRICA (42px | AUTO | 45px | 35px) */
-        [data-testid="stHorizontalBlock"]:has(> [data-testid="column"]:nth-child(4)) {
-            display: grid !important;
-            grid-template-columns: 42px 1fr 45px 35px !important;
-            gap: 2px !important;
-            align-items: center !important;
-            width: 100% !important;
-        }
-
-        /* 2. MATAR EL RELLENO DE LAS COLUMNAS */
-        [data-testid="column"] {
-            min-width: 0 !important;
-            width: auto !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            overflow: hidden !important;
-        }
-
-        /* 3. ATACAR LAS CAJAS INTERNAS (INPUTS) - ESTO ES LO QUE PEDISTE */
-        
-        /* CAJA DE CANTIDAD (NUMBER INPUT) */
-        [data-testid="stNumberInput"] {
-            min-width: 0px !important;
-            width: 100% !important;
-        }
-        [data-testid="stNumberInput"] input {
-            min-width: 0px !important;
-            width: 100% !important;
-            padding: 0px !important; /* Sin aire interno */
-            text-align: center !important;
-            font-size: 11px !important;
-        }
-        /* Ocultar botones +/- del input numero en algunos navegadores para ganar espacio */
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-            -webkit-appearance: none; margin: 0; 
-        }
-
-        /* CAJA DE DESCRIPCIÓN (SELECTBOX) */
-        div[data-baseweb="select"] {
-            min-width: 0px !important;
-            width: 100% !important;
-        }
-        div[data-baseweb="select"] > div {
-            padding-left: 2px !important;
-            padding-right: 2px !important;
-            background-color: white !important;
-        }
-        div[data-baseweb="select"] span {
-            font-size: 10px !important;
-            white-space: nowrap !important; /* No bajar linea */
-            text-overflow: ellipsis !important; /* Poner ... */
-            overflow: hidden !important;
-        }
-
-        /* CAJA DE CÓDIGO */
-        .codigo-box {
-            font-size: 9px !important;
-            padding: 0 !important;
-            letter-spacing: -0.5px; /* Apretar numeros */
-        }
-
-        /* BOTÓN X */
-        .stButton > button {
-            padding: 0 !important;
-            min-width: 0 !important;
-        }
-
-        /* ALTURA UNIFICADA DE LAS CAJAS EN MÓVIL */
-        div[data-baseweb="select"] > div, 
-        [data-testid="stNumberInput"] input,
-        .codigo-box,
-        .stButton > button {
-            height: 35px !important;
-            min-height: 35px !important;
-            line-height: 35px !important;
-        }
-    }
-    /* -----------------------------------------------------------
-       FIN MEDIA QUERY
-       ----------------------------------------------------------- */
-
-    /* ESTILOS GENERALES (WEB Y BASE) */
+    /* 1. FUERZA BRUTA CONTRA EL MODO OSCURO
+       Esto obliga a los inputs específicos a ser blancos con texto negro. */
     
-    /* Bordes y colores de las cajas */
-    div[data-baseweb="select"] > div, 
-    [data-testid="stNumberInput"] input {
-        border: 1px solid #aaa !important;
-        border-radius: 4px !important;
-        color: black !important;
-        background: white !important;
+    /* Calendario, Inputs Numéricos y Selectores */
+    [data-testid="stDateInput"] input,
+    [data-testid="stNumberInput"] input,
+    div[data-baseweb="select"] > div {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        border: 1px solid #cccccc !important;
+    }
+    /* Área de Texto (Observaciones) */
+    [data-testid="stTextArea"] textarea {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+         border: 1px solid #cccccc !important;
+    }
+    /* Fondo general para asegurar contraste */
+    [data-testid="stAppViewContainer"] {
+        background-color: #f8f9fa; /* Un gris muy claro para que no sea tan brillante */
+    }
+    .block-container {
+        padding-top: 2rem !important;
+        max-width: 100% !important;
     }
 
-    /* Estilo Caja Código */
+    /* 2. ESTILOS GENERALES DE COMPONENTES */
+    
+    /* Caja de Código */
     .codigo-box {
-        background-color: #e0e0e0;
-        border: 1px solid #aaa;
-        color: black;
+        background-color: #e9ecef;
+        border: 1px solid #ced4da;
+        color: #495057;
         font-weight: bold;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        padding: 8px;
+        text-align: center;
         border-radius: 4px;
-        width: 100%;
-        height: 100%;
-        min-height: 38px; /* Altura Web */
-        font-size: 11px;
+        font-size: 14px;
     }
 
-    /* Estilo Botones */
+    /* Botones "Añadir" y "Finalizar" (Verdes Plaza's) */
     .stButton > button {
         background-color: #36b04b !important;
         color: white !important;
-        border: none !important;
-        width: 100% !important;
-        font-weight: bold !important;
+        font-weight: bold;
+        border: none;
     }
     .stButton > button:hover { background-color: #2a8a3b !important; }
 
-    /* header filtros */
-    [data-testid="stHorizontalBlock"]:not(:has(> [data-testid="column"]:nth-child(4))) > [data-testid="column"] {
-        flex: 1 1 50% !important;
+    /* Títulos de Sección */
+    .section-header {
+        background: #36b04b;
+        color: white;
+        padding: 8px;
+        text-align: center;
+        font-weight: bold;
+        border-radius: 4px;
+        margin-top: 20px;
+        margin-bottom: 10px;
+    }
+
+    /* 3. REGLAS ESPECÍFICAS PARA MÓVIL (CUANDO SE APILA) */
+    @media (max-width: 640px) {
+        /* Cuando se apilan, dar un poco de espacio entre elementos */
+        [data-testid="column"] {
+            margin-bottom: 8px !important;
+        }
+        
+        /* EL BOTÓN X CUADRADO (SOLUCIÓN PEDIDA) */
+        /* Buscamos los botones dentro de las filas de productos y los hacemos cuadrados y rojos */
+        [data-testid="stHorizontalBlock"] [data-testid="column"] .stButton button {
+            width: 50px !important;  /* Ancho fijo */
+            height: 50px !important; /* Alto fijo = Cuadrado */
+            margin: 0 auto !important; /* Centrado horizontal */
+            display: block !important;
+            background-color: #dc3545 !important; /* Rojo para eliminar */
+            font-size: 20px !important;
+        }
+        
+        /* Ajustar inputs para que se vean bien apilados */
+        [data-testid="stNumberInput"] input,
+        div[data-baseweb="select"] > div {
+            min-height: 40px;
+        }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -159,16 +103,16 @@ def render_header(logo_path):
         with open(logo_path, "rb") as f:
             data = base64.b64encode(f.read()).decode()
         st.markdown(f"""
-            <div style="display: flex; align-items: center; padding-bottom: 10px; border-bottom: 3px solid #36b04b; margin-bottom: 20px;">
-                <img src="data:image/png;base64,{data}" style="height: 70px; margin-right: 15px;">
+            <div style="display: flex; align-items: center; padding-bottom: 10px; border-bottom: 4px solid #36b04b; margin-bottom: 20px;">
+                <img src="data:image/png;base64,{data}" style="height: 70px; margin-right: 15px; object-fit: contain;">
                 <div>
-                    <div style="color:#1a3a63; font-size:22px; font-weight:800; line-height:1.1;">Registro de Producción</div>
-                    <div style="color:#444; font-size:13px;">Gerencia de Alimentos Procesados</div>
+                    <h2 style="color:#1a3a63; margin:0; font-weight:900;">Registro de Producción</h2>
+                    <p style="color:#666; margin:0;">Gerencia de Alimentos Procesados</p>
                 </div>
             </div>
             """, unsafe_allow_html=True)
     except:
-        st.markdown("### Producción Plaza's")
+        st.title("Registro de Producción Plaza's")
 
 render_header("logo_plaza.png")
 
@@ -263,40 +207,50 @@ if 'secciones_data' not in st.session_state:
 
 # SUPERVISOR Y FECHA
 col_sup, col_fec = st.columns(2)
-with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
-with col_fec: fecha_sel = st.date_input("Fecha", datetime.now())
+with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"], label_visibility="visible")
+with col_fec: fecha_sel = st.date_input("Fecha", datetime.now(), label_visibility="visible")
 
 # RENDERIZADO
 for seccion in SECCIONES_ORDEN:
-    st.markdown(f'<div style="background:#f0f2f6; padding:4px; text-align:center; font-weight:bold; margin-top:15px; border-radius:4px; color:black; font-size:14px;">{seccion}</div>', unsafe_allow_html=True)
-    
+    st.markdown(f'<div class="section-header">{seccion}</div>', unsafe_allow_html=True)
     opciones = df_productos[df_productos['Seccion'] == seccion]['Descripcion'].tolist()
     if not opciones: continue
 
     for i, item in enumerate(st.session_state.secciones_data[seccion]):
-        # EN MÓVIL SE ACTIVARÁ EL GRID CSS
-        c1, c2, c3, c4 = st.columns(4) 
+        # EN MÓVIL ESTO SE APILARÁ AUTOMÁTICAMENTE (LO QUE PEDISTE)
+        # EN WEB SE VERÁ EN 4 COLUMNAS BIEN DISTRIBUIDAS
+        c1, c2, c3, c4 = st.columns([2, 6, 2, 1]) 
         
         with c1:
+            # Usamos st.write con markdown para que se alinee mejor en móvil
+            st.markdown(f"**Código:**")
             st.markdown(f'<div class="codigo-box">{item["Codigo"]}</div>', unsafe_allow_html=True)
         with c2:
+            st.markdown(f"**Descripción:**")
             seleccion = st.selectbox(f"s_{seccion}_{i}", options=opciones, key=f"sel_{seccion}_{i}", label_visibility="collapsed")
             item['Descripcion'] = seleccion
             item['Codigo'] = df_productos[df_productos['Descripcion'] == seleccion]['Codigo'].values[0]
         with c3:
+            st.markdown(f"**Cantidad:**")
             item['Cantidad'] = st.number_input(f"q_{seccion}_{i}", min_value=0, step=1, key=f"q_{seccion}_{i}", label_visibility="collapsed")
         with c4:
+            # Espacio vacío para alinear el botón X en móvil
+            st.write("") 
+            st.write("")
             if st.button("X", key=f"x_{seccion}_{i}"):
                 st.session_state.secciones_data[seccion].pop(i)
                 st.rerun()
+        
+        # Separador visual en móvil
+        st.markdown('<hr style="margin: 10px 0; border-top: 1px solid #eee;">', unsafe_allow_html=True)
 
-    if st.button(f"➕ Añadir a {seccion.lower()}", key=f"btn_{seccion}"):
+    if st.button(f"➕ Añadir Producto", key=f"btn_{seccion}"):
         st.session_state.secciones_data[seccion].append({"Codigo": opciones[0], "Descripcion": opciones[0], "Cantidad": 0})
         st.rerun()
 
 st.write("---")
-st.markdown('<p style="font-weight:bold; font-size:12px; color:black;">Observaciones:</p>', unsafe_allow_html=True)
-obs = st.text_area("", placeholder="Notas...", label_visibility="collapsed")
+st.header("Observaciones")
+obs = st.text_area("", placeholder="Escriba aquí sus notas...", label_visibility="collapsed")
 
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
     st.success("¡Registro completado!"); st.balloons()
