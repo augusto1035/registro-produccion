@@ -3,106 +3,111 @@ import pandas as pd
 from datetime import datetime
 import base64
 
-# --- CONFIGURACIÓN DE PÁGINA ---
+# --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
 
-# --- CSS INTELIGENTE (RESPONSIVE) ---
+# --- CSS DE PRECISIÓN (PIXEL PERFECT) ---
 st.markdown("""
     <style>
-    /* 1. ESTILOS BASE (GLOBALES) - MODO CLARO OBLIGATORIO */
+    /* 1. MODO CLARO Y RESET */
     :root { color-scheme: light; }
     html, body, [data-testid="stAppViewContainer"] { background-color: #ffffff !important; color: black !important; }
-
-    /* 2. ENCABEZADO (Igual para ambos) */
-    .header-container {
-        display: flex;
-        align-items: center;
-        padding-bottom: 10px;
-        border-bottom: 3px solid #36b04b;
-        margin-bottom: 20px;
-    }
-    .logo-img { height: 60px; margin-right: 15px; }
-    .main-title { color: #1a3a63 !important; font-size: 24px; font-weight: 800; margin: 0; line-height: 1.2; }
-    .sub-title { color: #444444 !important; font-size: 14px; margin: 0; }
-
-    /* 3. BOTONES VERDES (GLOBAL) */
-    .stButton > button {
-        background-color: #36b04b !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 4px;
-        font-weight: bold !important;
-    }
-    .stButton > button:hover { background-color: #2a8a3b !important; color: white !important; }
-    .stButton > button p { color: white !important; }
-
-    /* ============================================================
-       4. REGLAS ESPECÍFICAS PARA MÓVIL (PANTALLAS < 640px) 
-       ============================================================ */
-    @media only screen and (max-width: 640px) {
-        
-        /* Reducir márgenes laterales para ganar espacio */
-        .block-container {
-            padding-left: 0.5rem !important;
-            padding-right: 0.5rem !important;
-            padding-top: 1rem !important;
-        }
-
-        /* FORZAR FILA HORIZONTAL (NO WRAP) */
-        [data-testid="stHorizontalBlock"] {
-            flex-wrap: nowrap !important;
-            gap: 2px !important;
-            align-items: center !important;
-        }
-
-        /* QUITAR PADDING DE COLUMNAS */
-        [data-testid="column"] {
-            padding: 0px !important;
-            min-width: 0px !important;
-            overflow: hidden !important; /* Corta si se pasa un poco */
-        }
-
-        /* ACHICAR WIDGETS SOLO EN MÓVIL */
-        div[data-baseweb="select"] > div, 
-        [data-testid="stNumberInput"] input {
-            height: 35px !important;
-            min-height: 35px !important;
-            font-size: 11px !important;
-            padding-left: 2px !important;
-            padding-right: 2px !important;
-        }
-
-        /* BOTÓN X COMPACTO */
-        .stButton > button {
-            height: 35px !important;
-            min-height: 35px !important;
-            padding: 0px !important;
-            width: 100% !important;
-        }
-        
-        /* TÍTULOS MÁS PEQUEÑOS EN MÓVIL */
-        .main-title { font-size: 18px !important; }
-        .logo-img { height: 45px !important; }
+    
+    /* 2. GANAR ESPACIO EN PANTALLA */
+    .block-container {
+        padding-top: 1rem !important;
+        padding-left: 0.2rem !important;
+        padding-right: 0.2rem !important;
+        padding-bottom: 5rem !important;
     }
 
-    /* 5. CAJA DE CÓDIGO (ESTILO PROPIO) */
+    /* 3. CONTROL TOTAL DE LA FILA (FLEXBOX) */
+    [data-testid="stHorizontalBlock"] {
+        flex-wrap: nowrap !important; /* Nunca bajar de línea */
+        align-items: center !important;
+        gap: 2px !important;
+        width: 100% !important;
+    }
+
+    /* 4. DEFINICIÓN DE ANCHOS POR COLUMNA (LO QUE PEDISTE) */
+    
+    /* Columna 1: CÓDIGO (Fijo 50px - Cabe el código más largo) */
+    [data-testid="column"]:nth-of-type(1) {
+        flex: 0 0 50px !important;
+        min-width: 50px !important;
+        max-width: 50px !important;
+        overflow: hidden !important;
+    }
+
+    /* Columna 2: DESCRIPCIÓN (Flexible - Ocupa el resto) */
+    [data-testid="column"]:nth-of-type(2) {
+        flex: 1 1 auto !important; /* Crece para llenar espacio */
+        min-width: 0px !important;
+        overflow: hidden !important;
+    }
+
+    /* Columna 3: CANTIDAD (Fijo 50px - Caben 4 dígitos) */
+    [data-testid="column"]:nth-of-type(3) {
+        flex: 0 0 50px !important;
+        min-width: 50px !important;
+        max-width: 50px !important;
+    }
+
+    /* Columna 4: BORRAR X (Fijo 35px - Cuadrado) */
+    [data-testid="column"]:nth-of-type(4) {
+        flex: 0 0 35px !important;
+        min-width: 35px !important;
+        max-width: 35px !important;
+    }
+
+    /* 5. ESTILOS DE LOS ELEMENTOS INTERNOS */
+    
+    /* Caja Gris del Código */
     .codigo-box {
         background-color: #e0e0e0;
         color: black;
-        border: 1px solid #999;
+        border: 1px solid #ccc;
         font-weight: bold;
-        height: 35px; /* Altura igual a los inputs */
+        height: 35px;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 10px;
         border-radius: 4px;
         width: 100%;
-        line-height: 1;
+    }
+
+    /* Selectores y Inputs */
+    div[data-baseweb="select"] > div, 
+    [data-testid="stNumberInput"] input {
+        min-height: 35px !important;
+        height: 35px !important;
+        font-size: 11px !important;
+        padding: 0px 2px !important;
+        background-color: white !important;
+        color: black !important;
+        border: 1px solid #ccc !important;
     }
     
-    /* Arreglar etiquetas ocultas que ocupan espacio */
-    [data-testid="stForm"] { border: none; padding: 0; }
+    /* Botones (Todos Verdes) */
+    .stButton > button {
+        background-color: #36b04b !important;
+        color: white !important;
+        border: none !important;
+        height: 35px !important;
+        width: 100% !important;
+        padding: 0 !important;
+    }
+    .stButton > button:hover { background-color: #2a8a3b !important; }
+
+    /* 6. HEADER */
+    .header-container { display: flex; align-items: center; padding-bottom: 5px; border-bottom: 3px solid #36b04b; margin-bottom: 10px; }
+    .logo-img { height: 50px; margin-right: 10px; }
+    .main-title { color: #1a3a63 !important; font-size: 18px; font-weight: 800; margin: 0; line-height: 1.1; }
+    .sub-title { color: #444444 !important; font-size: 10px; margin: 0; }
+    
+    /* Títulos de Sección */
+    .section-title { background: #f0f2f6; padding: 5px; font-weight: bold; text-align: center; font-size: 12px; margin-top: 10px; margin-bottom: 5px; color: black; border-radius: 4px; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -125,7 +130,7 @@ def render_header(logo_path):
 
 render_header("logo_plaza.png")
 
-# --- DATOS ---
+# --- DATA ---
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -221,16 +226,15 @@ with col_fec: fecha_sel = st.date_input("Fecha", datetime.now())
 
 # RENDERIZADO
 for seccion in SECCIONES_ORDEN:
-    st.markdown(f'<div style="background:#f0f2f6; padding:5px; border-radius:4px; font-weight:bold; margin-top:20px; color:black; text-align:center;">{seccion}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="section-title">{seccion}</div>', unsafe_allow_html=True)
     
     opciones = df_productos[df_productos['Seccion'] == seccion]['Descripcion'].tolist()
     if not opciones: continue
 
     for i, item in enumerate(st.session_state.secciones_data[seccion]):
-        # COLUMNAS PARA MÓVIL Y ESCRITORIO
-        # En móvil, el CSS ajustará esto para que sea 1.5 - 5 - 2 - 1
-        # En escritorio, se verá bien espaciado.
-        c1, c2, c3, c4 = st.columns([1.5, 5.0, 2.0, 1.0])
+        # COLUMNAS POR DEFECTO (ST) PERO CONTROLADAS POR EL CSS ARRIBA
+        # El CSS 'nth-of-type' es el que hace la magia de los anchos fijos
+        c1, c2, c3, c4 = st.columns(4) 
         
         with c1:
             st.markdown(f'<div class="codigo-box">{item["Codigo"]}</div>', unsafe_allow_html=True)
@@ -250,9 +254,8 @@ for seccion in SECCIONES_ORDEN:
         st.rerun()
 
 st.write("---")
-st.markdown('<p style="font-weight:bold; font-size:14px;">Observaciones:</p>', unsafe_allow_html=True)
-obs = st.text_area("", placeholder="Escriba aquí sus notas...", label_visibility="collapsed")
+st.markdown('<p style="font-weight:bold; font-size:12px;">Observaciones:</p>', unsafe_allow_html=True)
+obs = st.text_area("", placeholder="Notas...", label_visibility="collapsed")
 
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
     st.success("¡Registro completado!"); st.balloons()
-    
