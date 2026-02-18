@@ -173,7 +173,7 @@ def actualizar_producto(seccion_key, index_key, selectbox_key):
 
 # SUPERVISOR Y FECHA
 col_sup, col_fec = st.columns(2)
-with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
+with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado" ,"Jesus Ramirez"])
 with col_fec: fecha_sel = st.date_input("Fecha", datetime.now())
 
 # RENDERIZADO PRODUCTOS
@@ -249,4 +249,5 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
             st.error(f"Error al guardar: {e}")
         except Exception as e:
             st.error(f"Error al guardar: {e}")
+
 
