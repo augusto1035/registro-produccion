@@ -68,87 +68,59 @@ st.set_page_config(page_title="Gerencia de Alimentos Procesados", layout="wide")
 
 st.markdown("""
     <style>
-    /* 1. Reset Global del modo oscuro en el cuerpo */
-    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stToolbar"] {
+    /* 1. Reset Global del modo oscuro */
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: #FFFFFF !important;
         color: #000000 !important;
     }
 
-    /* 2. ATAQUE DIRECTO A LOS MENÚS DESPLEGABLES (LISTAS) */
-    /* Estas clases son las que usa la librería BaseWeb para las listas flotantes */
-    div[data-baseweb="popover"], 
-    div[role="listbox"], 
-    div[role="option"], 
-    ul[role="listbox"] {
-        background-color: #FFFFFF !important;
-        color: #000000 !important;
-    }
-
-    /* Forzar texto negro en cada elemento de la lista */
-    div[role="option"] span, 
-    div[role="option"] div,
-    li[role="option"] {
-        color: #000000 !important;
+    /* 2. FORZAR MENÚS DESPLEGABLES (Listas) */
+    div[data-baseweb="popover"], div[role="listbox"], div[role="option"] {
         background-color: #FFFFFF !important;
     }
-
-    /* Efecto al pasar el mouse/dedo sobre la opción */
-    div[role="option"]:hover {
-        background-color: #f0f2f6 !important;
+    div[role="option"] *, div[role="listbox"] * {
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
     }
 
-    /* 3. ENCABEZADO Y BOTONES (Respetando el diseño de Plazas) */
-    .header {
-        background-color: #36b04b !important;
-        color: #FFFFFF !important;
-        padding: 15px;
-        text-align: center;
-        border-radius: 5px;
-    }
-    
-    .header h2, .header p {
-        color: #FFFFFF !important;
-        margin: 0;
-    }
-
+    /* 3. BOTONES: Siempre Verdes con Letras Blancas */
     .stButton > button {
-        background-color: #000000 !important;
+        background-color: #36b04b !important;
         color: #FFFFFF !important;
         border: none !important;
         font-weight: bold !important;
+        border-radius: 5px !important;
     }
-    
-    .stButton > button p {
+    /* Forzar texto blanco en botones */
+    .stButton > button p, .stButton > button div, .stButton > button span {
         color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important;
     }
 
-    /* 4. CAJAS DE ENTRADA, CALENDARIO Y SELECTORES CERRADOS */
-    input, textarea, [data-baseweb="select"] > div {
+    /* 4. OBSERVACIONES Y TEXTO: Fondo Blanco, Letras Negras */
+    textarea, input, [data-baseweb="select"] > div {
         background-color: #FFFFFF !important;
         color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
         border: 1px solid #CCCCCC !important;
     }
-
-    /* Asegurar que el texto dentro del selector cerrado sea negro */
-    div[data-baseweb="select"] * {
+    
+    /* Forzar visibilidad del label de Observaciones */
+    label, p, span {
         color: #000000 !important;
+        font-weight: bold !important;
     }
 
-    /* 5. TÍTULOS DE SECCIÓN */
-    .section-header {
-        background-color: #f0f2f6 !important;
-        color: #333333 !important;
-        padding: 10px;
-        font-weight: bold;
-        text-align: center;
-        border-radius: 5px;
-        border: 1px solid #ddd;
-    }
+    /* 5. Estética General */
+    .header { background-color: #36b04b !important; padding: 15px; text-align: center; border-radius: 5px; }
+    .header h2, .header p { color: #FFFFFF !important; margin: 0; }
+    .section-header { background-color: #f0f2f6 !important; color: #333333 !important; padding: 10px; font-weight: bold; text-align: center; border-radius: 5px; margin-top: 20px; }
+    .codigo-box { background-color: #f0f0f0 !important; color: #000 !important; padding: 8px; border-radius: 4px; text-align: center; border: 1px solid #ccc; font-weight: bold; height: 38px; display: flex; align-items: center; justify-content: center; }
     </style>
     
     <div class="header">
-        <h2>Registro de producción</h2>
-        <p>Gerencia de Alimentos Procesados</p>
+        <h2 style="color:white !important;">Registro de producción</h2>
+        <p style="color:white !important;">Gerencia de Alimentos Procesados</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -182,7 +154,7 @@ for seccion in SECCIONES:
             item['Codigo'] = match['Codigo'].values[0] if not match.empty else "N/A"
 
         with c1:
-            st.markdown(f'<div style="background-color:#f0f0f0; color:#000; padding:8px; border-radius:4px; text-align:center; border:1px solid #ccc; font-weight:bold; height:38px; display:flex; align-items:center; justify-content:center;">{item["Codigo"]}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="codigo-box">{item["Codigo"]}</div>', unsafe_allow_html=True)
             
         with c3:
             item['Cantidad'] = st.number_input(f"Q_{seccion}_{i}", min_value=0, value=item['Cantidad'], key=f"q_{seccion}_{i}", label_visibility="collapsed")
@@ -197,8 +169,33 @@ for seccion in SECCIONES:
         st.rerun()
 
 st.write("---")
-obs = st.text_area("Observaciones")
+# Etiqueta manual de Observaciones con color forzado
+st.markdown('<p style="color:black !important;">Observaciones:</p>', unsafe_allow_html=True)
+obs = st.text_area("", placeholder="Escriba aquí sus notas...", key="obs_area", label_visibility="collapsed")
 
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
-    # Lógica de guardado...
-    st.success("¡Información enviada con éxito!")
+    all_data = []
+    for seccion in SECCIONES:
+        for row in st.session_state.secciones_data[seccion]:
+            if row['Cantidad'] > 0:
+                all_data.append({
+                    "ID_Registro": datetime.now().strftime("%Y%m%d%H%M%S"),
+                    "Supervisor": supervisor,
+                    "Fecha_Hora": datetime.now().strftime("%d/%m/%Y %I:%M %p"),
+                    "Codigo_Articulo": row['Codigo'],
+                    "Descripcion": row['Descripcion'],
+                    "Cantidad": row['Cantidad'],
+                    "Observaciones": obs
+                })
+    
+    if all_data:
+        try:
+            conn = st.connection("gsheets", type=GSheetsConnection)
+            df_actual = conn.read()
+            df_final = pd.concat([df_actual, pd.DataFrame(all_data)], ignore_index=True)
+            conn.update(data=df_final)
+            st.success("¡Registro guardado con éxito!"); st.balloons()
+            for sec in SECCIONES: st.session_state.secciones_data[sec] = []
+            st.rerun()
+        except Exception as e:
+            st.error(f"Error al conectar con la base de datos: {e}")
