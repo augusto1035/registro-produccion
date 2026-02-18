@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime
 import base64
 from streamlit_gsheets import GSheetsConnection
+import streamlit.components.v1 as components
 
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
@@ -36,13 +37,25 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
+# --- TRUCO DE SCROLL FORZADO ---
+if st.session_state.get('exito'):
+    # Este componente se ejecuta al cargar la página tras el rerun
+    components.html(
+        """
+        <script>
+            window.parent.document.querySelector('section.main').scrollTo(0, 0);
+        </script>
+        """,
+        height=0,
+    )
+
 # --- HEADER ---
 def render_header(logo_path):
     try:
         with open(logo_path, "rb") as f:
             data = base64.b64encode(f.read()).decode()
         st.markdown(f"""
-            <div id="top-of-page" style="display: flex; align-items: center; padding-bottom: 10px; border-bottom: 4px solid #36b04b; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; padding-bottom: 10px; border-bottom: 4px solid #36b04b; margin-bottom: 20px;">
                 <img src="data:image/png;base64,{data}" style="height: 70px; margin-right: 15px; object-fit: contain;">
                 <div>
                     <h2 style="color:#1a3a63; margin:0; font-weight:900; font-size: 20px;">Registro de Producción</h2>
@@ -55,7 +68,7 @@ def render_header(logo_path):
 
 render_header("logo_plaza.png")
 
-# --- DATA PRODUCTOS ---
+# --- DATA PRODUCTOS (Lista original mantenida) ---
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -149,17 +162,11 @@ if 'exito' not in st.session_state:
 if 'texto_observaciones' not in st.session_state:
     st.session_state.texto_observaciones = ""
 
-# MENSAJE DE ÉXITO + AUTO SCROLL
+# MENSAJE DE ÉXITO
 if st.session_state.exito:
     st.success("✅ ¡Registro guardado exitosamente!")
     st.balloons()
-    # INYECTAMOS EL SCRIPT PARA SUBIR AL INICIO
-    st.markdown("""
-        <script>
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        </script>
-    """, unsafe_allow_html=True)
-    st.session_state.exito = False
+    st.session_state.exito = False # Se apaga para que no se repita el scroll al interactuar después
 
 # CALLBACKS
 def actualizar_producto(seccion_key, index_key, selectbox_key):
@@ -255,7 +262,3 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
             
         except Exception as e:
             st.error(f"Error al guardar: {e}")
-            
-        except Exception as e:
-            st.error(f"Error al guardar: {e}")
-
