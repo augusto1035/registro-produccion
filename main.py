@@ -7,77 +7,91 @@ import base64
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Gerencia de Alimentos Procesados", layout="wide")
 
-# --- INYECCIÓN DE ESTILO "EQUILIBRADO" (WEB + MÓVIL) ---
+# --- INYECCIÓN DE ESTILO "A MEDIDA" (AJUSTE AL CINTILLO) ---
 st.markdown("""
     <style>
-    /* 1. Reset Global y Blindaje contra Modo Oscuro */
+    /* 1. Fondo Blanco e Invariable */
     html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: #FFFFFF !important;
         color: #000000 !important;
     }
 
-    /* 2. FORZAR FILA ÚNICA EN MÓVIL SIN APILAR */
+    /* 2. AJUSTE DE FILA AL ANCHO DE PANTALLA (SIN DESBORDE) */
     [data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: center !important;
-        gap: 5px !important;
+        justify-content: space-between !important;
+        gap: 2px !important; /* Espacio mínimo entre elementos */
+        width: 100% !important;
     }
 
     [data-testid="column"] {
         min-width: 0 !important;
         flex-shrink: 1 !important;
+        padding: 0px !important;
     }
 
-    /* 3. BLINDAJE DE COLORES (Calendario, Inputs, Selectores) */
-    div[data-baseweb="select"] > div, input, textarea, div[data-baseweb="popover"] * {
+    /* 3. COMPONENTES COMPACTOS */
+    div[data-baseweb="select"] > div, input {
+        height: 35px !important;
+        font-size: 12px !important; /* Texto pequeño para que quepa todo */
         background-color: #FFFFFF !important;
         color: #000000 !important;
         -webkit-text-fill-color: #000000 !important;
-        border: 1px solid #CCCCCC !important;
     }
 
-    /* 4. ENCABEZADO PLAZA'S */
+    /* 4. ENCABEZADO PLAZA'S (CINTILLO) */
     .header-container {
         display: flex;
         align-items: center;
-        padding: 10px 0px;
+        padding: 10px 5px;
         margin-bottom: 20px;
         border-bottom: 3px solid #36b04b;
+        width: 100%;
     }
-    .logo-img { height: 70px; margin-right: 15px; }
-    .main-title { color: #1a3a63 !important; font-size: 26px; font-weight: 800; margin: 0; }
-    .sub-title { color: #444444 !important; font-size: 14px; margin: 0; }
+    .logo-img { height: 60px; margin-right: 15px; }
+    .main-title { color: #1a3a63 !important; font-size: 22px; font-weight: 800; margin: 0; }
+    .sub-title { color: #444444 !important; font-size: 13px; margin: 0; }
 
-    /* 5. CAJA DE CÓDIGOS */
+    /* 5. CAJA DE CÓDIGOS SAP */
     .codigo-box-forzado {
         background-color: #f0f0f0 !important;
         color: #000000 !important;
         -webkit-text-fill-color: #000000 !important;
-        padding: 8px 4px;
         border: 1px solid #cccccc;
         text-align: center;
         font-weight: bold;
         border-radius: 4px;
-        height: 38px;
+        height: 35px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 11px;
+        font-size: 10px;
     }
 
-    /* 6. BOTONES VERDES */
+    /* 6. BOTONES VERDES (INCLUYENDO LA X) */
     .stButton > button {
         background-color: #36b04b !important;
         color: #FFFFFF !important;
         border: none !important;
         font-weight: bold !important;
+        padding: 0px !important;
+        height: 35px !important;
     }
-    .stButton > button * { color: #FFFFFF !important; -webkit-text-fill-color: #FFFFFF !important; }
+    /* Forzar que el texto (o la X) dentro del botón sea blanco */
+    .stButton > button p, .stButton > button span, .stButton > button div {
+        color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important;
+    }
 
-    .section-header { background-color: #f0f2f6 !important; color: #000 !important; padding: 5px; text-align: center; font-weight: bold; border-radius: 4px; margin-top: 10px;}
-    label, p, span { color: #000000 !important; font-weight: bold !important; }
+    /* 7. CALENDARIO Y OTROS */
+    div[data-baseweb="popover"] *, div[role="listbox"] * {
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+    }
+    .section-header { background-color: #f0f2f6 !important; color: #000 !important; padding: 5px; text-align: center; font-weight: bold; border-radius: 4px; font-size: 13px; margin-top: 10px;}
     </style>
     """, unsafe_allow_html=True)
 
@@ -100,7 +114,8 @@ def render_header(logo_path):
 
 render_header("logo_plaza.png")
 
-# --- BASE DE DATOS MAESTRA COMPLETA (79 PRODUCTOS) ---
+# --- BASE DE DATOS MAESTRA ---
+# (Aquí incluyo la lista que me pasaste completa)
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -204,31 +219,22 @@ for seccion in SECCIONES_ORDEN:
     if not opciones: continue
 
     for i, item in enumerate(st.session_state.secciones_data[seccion]):
-        # COLUMNAS HÍBRIDAS: Código (0.7), Descripción (2.5), Cantidad (1.1), Borrar (0.5)
-        c1, c2, c3, c4 = st.columns([0.7, 2.5, 1.1, 0.5])
+        # DISTRIBUCIÓN MILIMÉTRICA PARA MÓVIL
+        # Código (0.6), Descripción (2.3), Cantidad (0.8), X (0.3)
+        c1, c2, c3, c4 = st.columns([0.6, 2.3, 0.8, 0.3])
         with c1:
-            # Mostramos el CÓDIGO real aquí
             st.markdown(f'<div class="codigo-box-forzado">{item["Codigo"]}</div>', unsafe_allow_html=True)
         with c2:
-            # Mostramos la DESCRIPCIÓN real aquí
             seleccion = st.selectbox(f"S_{seccion}_{i}", options=opciones, key=f"sel_{seccion}_{i}", label_visibility="collapsed")
             item['Descripcion'] = seleccion
             item['Codigo'] = df_productos[df_productos['Descripcion'] == seleccion]['Codigo'].values[0]
         with c3:
-            item['Cantidad'] = st.number_input(f"Q_{seccion}_{i}", min_value=0, value=item['Cantidad'], key=f"q_{seccion}_{i}", label_visibility="collapsed")
+            item['Cantidad'] = st.number_input(f"Q_{seccion}_{i}", min_value=0, step=1, key=f"q_{seccion}_{i}", label_visibility="collapsed")
         with c4:
-            if st.button("X", key=f"x_{seccion}_{i}", help="Eliminar fila"):
+            # Botón X ahora siempre blanco
+            if st.button("X", key=f"x_{seccion}_{i}"):
                 st.session_state.secciones_data[seccion].pop(i)
                 st.rerun()
 
     if st.button(f"➕ Añadir a {seccion.lower()}", key=f"btn_{seccion}"):
-        st.session_state.secciones_data[seccion].append({"Codigo": opciones[0], "Descripcion": opciones[0], "Cantidad": 0})
-        st.rerun()
-
-st.write("---")
-st.markdown('<p style="color:black !important; font-weight:bold;">Observaciones:</p>', unsafe_allow_html=True)
-obs = st.text_area("", placeholder="Notas...", label_visibility="collapsed")
-
-if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
-    # Lógica de guardado...
-    st.success("¡Registro completado!"); st.balloons()
+        st.session_state.secciones_data[seccion].append({"Codigo": opciones[0], "Descripcion": opciones[0], "Cantidad":
