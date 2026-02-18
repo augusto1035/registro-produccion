@@ -4,112 +4,103 @@ from datetime import datetime
 from streamlit_gsheets import GSheetsConnection
 import base64
 
-# --- CONFIGURACIÓN DE PÁGINA ---
+# --- CONFIGURACIÓN INICIAL ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
 
-# --- CSS CORRECTIVO EXTREMO (SIN MÁRGENES + TODOS VERDES) ---
+# --- CSS MAESTRO (SOLUCIÓN DE RAÍZ) ---
 st.markdown("""
     <style>
-    /* 1. GANAR ESPACIO LATERAL (CRUCIAL PARA QUE QUEPA) */
+    /* 1. COMANDO MAESTRO: OBLIGA A MODO CLARO (Arregla lo "oscuro") */
+    :root {
+        color-scheme: light;
+    }
+    
+    /* 2. FONDO BLANCO Y LETRAS NEGRAS OBLIGATORIAS */
+    [data-testid="stAppViewContainer"], header, body, html {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+    }
+
+    /* 3. QUITAR MÁRGENES GIGANTES DE STREAMLIT (Para que quepa en móvil) */
     .block-container {
         padding-top: 1rem !important;
         padding-bottom: 2rem !important;
-        padding-left: 0.2rem !important; /* Casi al borde */
+        padding-left: 0.2rem !important;
         padding-right: 0.2rem !important;
     }
 
-    /* 2. FORZAR FILA HORIZONTAL PERFECTA */
+    /* 4. FILA HORIZONTAL FORZADA (NO WRAP) */
     [data-testid="stHorizontalBlock"] {
         flex-wrap: nowrap !important;
-        gap: 2px !important;
+        gap: 0px !important;
         align-items: center !important;
-        width: 100% !important;
     }
 
-    /* 3. COLUMNAS SIN RELLENO */
+    /* 5. COLUMNAS CON TAMAÑO FIJO (NO PORCENTAJES) */
+    /* Esto evita que el navegador "invente" anchos */
     [data-testid="column"] {
-        min-width: 0px !important;
-        width: auto !important;
-        flex: 1 1 auto !important;
+        flex: 0 0 auto !important; /* No crecer, no encoger */
         padding: 0px !important;
+        min-width: 0px !important;
         overflow: hidden !important;
     }
 
-    /* 4. COMPONENTES MINÚSCULOS PARA QUE QUEPAN */
-    div[data-baseweb="select"] > div, 
-    input, 
-    [data-testid="stNumberInput"] input {
+    /* 6. ESTILOS DE LOS INPUTS (CÓDIGO, SELECTOR, CANTIDAD) */
+    div[data-baseweb="select"] > div, input, [data-testid="stNumberInput"] input {
         min-height: 35px !important;
         height: 35px !important;
-        font-size: 10px !important; /* Letra pequeña obligatoria */
-        padding: 0px 1px !important; /* Sin relleno interno */
-        background-color: #FFFFFF !important;
+        font-size: 11px !important;
+        background-color: #ffffff !important;
         color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
-        border: 1px solid #999 !important;
+        border: 1px solid #ccc !important;
+        padding: 0px 4px !important;
     }
 
-    /* 5. CAJA DE CÓDIGO (GRIS) */
+    /* 7. CAJA DE CÓDIGO */
     .codigo-box {
-        background-color: #e0e0e0 !important;
-        color: #000000 !important;
-        border: 1px solid #999;
-        text-align: center;
-        font-weight: bold;
-        border-radius: 3px;
+        background-color: #f0f0f0 !important;
+        color: #000 !important;
+        border: 1px solid #ccc;
         height: 35px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 9px;
-        line-height: 1;
-        white-space: nowrap;
-        overflow: hidden;
+        font-size: 10px;
+        font-weight: bold;
     }
 
-    /* 6. TODOS LOS BOTONES VERDES (INCLUIDA LA X) */
+    /* 8. BOTONES VERDES (TODOS) */
     .stButton > button {
-        background-color: #36b04b !important; /* VERDE PLAZA'S */
-        color: #FFFFFF !important;
+        background-color: #36b04b !important;
+        color: white !important;
         border: none !important;
         height: 35px !important;
-        min-height: 35px !important;
-        padding: 0px !important;
         width: 100% !important;
+        padding: 0 !important;
         font-weight: bold !important;
-        font-size: 14px !important;
-        line-height: 1 !important;
     }
     .stButton > button:hover {
-        color: #FFFFFF !important;
+        color: white !important;
         background-color: #2a8a3b !important;
     }
-    .stButton > button p { color: #FFFFFF !important; }
-
-    /* 7. ENCABEZADO */
-    .header-container { display: flex; align-items: center; padding: 5px; border-bottom: 3px solid #36b04b; width: 100%; margin-bottom: 5px; }
-    .logo-img { height: 40px; margin-right: 5px; }
-    .main-title { color: #1a3a63 !important; font-size: 16px; font-weight: 800; margin: 0; line-height: 1.1; }
-    .sub-title { color: #444444 !important; font-size: 10px; margin: 0; }
     
-    .section-header { background-color: #f0f2f6 !important; color: #000 !important; padding: 2px; text-align: center; font-weight: bold; font-size: 12px; margin-top: 5px;}
-    
-    /* Ajuste para que el calendario no se rompa */
+    /* Arreglo específico para que el calendario se vea bien */
     [data-testid="stDateInput"] input { font-size: 12px !important; }
+    div[role="listbox"] * { color: black !important; background-color: white !important; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- CARGA DE LOGO ---
+# --- ENCABEZADO ---
 def render_header(logo_path):
     try:
         with open(logo_path, "rb") as f:
             data = base64.b64encode(f.read()).decode()
         st.markdown(f"""
-            <div class="header-container">
-                <img src="data:image/png;base64,{data}" class="logo-img">
+            <div style="display:flex; align-items:center; padding:5px; border-bottom:3px solid #36b04b; margin-bottom:10px;">
+                <img src="data:image/png;base64,{data}" style="height:45px; margin-right:10px;">
                 <div>
-                    <div class="main-title">Registro de Producción</div>
-                    <div class="sub-title">Gerencia de Alimentos Procesados</div>
+                    <div style="color:#1a3a63; font-size:18px; font-weight:800; line-height:1;">Registro de Producción</div>
+                    <div style="color:#444; font-size:11px;">Gerencia de Alimentos Procesados</div>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -220,18 +211,29 @@ for seccion in SECCIONES_ORDEN:
 
     for i, item in enumerate(st.session_state.secciones_data[seccion]):
         
-        # PROPORCIÓN ESTRICTA PARA MÓVIL
-        # 12% Código | 60% Desc | 16% Cant | 12% X (Todos verdes)
-        c1, c2, c3, c4 = st.columns([1.2, 6.0, 1.6, 1.2])
+        # --- COLUMNAS CON WIDTH% FORZADO EN CSS ---
+        # NO USAMOS RATIOS, USAMOS CSS PARA CONTROLARLO
+        c1, c2, c3, c4 = st.columns(4)
+        
+        # Inyectamos CSS específico para ESTAS 4 columnas para forzar su ancho
+        # Col 1 (Codigo): 12% | Col 2 (Desc): 63% | Col 3 (Cant): 15% | Col 4 (X): 10%
+        css_col = f"""
+        <style>
+        [data-testid="column"]:nth-of-type(1) {{ flex: 0 0 12% !important; max-width: 12% !important; }}
+        [data-testid="column"]:nth-of-type(2) {{ flex: 0 0 63% !important; max-width: 63% !important; }}
+        [data-testid="column"]:nth-of-type(3) {{ flex: 0 0 15% !important; max-width: 15% !important; }}
+        [data-testid="column"]:nth-of-type(4) {{ flex: 0 0 10% !important; max-width: 10% !important; }}
+        </style>
+        """
         
         with c1:
             st.markdown(f'<div class="codigo-box">{item["Codigo"]}</div>', unsafe_allow_html=True)
         with c2:
-            seleccion = st.selectbox(f"sel_{seccion}_{i}", options=opciones, key=f"sel_{seccion}_{i}", label_visibility="collapsed")
+            seleccion = st.selectbox(f"s_{seccion}_{i}", options=opciones, key=f"sel_{seccion}_{i}", label_visibility="collapsed")
             item['Descripcion'] = seleccion
             item['Codigo'] = df_productos[df_productos['Descripcion'] == seleccion]['Codigo'].values[0]
         with c3:
-            item['Cantidad'] = st.number_input(f"qty_{seccion}_{i}", min_value=0, step=1, key=f"q_{seccion}_{i}", label_visibility="collapsed")
+            item['Cantidad'] = st.number_input(f"q_{seccion}_{i}", min_value=0, step=1, key=f"q_{seccion}_{i}", label_visibility="collapsed")
         with c4:
             if st.button("X", key=f"x_{seccion}_{i}"):
                 st.session_state.secciones_data[seccion].pop(i)
@@ -242,9 +244,8 @@ for seccion in SECCIONES_ORDEN:
         st.rerun()
 
 st.write("---")
-st.markdown('<p style="color:black !important; font-weight:bold; font-size:12px; margin-bottom:0;">Observaciones:</p>', unsafe_allow_html=True)
+st.markdown('<p style="color:black; font-weight:bold; font-size:12px; margin-bottom:0;">Observaciones:</p>', unsafe_allow_html=True)
 obs = st.text_area("", placeholder="Notas...", label_visibility="collapsed")
 
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
-    # Lógica de guardado...
     st.success("¡Registro completado!"); st.balloons()
