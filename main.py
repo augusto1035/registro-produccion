@@ -7,7 +7,7 @@ from streamlit_gsheets import GSheetsConnection
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
 
-# --- CSS VISUAL ---
+# --- CSS VISUAL (DISEÑO MÓVIL Y WEB) ---
 st.markdown("""
     <style>
     :root { color-scheme: light; }
@@ -36,11 +36,12 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- INICIALIZACIÓN DE ESTADOS ---
-SECCIONES = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POSTRE", "RELLENOS Y CREMAS"]
+# --- DEFINICIÓN DE SECCIONES (FIJAS PARA EVITAR NAMEERROR) ---
+SECCIONES_ORDEN = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POSTRE", "RELLENOS Y CREMAS"]
 
+# --- INICIALIZACIÓN DE ESTADOS ---
 if 'secciones_data' not in st.session_state:
-    st.session_state.secciones_data = {sec: [] for sec in SECCIONES}
+    st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
 if 'exito' not in st.session_state:
     st.session_state.exito = False
 if 'texto_obs' not in st.session_state:
@@ -48,7 +49,6 @@ if 'texto_obs' not in st.session_state:
 
 # --- LÓGICA DE ÉXITO Y AUTO-SCROLL ---
 if st.session_state.exito:
-    # Este script es más agresivo: busca el contenedor de scroll de Streamlit y lo resetea
     st.markdown("""
         <script>
             var mainContainer = window.parent.document.querySelector('section.main');
@@ -81,7 +81,6 @@ def render_header(logo_path):
 render_header("logo_plaza.png")
 
 # --- DATA PRODUCTOS ---
-# (Se mantiene la lista original de PRODUCTOS_DATA que ya tienes)
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -129,7 +128,7 @@ PRODUCTOS_DATA = [
     {"Codigo": "27667", "Descripcion": "PIE DE LIMON PLAZAS", "Seccion": "POSTRE"},
     {"Codigo": "27673", "Descripcion": "QUESILLO INDIVIDUAL PLAZAS", "Seccion": "POSTRE"},
     {"Codigo": "27637", "Descripcion": "MINI TORTA PLAZAS UND (UN)", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
-    {"Codigo": "27676", "稼": "PIE DE PARCHITA PLAZAS", "Seccion": "POSTRE"},
+    {"Codigo": "27676", "Descripcion": "PIE DE PARCHITA PLAZAS", "Seccion": "POSTRE"},
     {"Codigo": "27678", "Descripcion": "GELATINA PLAZAS FRESA Y LECHE UND", "Seccion": "POSTRE"},
     {"Codigo": "27679", "Descripcion": "GELATINA PLAZAS FRAMBUESA Y LECHE UND", "Seccion": "POSTRE"},
     {"Codigo": "27680", "Descripcion": "GELATINA PLAZAS PINA Y LECHE UND", "Seccion": "POSTRE"},
@@ -165,7 +164,7 @@ PRODUCTOS_DATA = [
 ]
 df_productos = pd.DataFrame(PRODUCTOS_DATA)
 
-# CALLBACKS
+# CALLBACK PARA ACTUALIZACIÓN INSTANTÁNEA
 def actualizar_producto(seccion_key, index_key, selectbox_key):
     nuevo_nombre = st.session_state[selectbox_key]
     nuevo_codigo = df_productos[df_productos['Descripcion'] == nuevo_nombre]['Codigo'].values[0]
@@ -248,3 +247,6 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
             
         except Exception as e:
             st.error(f"Error al guardar: {e}")
+        except Exception as e:
+            st.error(f"Error al guardar: {e}")
+
