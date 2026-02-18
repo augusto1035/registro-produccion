@@ -91,45 +91,48 @@ df_productos = pd.DataFrame(PRODUCTOS_DATA)
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Gerencia de Alimentos Procesados", layout="wide")
 
-# CSS "Fuerza Bruta" para modo oscuro
+# CSS para forzar colores y estructura
 st.markdown("""
     <style>
-    /* Forzar fondo blanco y texto negro en TODO */
-    * { color: black !important; }
+    /* Forzar variables de Streamlit para ignorar modo oscuro */
+    :root {
+        --primary-color: #36b04b;
+        --background-color: #ffffff;
+        --secondary-background-color: #f0f2f6;
+        --text-color: #000000;
+    }
     
     html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
-        background-color: white !important;
-    }
-
-    .header { background-color: #36b04b !important; color: white !important; padding: 15px; text-align: center; font-weight: bold; font-size: 24px; border-radius: 5px; }
-    .header * { color: white !important; }
-
-    .section-header { background-color: #f0f2f6 !important; color: #333 !important; padding: 10px; font-weight: bold; text-align: center; margin-top: 25px; border-radius: 5px; border: 1px solid #ddd; }
-
-    .codigo-box { background-color: #f0f0f0 !important; color: black !important; padding: 8px; border-radius: 4px; text-align: center; font-family: monospace; border: 1px solid #ccc; height: 38px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-    
-    /* Botones Negros */
-    .stButton > button { 
-        background-color: black !important; 
-        color: white !important; 
-        border: none !important;
-    }
-    .stButton > button * { color: white !important; }
-
-    /* Forzar visibilidad en inputs */
-    input, textarea, [data-baseweb="select"] {
         background-color: white !important;
         color: black !important;
     }
 
-    /* Estilo para los textos de ayuda (labels) */
-    .stSelectbox label, .stDateInput label, .stTextArea label {
-        background-color: #ffffff !important;
-        padding: 2px 5px !important;
-        border-radius: 3px !important;
+    /* Forzar texto negro en etiquetas y widgets */
+    label, p, span, div, input, select, textarea {
+        color: black !important;
+    }
+
+    .header { background-color: #36b04b !important; color: white !important; padding: 15px; text-align: center; font-weight: bold; font-size: 24px; border-radius: 5px; }
+    .section-header { background-color: #f0f2f6 !important; color: #333 !important; padding: 10px; font-weight: bold; text-align: center; margin-top: 25px; border-radius: 5px; border: 1px solid #ddd; }
+    
+    .codigo-box { background-color: #f0f0f0 !important; color: black !important; padding: 8px; border-radius: 4px; text-align: center; font-family: monospace; border: 1px solid #ccc; height: 38px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+    
+    /* Botones negros con texto blanco forzado */
+    .stButton > button { 
+        background-color: black !important; 
+        color: white !important; 
+        border: none !important;
+        font-weight: bold !important;
+    }
+    .stButton > button * { color: white !important; }
+
+    /* Inputs siempre con fondo blanco */
+    [data-baseweb="select"], [data-baseweb="input"], [data-baseweb="popover"], [data-baseweb="calendar"], input, textarea {
+        background-color: white !important;
+        color: black !important;
     }
     </style>
-    <div class="header">Registro de producción <br><span style="font-size: 14px;">Gerencia de Alimentos Procesados</span></div>
+    <div class="header">Registro de producción <br><span style="font-size: 14px; color: white !important;">Gerencia de Alimentos Procesados</span></div>
     """, unsafe_allow_html=True)
 
 SECCIONES = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POSTRE", "RELLENOS Y CREMAS"]
@@ -137,14 +140,14 @@ SECCIONES = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POSTRE", 
 if 'secciones_data' not in st.session_state:
     st.session_state.secciones_data = {sec: [] for sec in SECCIONES}
 
-# Envolvemos los labels en HTML para asegurar visibilidad
-st.markdown("<b style='color:black;'>Supervisor</b>", unsafe_allow_html=True)
-supervisor = st.selectbox("", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"], key="sup_main", label_visibility="collapsed")
+# --- REGRESO A COLUMNAS PARA SUPERVISOR Y FECHA ---
+col_sup, col_fec = st.columns(2)
+with col_sup:
+    supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
+with col_fec:
+    fecha_sel = st.date_input("Fecha", datetime.now())
 
-st.markdown("<b style='color:black;'>Fecha de Registro</b>", unsafe_allow_html=True)
-fecha_sel = st.date_input("", datetime.now(), key="fec_main", label_visibility="collapsed")
-
-# --- RENDERIZADO ---
+# --- RENDERIZADO DE SECCIONES ---
 for seccion in SECCIONES:
     st.markdown(f'<div class="section-header">{seccion}</div>', unsafe_allow_html=True)
     opciones = df_productos[df_productos['Seccion'] == seccion]['Descripcion'].tolist()
@@ -178,8 +181,7 @@ for seccion in SECCIONES:
         st.rerun()
 
 st.write("---")
-st.markdown("<b style='color:black;'>Observaciones</b>", unsafe_allow_html=True)
-obs = st.text_area("", placeholder="Escriba aquí sus notas...", key="obs_main", label_visibility="collapsed")
+obs = st.text_area("Observaciones", placeholder="Escriba aquí sus notas...")
 
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
     all_data = []
@@ -206,5 +208,3 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
             for sec in SECCIONES: st.session_state.secciones_data[sec] = []
             st.rerun()
         except Exception as e: st.error(f"Error: {e}")
-    else:
-        st.warning("Ingrese al menos una cantidad mayor a 0.")
