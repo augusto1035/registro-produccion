@@ -6,94 +6,94 @@ import base64
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
 
-# --- CSS DE ARQUITECTURA FIJA (SOLUCIÓN FINAL) ---
+# --- CSS DE "CIRUGÍA PLÁSTICA" PARA LAS CAJAS ---
 st.markdown("""
     <style>
-    /* 1. OBLIGAR MODO CLARO (Soluciona "todo oscuro" en web) */
+    /* 1. MODO CLARO OBLIGATORIO */
     :root { color-scheme: light; }
     html, body, [data-testid="stAppViewContainer"] { background-color: #ffffff !important; color: black !important; }
 
-    /* 2. MAXIMIZAR ESPACIO LATERAL */
+    /* 2. ELIMINAR LOS MÁRGENES LATERALES PARA GANAR CADA PIXEL */
     .block-container {
         padding-top: 1rem !important;
-        padding-left: 0.5rem !important;
-        padding-right: 0.5rem !important;
-        max-width: 100% !important;
+        padding-bottom: 2rem !important;
+        padding-left: 0.1rem !important; /* Casi cero */
+        padding-right: 0.1rem !important;
     }
 
-    /* 3. LÓGICA DE FILA FLEXIBLE (NO WRAP) */
+    /* 3. FORZAR LA FILA A NO ROMPERSE (NO WRAP) */
     [data-testid="stHorizontalBlock"] {
         flex-wrap: nowrap !important;
         align-items: center !important;
-        gap: 2px !important;
-        width: 100% !important;
+        gap: 1px !important;
     }
 
-    /* 4. DEFINICIÓN EXACTA DE COLUMNAS (MÓVIL Y WEB) */
-    /* Esto aplica a las filas de 4 columnas. Los filtros de arriba (2 cols) no se afectan igual */
+    /* 4. DEFINICIÓN DE LOS ANCHOS DE LAS CAJAS (AQUÍ ESTÁ LA SOLUCIÓN) */
     
-    /* COLUMNA 1: CÓDIGO (FIJO 50px) */
+    /* CAJA 1: CÓDIGO (45px Fijos - Solo el ancho del número) */
     div[data-testid="column"]:nth-of-type(1) {
+        flex: 0 0 45px !important;
+        min-width: 45px !important;
+        max-width: 45px !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+
+    /* CAJA 2: DESCRIPCIÓN (Flexible - Ocupa el resto) */
+    div[data-testid="column"]:nth-of-type(2) {
+        flex: 1 1 auto !important;
+        min-width: 100px !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+
+    /* CAJA 3: CANTIDAD (50px Fijos - Solo el ancho de 4 dígitos) */
+    div[data-testid="column"]:nth-of-type(3) {
         flex: 0 0 50px !important;
         min-width: 50px !important;
         max-width: 50px !important;
-        overflow: hidden !important;
+        padding: 0 !important;
     }
 
-    /* COLUMNA 2: DESCRIPCIÓN (FLEXIBLE - LLENA EL RESTO) */
-    div[data-testid="column"]:nth-of-type(2) {
-        flex: 1 1 auto !important;
-        min-width: 100px !important; /* Mínimo para que no desaparezca */
-        overflow: hidden !important;
-    }
-
-    /* COLUMNA 3: CANTIDAD (FIJO 55px) */
-    div[data-testid="column"]:nth-of-type(3) {
-        flex: 0 0 55px !important;
-        min-width: 55px !important;
-        max-width: 55px !important;
-    }
-
-    /* COLUMNA 4: BOTÓN X (FIJO 35px) */
+    /* CAJA 4: BOTÓN X (35px Fijos) */
     div[data-testid="column"]:nth-of-type(4) {
         flex: 0 0 35px !important;
         min-width: 35px !important;
         max-width: 35px !important;
+        padding: 0 !important;
     }
 
-    /* 5. COMPONENTES COMPACTOS */
+    /* 5. ESTILO DE LOS INPUTS (LAS CAJAS EN SÍ MISMAS) */
+    
+    /* El selector y el input de número deben ser bajitos y sin aire */
     div[data-baseweb="select"] > div, 
     [data-testid="stNumberInput"] input {
         min-height: 35px !important;
         height: 35px !important;
+        padding: 0px 2px !important; /* Sin relleno interno */
         font-size: 11px !important;
-        padding: 0px 4px !important;
         background-color: white !important;
+        border: 1px solid #aaa !important; /* Borde visible */
         color: black !important;
-        border: 1px solid #ccc !important;
-    }
-    
-    /* Eliminar padding de las columnas */
-    div[data-testid="column"] > div {
-        width: 100% !important;
     }
 
-    /* 6. CAJA DE CÓDIGO */
-    .codigo-box {
+    /* 6. ESTILO DE LA CAJA DE CÓDIGO (GRIS) */
+    .codigo-container {
         background-color: #e0e0e0;
+        border: 1px solid #aaa;
         color: black;
-        border: 1px solid #999;
         font-weight: bold;
+        font-size: 10px;
         height: 35px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 10px;
         border-radius: 4px;
         width: 100%;
+        white-space: nowrap; /* Que no se parta el numero */
     }
 
-    /* 7. BOTONES VERDES (TODOS) */
+    /* 7. BOTONES VERDES (PLAZA'S) */
     .stButton > button {
         background-color: #36b04b !important;
         color: white !important;
@@ -101,36 +101,33 @@ st.markdown("""
         height: 35px !important;
         width: 100% !important;
         padding: 0 !important;
+        border-radius: 4px;
     }
-    .stButton > button:hover { background-color: #2a8a3b !important; }
-    .stButton > button p { font-size: 14px !important; font-weight: bold !important; }
-
-    /* 8. ENCABEZADO */
-    .header-container { display: flex; align-items: center; padding-bottom: 5px; border-bottom: 3px solid #36b04b; margin-bottom: 10px; }
-    .logo-img { height: 60px; margin-right: 15px; }
-    .main-title { color: #1a3a63 !important; font-size: 22px; font-weight: 800; margin: 0; line-height: 1.1; }
-    .sub-title { color: #444444 !important; font-size: 12px; margin: 0; }
     
-    /* 9. SELECTORES DE FILTRO (Arreglo para que no se rompan con la regla de columnas) */
-    /* Las columnas dentro del bloque de filtros (que son 2) deben ser iguales */
-    [data-testid="stHorizontalBlock"]:has(div:nth-of-type(2):last-child) > [data-testid="column"] {
-        flex: 1 1 50% !important;
-        max-width: 50% !important;
+    /* 8. HEADER (RESTAURADO) */
+    /* Protegemos el header para que las reglas de columnas no lo rompan */
+    .header-layout {
+        display: flex; 
+        align-items: center; 
+        padding-bottom: 5px; 
+        border-bottom: 3px solid #36b04b; 
+        margin-bottom: 10px;
     }
     </style>
     """, unsafe_allow_html=True)
 
 # --- HEADER ---
 def render_header(logo_path):
+    # Usamos HTML directo para que no le afecten las columnas de Streamlit
     try:
         with open(logo_path, "rb") as f:
             data = base64.b64encode(f.read()).decode()
         st.markdown(f"""
-            <div class="header-container">
-                <img src="data:image/png;base64,{data}" class="logo-img">
+            <div class="header-layout">
+                <img src="data:image/png;base64,{data}" style="height: 60px; margin-right: 10px;">
                 <div>
-                    <div class="main-title">Registro de Producción</div>
-                    <div class="sub-title">Gerencia de Alimentos Procesados</div>
+                    <div style="color:#1a3a63; font-size:20px; font-weight:800; line-height:1.1;">Registro de Producción</div>
+                    <div style="color:#444; font-size:12px;">Gerencia de Alimentos Procesados</div>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -228,24 +225,25 @@ SECCIONES_ORDEN = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POS
 if 'secciones_data' not in st.session_state:
     st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
 
-# SUPERVISOR Y FECHA
+# SUPERVISOR Y FECHA (FUERA DEL LOOP DE PRODUCTOS PARA QUE NO SE ROMPA)
+# Usamos columnas estándar aquí porque no necesitamos el ajuste micrométrico de la tabla
 col_sup, col_fec = st.columns(2)
 with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
 with col_fec: fecha_sel = st.date_input("Fecha", datetime.now())
 
 # RENDERIZADO
 for seccion in SECCIONES_ORDEN:
-    st.markdown(f'<div style="background:#f0f2f6; color:black; font-weight:bold; text-align:center; padding:5px; margin-top:15px; border-radius:4px;">{seccion}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="background:#f0f2f6; padding:4px; text-align:center; font-weight:bold; margin-top:15px; border-radius:4px; color:black; font-size:12px;">{seccion}</div>', unsafe_allow_html=True)
     
     opciones = df_productos[df_productos['Seccion'] == seccion]['Descripcion'].tolist()
     if not opciones: continue
 
     for i, item in enumerate(st.session_state.secciones_data[seccion]):
-        # Las proporciones ahora las controla el CSS global (50px, Flex, 55px, 35px)
+        # AQUÍ USAMOS ST.COLUMNS(4) PERO EL CSS "HACKEA" SUS ANCHOS
         c1, c2, c3, c4 = st.columns(4) 
         
         with c1:
-            st.markdown(f'<div class="codigo-box">{item["Codigo"]}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="codigo-container">{item["Codigo"]}</div>', unsafe_allow_html=True)
         with c2:
             seleccion = st.selectbox(f"s_{seccion}_{i}", options=opciones, key=f"sel_{seccion}_{i}", label_visibility="collapsed")
             item['Descripcion'] = seleccion
@@ -267,3 +265,6 @@ obs = st.text_area("", placeholder="Notas...", label_visibility="collapsed")
 
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
     st.success("¡Registro completado!"); st.balloons()
+if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
+    st.success("¡Registro completado!"); st.balloons()
+
