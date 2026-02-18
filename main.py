@@ -7,77 +7,85 @@ import base64
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Gerencia de Alimentos Procesados", layout="wide")
 
-# --- ESTILO GLOBAL Y BLINDAJE ---
+# --- INYECCIÓN DE ESTILO "NUCLEAR" PARA MANTENER LA FILA HORIZONTAL ---
 st.markdown("""
     <style>
-    /* 1. Fondo Blanco Forzado */
+    /* 1. Reset Global y Blindaje contra Modo Oscuro */
     html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: #FFFFFF !important;
         color: #000000 !important;
     }
 
-    /* 2. CINTILLO SUPERIOR PLAZA'S */
-    .header-container {
-        display: flex;
-        align-items: center;
-        padding: 10px 0px;
-        margin-bottom: 20px;
-        border-bottom: 3px solid #36b04b;
-        width: 100%;
+    /* 2. FORZAR FILA HORIZONTAL EN MÓVIL (ESTO ES LO MÁS IMPORTANTE) */
+    /* Rompemos el apilamiento vertical de Streamlit */
+    [data-testid="stHorizontalBlock"] {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        gap: 3px !important;
     }
-    .logo-img { height: 60px; margin-right: 15px; }
-    .main-title { font-family: 'Segoe UI', sans-serif; color: #1a3a63 !important; font-size: 22px; font-weight: 800; margin: 0; }
-    .sub-title { color: #444444 !important; font-size: 13px; margin: 0; }
 
-    /* 3. BLINDAJE DE COMPONENTES CONTRA MODO OSCURO */
-    div[data-baseweb="select"] > div, input, textarea, [data-testid="stNumberInput"] input {
+    /* Ajustamos las columnas para que no se expandan ni se apilen */
+    [data-testid="column"] {
+        width: auto !important;
+        flex: 1 1 auto !important;
+        min-width: 0px !important;
+    }
+
+    /* 3. AJUSTES DE COLORES PARA CALENDARIO Y CANTIDADES */
+    input, [data-testid="stNumberInput"] input, [data-testid="stDateInput"] input {
         background-color: #FFFFFF !important;
         color: #000000 !important;
         -webkit-text-fill-color: #000000 !important;
         border: 1px solid #CCCCCC !important;
-        font-size: 12px !important;
     }
-
-    /* Forzar que la lista desplegable sea blanca al abrirse */
-    div[role="listbox"], div[role="listbox"] * {
+    
+    div[data-baseweb="select"] > div, div[data-baseweb="select"] * {
         background-color: #FFFFFF !important;
         color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
     }
 
-    /* 4. BOTONES VERDES */
+    /* 4. ENCABEZADO PLAZA'S (CINTILLO) */
+    .header-container {
+        display: flex;
+        align-items: center;
+        padding: 5px;
+        margin-bottom: 15px;
+        border-bottom: 3px solid #36b04b;
+    }
+    .logo-img { height: 50px; margin-right: 10px; }
+    .main-title { color: #1a3a63 !important; font-size: 20px; font-weight: 800; margin: 0; }
+    .sub-title { color: #444444 !important; font-size: 11px; margin: 0; }
+
+    /* 5. BOTONES VERDES CON X BLANCA */
     .stButton > button {
         background-color: #36b04b !important;
         color: #FFFFFF !important;
-        font-weight: bold !important;
         border: none !important;
+        font-weight: bold !important;
+        padding: 0px !important;
     }
-    .stButton > button * { color: #FFFFFF !important; -webkit-text-fill-color: #FFFFFF !important; }
-
-    /* 5. TÍTULOS DE SECCIÓN */
-    .section-header { 
-        background-color: #f0f2f6 !important; 
-        color: #000 !important; 
-        padding: 5px; 
-        text-align: center; 
-        font-weight: bold; 
-        border-radius: 4px; 
-        font-size: 13px; 
-        margin-top: 15px;
+    .stButton > button p, .stButton > button span {
+        color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important;
     }
 
     /* 6. CAJA DE CÓDIGOS SAP */
     .codigo-box-forzado {
         background-color: #f0f0f0 !important;
         color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
         border: 1px solid #cccccc;
         text-align: center;
         font-weight: bold;
         border-radius: 4px;
-        height: 35px;
+        height: 38px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 10px;
+        font-size: 11px;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -190,21 +198,22 @@ SECCIONES_ORDEN = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POS
 if 'secciones_data' not in st.session_state:
     st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
 
-# Fila Superior
-col_sup, col_fec = st.columns([1, 1])
-with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
-with col_fec: fecha_sel = st.date_input("Fecha", datetime.now())
+# Filtros superiores
+col_sup, col_fec = st.columns(2)
+with col_sup:
+    supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
+with col_fec:
+    fecha_sel = st.date_input("Fecha", datetime.now())
 
-# --- RENDERIZADO CON CONTROL DE ANCHO FIJO ---
+# RENDERIZADO
 for seccion in SECCIONES_ORDEN:
-    st.markdown(f'<div class="section-header">{seccion}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="background-color: #f0f2f6; color: black; padding: 5px; text-align: center; font-weight: bold; border-radius: 4px; margin-top: 10px; font-size: 13px;">{seccion}</div>', unsafe_allow_html=True)
     opciones = df_productos[df_productos['Seccion'] == seccion]['Descripcion'].tolist()
     if not opciones: continue
 
     for i, item in enumerate(st.session_state.secciones_data[seccion]):
-        # USAMOS 4 COLUMNAS CON EL ANCHO MÁS AGRESIVO POSIBLE
-        c1, c2, c3, c4 = st.columns([0.5, 2.5, 0.8, 0.2])
-        
+        # COLUMNAS CON DISTRIBUCIÓN ESPECÍFICA
+        c1, c2, c3, c4 = st.columns([0.6, 2.5, 0.8, 0.3])
         with c1:
             st.markdown(f'<div class="codigo-box-forzado">{item["Codigo"]}</div>', unsafe_allow_html=True)
         with c2:
@@ -223,9 +232,9 @@ for seccion in SECCIONES_ORDEN:
         st.rerun()
 
 st.write("---")
-st.markdown('<p style="color:black !important; font-weight:bold; font-size:12px;">Observaciones:</p>', unsafe_allow_html=True)
+st.markdown('<p style="color: black; font-weight: bold; font-size: 12px; margin-bottom: 0;">Observaciones:</p>', unsafe_allow_html=True)
 obs = st.text_area("", placeholder="Notas...", label_visibility="collapsed")
 
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
     # Lógica de guardado...
-    st.success("¡Registro completado!"); st.balloons()
+    st.success("¡Registro completado exitosamente!"); st.balloons()
