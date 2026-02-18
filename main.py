@@ -7,7 +7,7 @@ from streamlit_gsheets import GSheetsConnection
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
 
-# --- CSS VISUAL (MANTENEMOS TU DISEÑO) ---
+# --- CSS VISUAL ---
 st.markdown("""
     <style>
     :root { color-scheme: light; }
@@ -42,7 +42,7 @@ def render_header(logo_path):
         with open(logo_path, "rb") as f:
             data = base64.b64encode(f.read()).decode()
         st.markdown(f"""
-            <div style="display: flex; align-items: center; padding-bottom: 10px; border-bottom: 4px solid #36b04b; margin-bottom: 20px;">
+            <div id="top-of-page" style="display: flex; align-items: center; padding-bottom: 10px; border-bottom: 4px solid #36b04b; margin-bottom: 20px;">
                 <img src="data:image/png;base64,{data}" style="height: 70px; margin-right: 15px; object-fit: contain;">
                 <div>
                     <h2 style="color:#1a3a63; margin:0; font-weight:900; font-size: 20px;">Registro de Producción</h2>
@@ -149,10 +149,16 @@ if 'exito' not in st.session_state:
 if 'texto_observaciones' not in st.session_state:
     st.session_state.texto_observaciones = ""
 
-# MENSAJE DE ÉXITO
+# MENSAJE DE ÉXITO + AUTO SCROLL
 if st.session_state.exito:
     st.success("✅ ¡Registro guardado exitosamente!")
     st.balloons()
+    # INYECTAMOS EL SCRIPT PARA SUBIR AL INICIO
+    st.markdown("""
+        <script>
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        </script>
+    """, unsafe_allow_html=True)
     st.session_state.exito = False
 
 # CALLBACKS
@@ -202,11 +208,9 @@ for seccion in SECCIONES_ORDEN:
 
 st.write("---")
 st.header("Observaciones")
-
-# --- OBSERVACIONES CON VALOR VINCULADO PARA EL RESETEO ---
 obs = st.text_area(
     "", 
-    value=st.session_state.texto_observaciones, # <--- Vinculado al estado
+    value=st.session_state.texto_observaciones,
     placeholder="Notas...", 
     label_visibility="collapsed", 
     key="obs_input"
@@ -218,7 +222,6 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
     registros = []
     timestamp_id = datetime.now().strftime("%Y%m%d%H%M%S")
     
-    # Recoger el texto actual del widget antes de resetear
     texto_final_obs = st.session_state.obs_input
 
     for seccion, items in st.session_state.secciones_data.items():
@@ -231,7 +234,7 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
                     "Codigo_Articulo": item['Codigo'],
                     "Descripcion": item['Descripcion'],
                     "Cantidad": item['Cantidad'],
-                    "Observaciones": texto_final_obs # <--- Usar el texto recolectado
+                    "Observaciones": texto_final_obs
                 })
     
     if not registros:
@@ -246,9 +249,13 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
             # --- RESETEO TOTAL ---
             st.session_state.exito = True
             st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
-            st.session_state.texto_observaciones = "" # <--- Limpia el valor vinculado
+            st.session_state.texto_observaciones = ""
             
             st.rerun()
             
         except Exception as e:
             st.error(f"Error al guardar: {e}")
+            
+        except Exception as e:
+            st.error(f"Error al guardar: {e}")
+
