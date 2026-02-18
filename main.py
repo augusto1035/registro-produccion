@@ -2,12 +2,12 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 import base64
-from streamlit_gsheets import GSheetsConnection  # Importación DIRECTA, sin miedos
+from streamlit_gsheets import GSheetsConnection
 
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
 
-# --- CSS VISUAL (MANTENIENDO LO QUE YA ARREGLAMOS) ---
+# --- CSS VISUAL (MANTENIENDO EL APILAMIENTO EN MÓVIL) ---
 st.markdown("""
     <style>
     :root { color-scheme: light; }
@@ -93,7 +93,7 @@ def render_header(logo_path):
 
 render_header("logo_plaza.png")
 
-# --- DATA (PRODUCTOS) ---
+# --- DATA ---
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -261,9 +261,14 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
         df_nuevo = pd.DataFrame(registros)
         
         try:
-            # 3. Leer y Actualizar Google Sheet (Hoja1)
-            df_existente = conn.read(worksheet="Hoja1")
+            # 3. Leer (CON TTL=0 PARA QUE NO LEA CACHÉ VIEJA) y Actualizar
+            # TTL=0 es la clave para que no borre lo anterior
+            df_existente = conn.read(worksheet="Hoja1", ttl=0) 
+            
+            # Unir lo viejo con lo nuevo
             df_total = pd.concat([df_existente, df_nuevo], ignore_index=True)
+            
+            # Guardar todo junto
             conn.update(worksheet="Hoja1", data=df_total)
             
             st.success("¡Datos guardados exitosamente en Google Sheets!")
@@ -271,6 +276,7 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
             
             # Limpiar datos después de guardar
             st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
+            st.rerun()
             
         except Exception as e:
             st.error(f"Error al guardar: {e}")
