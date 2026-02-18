@@ -94,8 +94,8 @@ st.set_page_config(page_title="Gerencia de Alimentos Procesados", layout="wide")
 # CSS para forzar fondo blanco y botones negros con letras blancas
 st.markdown("""
     <style>
-    /* Forzar fondo blanco total incluso en modo oscuro */
-    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stSidebar"] {
+    /* Forzar fondo blanco total en cualquier modo */
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: white !important;
         color: black !important;
     }
@@ -103,10 +103,10 @@ st.markdown("""
     .header { background-color: #36b04b; color: white; padding: 15px; text-align: center; font-weight: bold; font-size: 24px; border-radius: 5px; }
     .section-header { background-color: #f0f2f6; color: #333; padding: 10px; font-weight: bold; text-align: center; margin-top: 25px; border-radius: 5px; border: 1px solid #ddd; }
     
-    /* Caja de código: fondo gris muy claro, texto negro */
+    /* Caja de código: fondo gris muy claro, texto negro siempre */
     .codigo-box { background-color: #f0f0f0; padding: 8px; border-radius: 4px; text-align: center; font-family: monospace; border: 1px solid #ccc; color: black !important; height: 38px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
     
-    /* Botones de añadir: Fondo negro, letras blancas */
+    /* Botones Negros: Fondo negro, texto blanco */
     .stButton > button { 
         width: 100% !important; 
         border: none !important; 
@@ -115,28 +115,27 @@ st.markdown("""
         font-weight: bold !important;
     }
     
-    /* Botón de Finalizar: Fondo negro, letras blancas (forzado) */
+    /* Forzar visibilidad del texto en botones */
+    .stButton > button p {
+        color: white !important;
+    }
+    
+    /* Botón de Finalizar (Primary): También negro con texto blanco */
     div.stButton > button[kind="primary"] {
         background-color: black !important;
         color: white !important;
         border: none !important;
     }
 
-    /* Inputs y Selectores: forzar fondo blanco y texto negro */
-    input, select, textarea, div[data-baseweb="select"] {
-        background-color: white !important;
-        color: black !important;
-    }
-    
-    /* Observaciones: forzar fondo blanco y texto negro */
-    .stTextArea textarea {
+    /* Observaciones y otros inputs: Fondo blanco, texto negro */
+    textarea, input, div[data-baseweb="select"] {
         background-color: white !important;
         color: black !important;
         border: 1px solid #ccc !important;
     }
-
-    /* Etiquetas (Supervisor, Fecha) */
-    label, p, span {
+    
+    /* Forzar color de texto negro en todo el cuerpo para etiquetas y placeholders */
+    label, span, div, p {
         color: black !important;
     }
     </style>
@@ -175,7 +174,7 @@ for seccion in SECCIONES:
             item['Cantidad'] = st.number_input(f"Q_{seccion}_{i}", min_value=0, value=item['Cantidad'], key=f"q_{seccion}_{i}", label_visibility="collapsed")
             
         with c4:
-            # Botón eliminar con estilo por defecto (blanco/gris para diferenciar)
+            # Botón X pequeño: Lo mantenemos negro con texto blanco por consistencia
             if st.button("X", key=f"x_{seccion}_{i}"):
                 st.session_state.secciones_data[seccion].pop(i)
                 st.rerun()
