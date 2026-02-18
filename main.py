@@ -7,45 +7,40 @@ import base64
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
 
-# --- CSS "NUCLEAR" PARA MÓVIL (FILA ÚNICA OBLIGATORIA) ---
+# --- CSS CORRECTIVO (SIN DESBORDE + BOTONES VERDES) ---
 st.markdown("""
     <style>
-    /* 1. RESET Y BLINDAJE DE COLORES */
-    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
-        background-color: #FFFFFF !important;
-        color: #000000 !important;
+    /* 1. ELIMINAR MÁRGENES DE LA APP PARA GANAR ESPACIO LATERAL */
+    .block-container {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
     }
 
-    /* 2. FORZAR FILA HORIZONTAL EN MÓVIL (NO WRAP) */
-    @media (max-width: 640px) {
-        [data-testid="stHorizontalBlock"] {
-            display: flex !important;
-            flex-direction: row !important;
-            flex-wrap: nowrap !important; /* CLAVE: No baja de línea */
-            align-items: center !important;
-            width: 100% !important;
-            gap: 2px !important;
-            padding: 0px !important;
-        }
-        
-        /* OBLIGAR A LAS COLUMNAS A ENCOGERSE */
-        [data-testid="column"] {
-            min-width: 0px !important;
-            width: auto !important;
-            flex-shrink: 1 !important;
-            flex-grow: 0 !important;
-            padding: 0px !important;
-        }
+    /* 2. FORZAR FILA ÚNICA EN MÓVIL (NO WRAP) */
+    [data-testid="stHorizontalBlock"] {
+        flex-wrap: nowrap !important;
+        gap: 1px !important; /* Espacio mínimo entre elementos */
+        align-items: center !important;
     }
 
-    /* 3. TAMAÑOS MICRO PARA CELULAR */
-    /* Altura reducida para ganar espacio vertical y fuente pequeña para horizontal */
+    /* 3. COLUMNAS SIN ANCHO MÍNIMO (CRUCIAL PARA QUE NO DESBORDE) */
+    [data-testid="column"] {
+        min-width: 0px !important;
+        width: auto !important;
+        flex: 1 1 auto !important;
+        padding: 0px !important;
+        overflow: hidden !important;
+    }
+
+    /* 4. COMPONENTES ULTRA-COMPACTOS */
     div[data-baseweb="select"] > div, 
     input, 
     [data-testid="stNumberInput"] input {
-        height: 30px !important;
-        min-height: 30px !important;
-        font-size: 10px !important; /* Letra pequeña */
+        min-height: 35px !important;
+        height: 35px !important;
+        font-size: 11px !important;
         padding: 0px 2px !important;
         background-color: #FFFFFF !important;
         color: #000000 !important;
@@ -53,7 +48,7 @@ st.markdown("""
         border: 1px solid #CCCCCC !important;
     }
 
-    /* 4. CAJA DEL CÓDIGO (COLUMNA 1) */
+    /* 5. CAJA DE CÓDIGO (GRIS) */
     .codigo-box {
         background-color: #e0e0e0 !important;
         color: #000000 !important;
@@ -61,39 +56,43 @@ st.markdown("""
         text-align: center;
         font-weight: bold;
         border-radius: 3px;
-        height: 30px;
+        height: 35px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 9px; /* Código pequeño pero legible */
-        width: 100%;
+        font-size: 10px;
+        line-height: 1;
+        white-space: nowrap;
+        overflow: hidden;
     }
 
-    /* 5. BOTÓN X (COLUMNA 4) */
+    /* 6. TODOS LOS BOTONES VERDES (INCLUIDA LA X) */
     .stButton > button {
-        background-color: #dc3545 !important; /* Rojo para borrar */
-        color: white !important;
+        background-color: #36b04b !important; /* VERDE PLAZA'S */
+        color: #FFFFFF !important;
         border: none !important;
-        height: 30px !important;
-        min-height: 30px !important;
+        height: 35px !important;
+        min-height: 35px !important;
         padding: 0px !important;
-        font-size: 12px !important;
         width: 100% !important;
+        font-weight: bold !important;
     }
-    .stButton > button p { color: white !important; }
-
-    /* 6. BOTONES DE AÑADIR (VERDES) */
-    .add-btn > button {
-        background-color: #36b04b !important; /* Verde Plaza's */
+    .stButton > button:hover {
+        color: #FFFFFF !important;
+        background-color: #2a8a3b !important;
     }
+    .stButton > button p { color: #FFFFFF !important; }
 
     /* 7. ENCABEZADO */
-    .header-container { display: flex; align-items: center; padding: 5px; border-bottom: 3px solid #36b04b; width: 100%; margin-bottom: 5px; }
+    .header-container { display: flex; align-items: center; padding: 5px; border-bottom: 3px solid #36b04b; width: 100%; margin-bottom: 10px; }
     .logo-img { height: 45px; margin-right: 8px; }
-    .main-title { color: #1a3a63 !important; font-size: 16px; font-weight: 800; margin: 0; line-height: 1; }
+    .main-title { color: #1a3a63 !important; font-size: 18px; font-weight: 800; margin: 0; line-height: 1.1; }
     .sub-title { color: #444444 !important; font-size: 10px; margin: 0; }
     
-    .section-header { background-color: #f0f2f6 !important; color: #000 !important; padding: 2px; text-align: center; font-weight: bold; font-size: 11px; margin-top: 5px;}
+    .section-header { background-color: #f0f2f6 !important; color: #000 !important; padding: 2px; text-align: center; font-weight: bold; font-size: 12px; margin-top: 10px;}
+    
+    /* Corrección para listas desplegables */
+    div[role="listbox"] * { font-size: 14px !important; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -116,7 +115,7 @@ def render_header(logo_path):
 
 render_header("logo_plaza.png")
 
-# --- BASE DE DATOS MAESTRA (79 PRODUCTOS) ---
+# --- DATA ---
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -214,44 +213,30 @@ with col_fec: fecha_sel = st.date_input("Fecha", datetime.now())
 for seccion in SECCIONES_ORDEN:
     st.markdown(f'<div class="section-header">{seccion}</div>', unsafe_allow_html=True)
     opciones = df_productos[df_productos['Seccion'] == seccion]['Descripcion'].tolist()
-    
     if not opciones: continue
 
     for i, item in enumerate(st.session_state.secciones_data[seccion]):
         
-        # --- ESTRUCTURA DE COLUMNAS (MÓVIL: 15% | 55% | 20% | 10%) ---
-        c1, c2, c3, c4 = st.columns([1.5, 5.5, 2, 1])
+        # PROPORCIÓN ESTRICTA PARA MÓVIL (15% | 55% | 20% | 10%)
+        # El CSS 'flex-wrap: nowrap' impide que se rompa la fila
+        c1, c2, c3, c4 = st.columns([1.5, 5.5, 2.0, 1.0])
         
         with c1:
-            # AQUÍ VA EL CÓDIGO (Columna Gris)
             st.markdown(f'<div class="codigo-box">{item["Codigo"]}</div>', unsafe_allow_html=True)
-        
         with c2:
-            # AQUÍ VA LA DESCRIPCIÓN (Selectbox)
             seleccion = st.selectbox(f"sel_{seccion}_{i}", options=opciones, key=f"sel_{seccion}_{i}", label_visibility="collapsed")
             item['Descripcion'] = seleccion
-            # Actualizamos el código según la selección
             item['Codigo'] = df_productos[df_productos['Descripcion'] == seleccion]['Codigo'].values[0]
-            
         with c3:
-            # AQUÍ VA LA CANTIDAD (Input)
             item['Cantidad'] = st.number_input(f"qty_{seccion}_{i}", min_value=0, step=1, key=f"q_{seccion}_{i}", label_visibility="collapsed")
-            
         with c4:
-            # AQUÍ VA LA X (Botón Rojo)
             if st.button("X", key=f"x_{seccion}_{i}"):
                 st.session_state.secciones_data[seccion].pop(i)
                 st.rerun()
 
-    # Botón Añadir (Clase personalizada verde)
-    col_add = st.columns(1)[0]
-    with col_add:
-        # Usamos un contenedor para darle la clase 'add-btn'
-        st.markdown('<div class="add-btn">', unsafe_allow_html=True)
-        if st.button(f"➕ {seccion.lower()}", key=f"btn_{seccion}"):
-            st.session_state.secciones_data[seccion].append({"Codigo": opciones[0], "Descripcion": opciones[0], "Cantidad": 0})
-            st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
+    if st.button(f"➕ Añadir a {seccion.lower()}", key=f"btn_{seccion}"):
+        st.session_state.secciones_data[seccion].append({"Codigo": opciones[0], "Descripcion": opciones[0], "Cantidad": 0})
+        st.rerun()
 
 st.write("---")
 st.markdown('<p style="color:black !important; font-weight:bold; font-size:12px; margin-bottom:0;">Observaciones:</p>', unsafe_allow_html=True)
