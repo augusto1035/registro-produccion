@@ -6,33 +6,93 @@ import base64
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
 
-# --- CSS INTELIGENTE (WEB NORMAL vs MÓVIL FORZADO) ---
+# --- CSS DE FUERZA BRUTA (SOLUCIÓN DEFINITIVA) ---
 st.markdown("""
     <style>
-    /* 1. MODO CLARO OBLIGATORIO */
+    /* 1. BLINDAJE DE COLORES (BLANCO Y NEGRO SIEMPRE) */
     :root { color-scheme: light; }
     html, body, [data-testid="stAppViewContainer"] { background-color: #ffffff !important; color: black !important; }
 
-    /* 2. HEADER Y CINTILLO (GLOBAL) */
+    /* 2. ESPACIO DEL CINTILLO (4rem PARA QUE NO SE CORTE) */
     .block-container {
-        padding-top: 3.5rem !important;
-        padding-bottom: 3rem !important;
+        padding-top: 4rem !important; 
         padding-left: 0.5rem !important;
         padding-right: 0.5rem !important;
+        padding-bottom: 3rem !important;
     }
 
-    /* 3. ESTILOS DE COMPONENTES (BLANCO Y NEGRO) */
+    /* 3. REGLA MAESTRA PARA MÓVIL (MAX-WIDTH 640px) */
+    @media (max-width: 640px) {
+        
+        /* OBLIGAR A FILA ÚNICA (NO WRAP) */
+        [data-testid="stHorizontalBlock"] {
+            display: flex !important;
+            flex-wrap: nowrap !important; /* CRUCIAL: NO BAJAR LÍNEA */
+            align-items: center !important;
+            gap: 2px !important;
+        }
+
+        /* ANULAR EL ANCHO MÍNIMO DE STREAMLIT (ESTO CAUSABA EL APILAMIENTO) */
+        [data-testid="column"] {
+            min-width: 0px !important; /* LA CLAVE */
+            width: auto !important;
+            padding: 0px !important;
+            flex-grow: 0 !important; 
+            flex-shrink: 0 !important;
+        }
+
+        /* --- ANCHOS EXACTOS PARA CADA CAJA (SOLO MÓVIL) --- */
+
+        /* CAJA 1: CÓDIGO (45px) */
+        [data-testid="column"]:nth-of-type(1) {
+            flex-basis: 45px !important;
+            width: 45px !important;
+            overflow: hidden !important;
+        }
+
+        /* CAJA 2: DESCRIPCIÓN (Flexible - llena el hueco) */
+        [data-testid="column"]:nth-of-type(2) {
+            flex-grow: 1 !important; /* Crece */
+            flex-shrink: 1 !important; /* Encoje si hace falta */
+            flex-basis: auto !important;
+            width: auto !important;
+        }
+
+        /* CAJA 3: CANTIDAD (50px) */
+        [data-testid="column"]:nth-of-type(3) {
+            flex-basis: 50px !important;
+            width: 50px !important;
+        }
+
+        /* CAJA 4: X (40px) */
+        [data-testid="column"]:nth-of-type(4) {
+            flex-basis: 40px !important;
+            width: 40px !important;
+        }
+
+        /* REDUCIR ALTURA DE TODO EN MÓVIL */
+        div[data-baseweb="select"] > div, 
+        [data-testid="stNumberInput"] input,
+        .codigo-box,
+        .stButton > button {
+            min-height: 35px !important;
+            height: 35px !important;
+            font-size: 11px !important;
+            padding: 0px 2px !important;
+        }
+    }
+
+    /* 4. ESTILOS GENERALES (WEB Y MÓVIL) */
     div[data-baseweb="select"] > div, 
-    [data-testid="stNumberInput"] input,
-    [data-testid="stDateInput"] input {
+    [data-testid="stNumberInput"] input {
         background-color: white !important;
         color: black !important;
         border: 1px solid #999 !important;
         border-radius: 4px !important;
-        font-size: 13px !important;
+        font-size: 13px;
     }
 
-    /* Caja de Código Base */
+    /* Caja Código */
     .codigo-box {
         background-color: #e0e0e0;
         border: 1px solid #999;
@@ -44,7 +104,7 @@ st.markdown("""
         border-radius: 4px;
         width: 100%;
         height: 100%;
-        min-height: 40px;
+        min-height: 38px;
         font-size: 11px;
     }
 
@@ -56,70 +116,17 @@ st.markdown("""
         width: 100% !important;
     }
     .stButton > button:hover { background-color: #2a8a3b !important; }
-
-    /* ============================================================
-       4. MEDIA QUERY: REGLAS SOLO PARA MÓVIL (< 640px)
-       Aquí prohibimos el apilamiento
-       ============================================================ */
-    @media (max-width: 640px) {
-        
-        /* A. DETECTAR FILAS DE 4 COLUMNAS (PRODUCTOS) Y FORZAR FILA ÚNICA */
-        [data-testid="stHorizontalBlock"]:has(> [data-testid="column"]:nth-child(4)) {
-            flex-direction: row !important; /* OBLIGAR HORIZONTAL */
-            flex-wrap: nowrap !important;   /* PROHIBIR APILAR */
-            display: flex !important;
-            gap: 2px !important;
-        }
-
-        /* B. PERMITIR QUE LAS COLUMNAS SE ENCOJAN AL MÁXIMO */
-        [data-testid="column"] {
-            min-width: 0px !important;
-            width: auto !important;
-            padding: 0px !important;
-        }
-
-        /* C. ANCHOS EXACTOS PIXEL POR PIXEL (SOLO MÓVIL) */
-        
-        /* Columna 1: CÓDIGO (45px - Solo el numero) */
-        [data-testid="stHorizontalBlock"]:has(> [data-testid="column"]:nth-child(4)) > [data-testid="column"]:nth-child(1) {
-            flex: 0 0 45px !important;
-            width: 45px !important;
-            overflow: hidden !important;
-        }
-
-        /* Columna 2: DESCRIPCIÓN (Flexible - Todo lo que sobra) */
-        [data-testid="stHorizontalBlock"]:has(> [data-testid="column"]:nth-child(4)) > [data-testid="column"]:nth-child(2) {
-            flex: 1 1 auto !important;
-            overflow: hidden !important;
-        }
-
-        /* Columna 3: CANTIDAD (50px - Solo 4 digitos) */
-        [data-testid="stHorizontalBlock"]:has(> [data-testid="column"]:nth-child(4)) > [data-testid="column"]:nth-child(3) {
-            flex: 0 0 50px !important;
-            width: 50px !important;
-        }
-
-        /* Columna 4: X (35px) */
-        [data-testid="stHorizontalBlock"]:has(> [data-testid="column"]:nth-child(4)) > [data-testid="column"]:nth-child(4) {
-            flex: 0 0 35px !important;
-            width: 35px !important;
-        }
-
-        /* D. REDUCIR ALTURA DE COMPONENTES EN MÓVIL */
-        div[data-baseweb="select"] > div, 
-        [data-testid="stNumberInput"] input,
-        .codigo-box,
-        .stButton > button {
-            min-height: 35px !important;
-            height: 35px !important;
-            font-size: 10px !important;
-            padding: 0px 2px !important;
-        }
+    
+    /* Arreglo para que los filtros de arriba no se rompan por las reglas de abajo */
+    /* Si el bloque NO tiene 4 columnas, usa flex normal */
+    [data-testid="stHorizontalBlock"]:not(:has(> [data-testid="column"]:nth-child(4))) > [data-testid="column"] {
+        flex: 1 1 50% !important;
+        min-width: 100px !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- HEADER (HTML Puro) ---
+# --- HEADER (HTML) ---
 def render_header(logo_path):
     try:
         with open(logo_path, "rb") as f:
@@ -138,7 +145,7 @@ def render_header(logo_path):
 
 render_header("logo_plaza.png")
 
-# --- DATA ---
+# --- DATOS ---
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -227,7 +234,7 @@ SECCIONES_ORDEN = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POS
 if 'secciones_data' not in st.session_state:
     st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
 
-# SUPERVISOR Y FECHA (Estos usan columnas estándar de Streamlit)
+# SUPERVISOR Y FECHA
 col_sup, col_fec = st.columns(2)
 with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
 with col_fec: fecha_sel = st.date_input("Fecha", datetime.now())
@@ -240,7 +247,7 @@ for seccion in SECCIONES_ORDEN:
     if not opciones: continue
 
     for i, item in enumerate(st.session_state.secciones_data[seccion]):
-        # COLUMNAS: En Web se verá normal, en móvil el CSS las fuerza.
+        # COLUMNAS: Streamlit normal (Web). En Móvil, CSS entra en acción.
         c1, c2, c3, c4 = st.columns(4) 
         
         with c1:
@@ -266,4 +273,5 @@ obs = st.text_area("", placeholder="Notas...", label_visibility="collapsed")
 
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
     st.success("¡Registro completado!"); st.balloons()
+
 
