@@ -91,21 +91,26 @@ df_productos = pd.DataFrame(PRODUCTOS_DATA)
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Gerencia de Alimentos Procesados", layout="wide")
 
-# CSS REFORZADO PARA FORZAR TEXTO NEGRO E IGNORAR MODO OSCURO
 st.markdown("""
     <style>
-    /* 1. Fondo principal siempre blanco */
+    /* 1. Fondo principal y forzado de modo claro */
     html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: white !important;
+        color: black !important;
     }
 
-    /* 2. FORZAR TEXTO NEGRO EN TODA LA APP */
-    * { 
-        color: black !important; 
+    /* 2. FORZADO DE TEXTO NEGRO EN LISTAS DESPLEGABLES (Flotantes) */
+    /* Este es el selector que controla el menú cuando se abre */
+    div[data-baseweb="popover"], div[role="listbox"], div[data-baseweb="menu"] {
+        background-color: white !important;
+    }
+    
+    div[data-baseweb="popover"] *, div[role="listbox"] *, div[role="option"] * {
+        color: black !important;
         -webkit-text-fill-color: black !important;
     }
 
-    /* 3. Estilo del Encabezado Verde */
+    /* 3. Encabezado */
     .header { background-color: #36b04b !important; padding: 15px; text-align: center; border-radius: 5px; }
     .header-text { color: white !important; -webkit-text-fill-color: white !important; font-weight: bold; font-size: 24px; }
     .header-subtext { color: white !important; -webkit-text-fill-color: white !important; font-size: 14px; }
@@ -113,46 +118,31 @@ st.markdown("""
     /* 4. Títulos de secciones */
     .section-header { background-color: #f0f2f6 !important; color: #333 !important; padding: 10px; font-weight: bold; text-align: center; margin-top: 25px; border-radius: 5px; border: 1px solid #ddd; }
 
-    /* 5. Caja de Código SAP (Gris claro) */
+    /* 5. Caja de Código SAP */
     .codigo-box { background-color: #f0f0f0 !important; color: black !important; padding: 8px; border-radius: 4px; text-align: center; font-family: monospace; border: 1px solid #ccc; height: 38px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
     
-    /* 6. BOTONES NEGROS CON TEXTO BLANCO */
+    /* 6. Botones Negros */
     .stButton > button { 
         background-color: black !important; 
         border: none !important;
-        font-weight: bold !important;
     }
     .stButton > button p, .stButton > button div, .stButton > button span {
         color: white !important;
         -webkit-text-fill-color: white !important;
     }
 
-    /* 7. Inputs y Selectores: Forzar fondo blanco y texto negro */
-    div[data-baseweb="select"] > div, input, textarea, div[role="listbox"] {
+    /* 7. Inputs y Selectores cerrados */
+    div[data-baseweb="select"] > div, input, textarea {
         background-color: white !important;
         color: black !important;
         -webkit-text-fill-color: black !important;
         border: 1px solid #ccc !important;
     }
     
-    /* Forzar visibilidad de opciones al abrir el menú */
-    div[role="option"] * {
-        color: black !important;
-        -webkit-text-fill-color: black !important;
-    }
-
-    /* 8. CALENDARIO: Asegurar que los números sean visibles */
+    /* 8. CALENDARIO */
     div[data-baseweb="calendar"] * {
         color: black !important;
         -webkit-text-fill-color: black !important;
-    }
-    /* Día seleccionado */
-    div[data-baseweb="calendar"] [aria-selected="true"] {
-        background-color: #36b04b !important;
-    }
-    div[data-baseweb="calendar"] [aria-selected="true"] * {
-        color: white !important;
-        -webkit-text-fill-color: white !important;
     }
     </style>
     
@@ -162,6 +152,7 @@ st.markdown("""
     </div>
     """, unsafe_allow_html=True)
 
+# 2. SECCIONES
 SECCIONES = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POSTRE", "RELLENOS Y CREMAS"]
 
 if 'secciones_data' not in st.session_state:
