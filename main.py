@@ -3,169 +3,201 @@ import pandas as pd
 from datetime import datetime
 from streamlit_gsheets import GSheetsConnection
 
-# 1. CONFIGURACIÓN DE PÁGINA
-st.set_page_config(page_title="Registro de producción", layout="wide")
+# 1. BASE DE DATOS DE PRODUCTOS (Mapeo de Código, Descripción y Sección)
+PRODUCTOS_DATA = [
+    {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
+    {"Codigo": "27115", "Descripcion": "TORTA DE AREQUIPE GRANDE", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27119", "Descripcion": "TORTA DE ZANAHORIA CON NUECES GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
+    {"Codigo": "27121", "Descripcion": "TORTA DE ZANAHORIA CON QUESO CREMA GRANDE", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27127", "Descripcion": "TORTA DE CHOCOLATE GRANDE", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27133", "Descripcion": "TORTA DE PIÑA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
+    {"Codigo": "27137", "Descripcion": "TORTA DE VAINILLA CON CHOCOLATE GRANDE", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27179", "Descripcion": "TORTA DE CHOCO MANI PLAZAS PEQ", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27180", "Descripcion": "TORTA DE CHOCO MANI PLAZAS GDE", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27198", "Descripcion": "TORTA CHOCO MANI VAINILLA PLAZAS PEQ", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27216", "Descripcion": "PAN DULCE PLAZAS", "Seccion": "PANES"},
+    {"Codigo": "27284", "Descripcion": "TORTA DE NARANJA PEQUEÑA", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
+    {"Codigo": "27285", "Descripcion": "TORTA DE AREQUIPE PEQUEÑA", "Seccion": "PASTELERIA"},
+    {"Codigo": "27287", "Descripcion": "TORTA DE ZANAHORIA CON NUECES PEQUEÑA", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
+    {"Codigo": "27289", "Descripcion": "TORTA DE PIÑA PEQUEÑA", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
+    {"Codigo": "27290", "Descripcion": "TORTA DE VAINILLA CON CHOCOLATE PEQUEÑA", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27291", "Descripcion": "TORTA DE ZANAHORIA CON QUESO CREMA PEQUEÑA", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27294", "Descripcion": "TORTA DE CHOCOLATE PEQUEÑA", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27315", "Descripcion": "TORTA DE COCO PEQUEÑA", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
+    {"Codigo": "27316", "Descripcion": "TORTA DE COCO GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
+    {"Codigo": "27323", "Descripcion": "TORTA MARMOLEADA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
+    {"Codigo": "27324", "Descripcion": "TORTA MARMOLEADA PEQUEÑA", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
+    {"Codigo": "27347", "Descripcion": "TORTA PLAZAS CHOCO AREQUIPE GRANDE", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27348", "Descripcion": "TORTA PLAZAS CHOCO AREQUIPE PEQ", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27349", "Descripcion": "TORTA RED VELVET PEQUEÑA", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27350", "Descripcion": "TORTA PLAZAS DE COCO Y DULCE DE LECHE GRANDE", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27365", "Descripcion": "TORTA PLAZAS DE COCO Y DULCE DE LECHE PEQUEÑA", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27366", "Descripcion": "TORTA PLAZAS HALLOWEEN CHOCOLATE PEQ", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27368", "Descripcion": "TORTA BLACK FRIDAY VAINILLA CHOCOLAT PEQ", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27371", "Descripcion": "TORTA DE VAINILLA CON CHOCOLATE PEQUEÑA ESPCIAL", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27470", "Descripcion": "PAN DE COCO PLAZAS PAQUETE 4UND", "Seccion": "PANES"},
+    {"Codigo": "27471", "Descripcion": "PAN DE AREQUIPE PLAZAS PAQUETE 4UND", "Seccion": "PANES"},
+    {"Codigo": "27476", "Descripcion": "TORTA PLAZAS TROPICAL PEQUEÑA", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27478", "Descripcion": "TORTA PINGÜINO CHOCOLATE PEQ", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27511", "Descripcion": "TORTA DE BANANA PEQ", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
+    {"Codigo": "27657", "Descripcion": "TORTA DE CAMBUR PLAZAS CHISPAS DE CHOCOLATE", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27658", "Descripcion": "TORTA VAINILLA CHOCOTINA Y NUECES PEQ", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27659", "Descripcion": "TORTA VAINILLA CREMA BLANCA CHOCO LLUVIA PEQ", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27660", "Descripcion": "TORTA VAINILLA AREQUIPE CHOCO GOTAS PEQ", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27661", "Descripcion": "TORTA VAINILLA AREQUIPE CHOCO LLUVIA PEQ", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27662", "Descripcion": "TORTA VAINILLA CREMA BLANCA NUECES PEQ", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27663", "Descripcion": "TORTA VAINILLA CHOCOKRON CHOCO LLUVIA PEQ", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27667", "PIE DE LIMON PLAZAS": "POSTRE", "Seccion": "POSTRE"},
+    {"Codigo": "27673", "Descripcion": "QUESILLO INDIVIDUAL PLAZAS", "Seccion": "POSTRE"},
+    {"Codigo": "27637", "Descripcion": "MINI TORTA PLAZAS UND (UN)", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
+    {"Codigo": "27676", "Descripcion": "PIE DE PARCHITA PLAZAS", "Seccion": "POSTRE"},
+    {"Codigo": "27678", "Descripcion": "GELATINA PLAZAS FRESA Y LECHE UND", "Seccion": "POSTRE"},
+    {"Codigo": "27679", "Descripcion": "GELATINA PLAZAS FRAMBUESA Y LECHE UND", "Seccion": "POSTRE"},
+    {"Codigo": "27680", "Descripcion": "GELATINA PLAZAS PINA Y LECHE UND", "Seccion": "POSTRE"},
+    {"Codigo": "27681", "Descripcion": "GELATINA PLAZAS LIMON UND", "Seccion": "POSTRE"},
+    {"Codigo": "27682", "Descripcion": "GELATINA PLAZAS FRAMBUESA UND", "Seccion": "POSTRE"},
+    {"Codigo": "27683", "Descripcion": "GELATINA PLAZAS PINA UND", "Seccion": "POSTRE"},
+    {"Codigo": "27684", "Descripcion": "GELATINA PLAZAS FRESA UND", "Seccion": "POSTRE"},
+    {"Codigo": "27116", "Descripcion": "TORTA VAINILLA PLAZAS AREQUIPE PORCION", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27128", "Descripcion": "TORTA DE CHOCOLATE PLAZAS PORCION", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27138", "Descripcion": "TORTA VAINILLA CUB CHOCOL PLAZAS PORCION", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27377", "Descripcion": "TORTA CHOCO AREQUIPE PLAZAS PORCION", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27697", "Descripcion": "GALLETAS CRAQUELADAS PLAZAS CHOCOLATE", "Seccion": "POSTRE"},
+    {"Codigo": "27702", "Descripcion": "SUSPIROS MULTICOLOR PLAZAS UND", "Seccion": "POSTRE"},
+    {"Codigo": "27677", "Descripcion": "PUDIN DE CHOCOLATE", "Seccion": "POSTRE"},
+    {"Codigo": "27695", "Descripcion": "NUBE DE CHOCOLATE", "Seccion": "POSTRE"},
+    {"Codigo": "27696", "Descripcion": "MARQUESA DE ALMENDRA", "Seccion": "POSTRE"},
+    {"Codigo": "27688", "Descripcion": "ARROZ CON LECHE", "Seccion": "POSTRE"},
+    {"Codigo": "27686", "Descripcion": "MARQUESA DE CHOCOLATE", "Seccion": "POSTRE"},
+    {"Codigo": "27687", "Descripcion": "MARQUESA DE COCO", "Seccion": "POSTRE"},
+    {"Codigo": "27685", "Descripcion": "TRES LECHE", "Seccion": "POSTRE"},
+    {"Codigo": "27293", "Descripcion": "BIZCOCHO DE VAINILLA PEQ (BASE)", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
+    {"Codigo": "27480", "Descripcion": "BIZCOCHO DE CHOCOLATE PEQ (BASE)", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
+    {"Codigo": "27111", "Descripcion": "BIZCOCHO DE VAINILLA GRANDE (BASE)", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
+    {"Codigo": "27374", "Descripcion": "RELLENO PARA LEMON PIE KG", "Seccion": "RELLENOS Y CREMAS"},
+    {"Codigo": "27698", "Descripcion": "PASTA SECA PLAZAS 200G UND", "Seccion": "POSTRE"},
+    {"Codigo": "27391", "Descripcion": "RELLENO PARA PIE DE PARCHITA KG", "Seccion": "RELLENOS Y CREMAS"},
+    {"Codigo": "27700", "Descripcion": "RECETA BASE PLANCHA GRUES TRES LECHES UN", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
+    {"Codigo": "27703", "Descripcion": "BASE PARA TARTALETAS (MASA DULCE) KG", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
+    {"Codigo": "27145", "Descripcion": "CREMA DE QUESO CREMA PARA TORTA", "Seccion": "RELLENOS Y CREMAS"},
+    {"Codigo": "27701", "Descripcion": "BIZCOCHUELO DE VAINILLA UND (BASE)", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
+    {"Codigo": "1", "Descripcion": "BASE DE COCO COCO PEQUEÑA", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
+    {"Codigo": "2", "Descripcion": "BASE DE RED VELVET", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"}
+]
 
-# 2. ESTILO VISUAL (Fondo blanco, botones estilo Power Apps, sin sombras)
+# Convertimos a DataFrame para facilitar el filtrado
+df_productos = pd.DataFrame(PRODUCTOS_DATA)
+
+# 2. CONFIGURACIÓN DE PÁGINA Y ESTILO
+st.set_page_config(page_title="Gerencia de Alimentos Procesados", layout="wide")
+
 st.markdown("""
     <style>
-    /* Fondo blanco total */
-    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
-        background-color: white !important;
-        color: #31333F !important;
-    }
-    
-    /* Encabezado Verde IESA */
-    .header {
-        background-color: #36b04b;
-        color: white;
-        padding: 15px;
-        text-align: center;
-        font-family: 'Segoe UI', sans-serif;
-        font-size: 24px;
-        font-weight: bold;
-        border-radius: 5px;
-        margin-bottom: 20px;
-    }
-
-    /* Títulos de Sección (PRODUCCIÓN / DECORACIÓN) */
-    .section-header {
-        color: #333333;
-        font-family: 'Segoe UI', sans-serif;
-        font-size: 18px;
-        font-weight: bold;
-        text-align: center;
-        margin-top: 30px;
-        margin-bottom: 15px;
-        text-transform: uppercase;
-    }
-
-    /* BOTONES BLANCOS CON BORDE OSCURO */
-    .stButton > button {
-        background-color: white !important;
-        color: #333333 !important;
-        border: 1px solid #cccccc !important;
-        border-radius: 4px !important;
-        width: 100% !important;
-        height: 40px !important;
-        font-weight: 500 !important;
-    }
-    
-    .stButton > button:hover {
-        border-color: #36b04b !important;
-        color: #36b04b !important;
-    }
-
-    /* Botón X para eliminar (Rojo y sin bordes) */
-    div[data-testid="stColumn"] > div > div > div > div > .stButton > button {
-        border: none !important;
-        color: #cc0000 !important;
-        background: transparent !important;
-        font-size: 18px !important;
-    }
-
-    /* Inputs y Selectores siempre blancos */
-    input, div[data-baseweb="select"], div[data-baseweb="input"], .stNumberInput div {
-        background-color: white !important;
-        color: black !important;
-        border: 1px solid #cccccc !important;
-    }
-    
-    /* Eliminar sombras de los bloques */
-    div[data-testid="stVerticalBlock"] > div {
-        background-color: transparent !important;
-        box-shadow: none !important;
-        border: none !important;
-    }
+    html, body, [data-testid="stAppViewContainer"] { background-color: white !important; }
+    .header { background-color: #36b04b; color: white; padding: 15px; text-align: center; font-weight: bold; font-size: 24px; border-radius: 5px; }
+    .section-header { background-color: #f0f2f6; color: #333; padding: 10px; font-weight: bold; text-align: center; margin-top: 25px; border-radius: 5px; border: 1px solid #ddd; }
+    .stButton > button { width: 100% !important; border: 1px solid #ccc !important; background-color: white !important; }
     </style>
-    
-    <div class="header">Registro de producción</div>
+    <div class="header">Registro de producción <br><span style="font-size: 14px;">Gerencia de Alimentos Procesados</span></div>
     """, unsafe_allow_html=True)
 
-# 3. INICIALIZACIÓN DE VARIABLES DE SESIÓN
-if 'prod' not in st.session_state: st.session_state.prod = []
-if 'dec' not in st.session_state: st.session_state.dec = []
+# 3. INICIALIZACIÓN DE SECCIONES EN SESSION STATE
+SECCIONES = [
+    "BASES, BISCOCHOS Y TARTALETAS", 
+    "DECORACIÓN", 
+    "PANES", 
+    "PASTELERIA", 
+    "POSTRE", 
+    "RELLENOS Y CREMAS"
+]
 
-# 4. ENCABEZADO DE SUPERVISOR Y FECHA
-c1, c2 = st.columns(2)
-with c1:
-    supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
-with c2:
-    fecha_sel = st.date_input("Fecha de Registro", datetime.now())
+for sec in SECCIONES:
+    if sec not in st.session_state:
+        st.session_state[sec] = []
 
-# 5. SECCIÓN DE PRODUCCIÓN
-st.markdown('<div class="section-header">PRODUCCIÓN</div>', unsafe_allow_html=True)
-for i, item in enumerate(st.session_state.prod):
-    cols = st.columns([1, 3, 1, 0.3])
-    with cols[0]: item['c'] = st.text_input("Cod", value=item['c'], key=f"pc{i}", label_visibility="collapsed", placeholder="Cód")
-    with cols[1]: item['d'] = st.selectbox("Desc", ["Base Vainilla pequeña", "Chocolate", "Red Velvet"], index=0, key=f"pd{i}", label_visibility="collapsed")
-    with cols[2]: item['q'] = st.number_input("Cant", value=item['q'], min_value=0, key=f"pq{i}", label_visibility="collapsed")
-    with cols[3]: 
-        if st.button("X", key=f"px{i}"):
-            st.session_state.prod.pop(i)
-            st.rerun()
+# 4. ENCABEZADO GENERAL
+col_sup, col_fec = st.columns(2)
+with col_sup: supervisor = st.selectbox("Seleccione Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
+with col_fec: fecha_sel = st.date_input("Fecha", datetime.now())
 
-if st.button("➕ AÑADIR ITEM PRODUCCIÓN", key="add_p"):
-    st.session_state.prod.append({"c": "", "d": "Base Vainilla pequeña", "q": 0})
-    st.rerun()
+# 5. RENDERIZADO DINÁMICO DE SECCIONES
+for seccion in SECCIONES:
+    st.markdown(f'<div class="section-header">{seccion}</div>', unsafe_allow_html=True)
+    
+    # Filtrar productos permitidos para esta sección
+    opciones_seccion = df_productos[df_productos['Seccion'] == seccion]['Descripcion'].tolist()
+    
+    if not opciones_seccion:
+        st.caption("No hay productos configurados para esta sección.")
+        continue
 
-# 6. SECCIÓN DE DECORACIÓN
-st.markdown('<div class="section-header">DECORACIÓN</div>', unsafe_allow_html=True)
-for i, item in enumerate(st.session_state.dec):
-    cols = st.columns([1, 3, 1, 0.3])
-    with cols[0]: item['c'] = st.text_input("Cod", value=item['c'], key=f"dc{i}", label_visibility="collapsed", placeholder="Cód")
-    with cols[1]: item['d'] = st.selectbox("Desc", ["Arequipe", "Coco Arequipe", "Lluvia de Chocolate"], index=0, key=f"dd{i}", label_visibility="collapsed")
-    with cols[2]: item['q'] = st.number_input("Cant", value=item['q'], min_value=0, key=f"dq{i}", label_visibility="collapsed")
-    with cols[3]: 
-        if st.button("X", key=f"dx{i}"):
-            st.session_state.dec.pop(i)
-            st.rerun()
+    # Dibujar filas de la sección
+    for i, item in enumerate(st.session_state[seccion]):
+        c1, c2, c3, c4 = st.columns([1.2, 3, 1, 0.3])
+        
+        with c2:
+            # Selector con búsqueda incorporada
+            seleccion = st.selectbox(
+                f"Desc_{seccion}_{i}", 
+                options=opciones_seccion,
+                key=f"desc_{seccion}_{i}",
+                label_visibility="collapsed"
+            )
+            item['Descripcion'] = seleccion
+            # El código se llena automáticamente buscando en el DataFrame
+            codigo_auto = df_productos[df_productos['Descripcion'] == seleccion]['Codigo'].values[0]
+            item['Codigo'] = codigo_auto
 
-if st.button("➕ AÑADIR ITEM DECORACIÓN", key="add_d"):
-    st.session_state.dec.append({"c": "", "d": "Arequipe", "q": 0})
-    st.rerun()
+        with c1:
+            # Mostramos el código (deshabilitado porque es automático)
+            st.text_input(f"Cod_{seccion}_{i}", value=item['Codigo'], disabled=True, key=f"cod_display_{seccion}_{i}", label_visibility="collapsed")
+            
+        with c3:
+            item['Cantidad'] = st.number_input(f"Cant_{seccion}_{i}", min_value=0, value=item['Cantidad'], key=f"q_{seccion}_{i}", label_visibility="collapsed")
+            
+        with c4:
+            if st.button("X", key=f"del_{seccion}_{i}"):
+                st.session_state[seccion].pop(i)
+                st.rerun()
+
+    if st.button(f"➕ Añadir a {seccion.lower()}", key=f"btn_{seccion}"):
+        st.session_state[seccion].append({"Codigo": "", "Descripcion": opciones_seccion[0], "Cantidad": 0})
+        st.rerun()
 
 st.write("---")
-# 7. OBSERVACIONES
-obs = st.text_area("Observaciones", placeholder="Escriba notas adicionales aquí...")
+observaciones = st.text_area("Observaciones del turno")
 
-# 8. BOTÓN FINALIZAR Y GUARDAR (CONEXIÓN GOOGLE SHEETS)
-if st.button("FINALIZAR Y GUARDAR TODO", type="primary"):
-    res = []
-    # Consolidar ambas listas
-    for x in st.session_state.prod + st.session_state.dec:
-        res.append({
-            "ID_Registro": datetime.now().strftime("%Y%m%d%H%M%S"),
-            "Supervisor": supervisor,
-            "Fecha_Hora": datetime.now().strftime("%d/%m/%Y %I:%M %p"),
-            "Codigo_Articulo": str(x['c']),
-            "Descripcion": x['d'],
-            "Cantidad": x['q'],
-            "Observaciones": obs
-        })
+# 6. GUARDADO FINAL
+if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
+    all_data = []
+    for seccion in SECCIONES:
+        for row in st.session_state[seccion]:
+            if row['Cantidad'] > 0:
+                all_data.append({
+                    "ID_Registro": datetime.now().strftime("%Y%m%d%H%M%S"),
+                    "Supervisor": supervisor,
+                    "Fecha_Hora": datetime.now().strftime("%d/%m/%Y %I:%M %p"),
+                    "Codigo_Articulo": row['Codigo'],
+                    "Descripcion": row['Descripcion'],
+                    "Cantidad": row['Cantidad'],
+                    "Observaciones": observaciones
+                })
     
-    if res:
+    if all_data:
         try:
-            # Conexión usando los Secrets configurados
             conn = st.connection("gsheets", type=GSheetsConnection)
             df_actual = conn.read()
-            df_nuevo = pd.DataFrame(res)
-            
-            # Unir datos nuevos con los existentes
+            df_nuevo = pd.DataFrame(all_data)
             df_final = pd.concat([df_actual, df_nuevo], ignore_index=True)
-            
-            # Actualizar la hoja de cálculo
             conn.update(data=df_final)
             
-            st.success("✅ ¡Datos guardados exitosamente en Google Sheets!")
+            st.success("¡Producción registrada con éxito!")
             st.balloons()
-            
-            # Limpiar el formulario
-            st.session_state.prod = []
-            st.session_state.dec = []
+            # Limpiar todo
+            for sec in SECCIONES: st.session_state[sec] = []
             st.rerun()
-            
         except Exception as e:
-            st.error(f"Error al conectar con Google Sheets: {e}")
+            st.error(f"Error: {e}")
     else:
-        st.warning("⚠️ No hay ítems en la lista para guardar.")
+        st.warning("No hay datos para guardar (asegúrate de que las cantidades sean mayores a 0).")
