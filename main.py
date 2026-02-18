@@ -7,16 +7,39 @@ import base64
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Gerencia de Alimentos Procesados", layout="wide")
 
-# --- INYECCIÓN DE ESTILO RADICAL (VISIBILIDAD TOTAL) ---
+# --- INYECCIÓN DE ESTILO "NUCLEAR" PARA VISIBILIDAD TOTAL ---
 st.markdown("""
     <style>
-    /* 1. Fondo Blanco Global */
+    /* 1. Forzar Tema Claro a nivel de raíz */
+    :root {
+        --primary-color: #36b04b;
+        --background-color: #ffffff;
+        --secondary-background-color: #f0f2f6;
+        --text-color: #000000;
+    }
+
     html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
-        background-color: #FFFFFF !important;
+        background-color: #ffffff !important;
         color: #000000 !important;
     }
 
-    /* 2. ENCABEZADO TIPO PLAZA'S */
+    /* 2. BLINDAJE DE SELECTORES (Supervisor y Descripciones) */
+    div[data-baseweb="select"] > div, 
+    div[data-baseweb="select"] * {
+        color: #000000 !important;
+        background-color: #ffffff !important;
+        -webkit-text-fill-color: #000000 !important;
+    }
+
+    /* Menú desplegable */
+    div[role="listbox"] ul li, 
+    div[role="option"] * {
+        color: #000000 !important;
+        background-color: #ffffff !important;
+        -webkit-text-fill-color: #000000 !important;
+    }
+
+    /* 3. ENCABEZADO PLAZA'S */
     .header-container {
         display: flex;
         align-items: center;
@@ -28,30 +51,13 @@ st.markdown("""
     .main-title { 
         font-family: 'Segoe UI', sans-serif;
         color: #1a3a63 !important; 
-        font-size: 34px; 
+        font-size: 30px; 
         font-weight: 800;
         margin: 0;
     }
-    .sub-title { 
-        color: #444444 !important; 
-        font-size: 20px; 
-        margin: 0;
-    }
+    .sub-title { color: #444444 !important; font-size: 18px; margin: 0; }
 
-    /* 3. VISIBILIDAD DE DESCRIPCIONES (SELECTORES) */
-    /* Forzamos texto negro sólido en el selector y sus listas */
-    div[data-baseweb="select"] * {
-        color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
-    }
-    
-    div[role="listbox"] * {
-        color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
-        background-color: #FFFFFF !important;
-    }
-
-    /* 4. VISIBILIDAD DE CÓDIGOS (CAJA GRIS) */
+    /* 4. CAJA DE CÓDIGOS */
     .codigo-box-forzado {
         background-color: #f0f0f0 !important;
         color: #000000 !important;
@@ -63,56 +69,33 @@ st.markdown("""
         border-radius: 4px;
         height: 38px;
         display: flex;
-        align-items: center;
-        justify-content: center;
+        align-items: center; justify-content: center;
     }
 
-    /* 5. INPUTS (Fecha, Cantidades, Observaciones) */
-    input, textarea {
-        background-color: #FFFFFF !important;
-        color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
-        border: 1px solid #CCCCCC !important;
-    }
-
-    /* 6. BOTONES VERDES CORPORATIVOS */
+    /* 5. BOTONES VERDES */
     .stButton > button {
         background-color: #36b04b !important;
-        color: #FFFFFF !important;
+        color: #ffffff !important;
         border: none !important;
         font-weight: bold !important;
     }
     .stButton > button p, .stButton > button span {
-        color: #FFFFFF !important;
-        -webkit-text-fill-color: #FFFFFF !important;
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
     }
 
-    /* 7. OTROS */
+    /* 6. INPUTS Y SECCIONES */
+    input, textarea {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+    }
     .section-header { background-color: #f0f2f6 !important; color: #333 !important; padding: 8px; font-weight: bold; text-align: center; border-radius: 4px; margin-top: 20px;}
     label, p, span { color: #000000 !important; font-weight: bold !important; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- CARGA DE LOGO ---
-def render_header(logo_path):
-    try:
-        with open(logo_path, "rb") as f:
-            data = base64.b64encode(f.read()).decode()
-        st.markdown(f"""
-            <div class="header-container">
-                <img src="data:image/png;base64,{data}" class="logo-img">
-                <div>
-                    <div class="main-title">Registro de Producción</div>
-                    <div class="sub-title">Gerencia de Alimentos Procesados</div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-    except FileNotFoundError:
-        st.error("⚠️ Sube 'logo_plaza.png' a GitHub.")
-
-render_header("logo_plaza.png")
-
-# --- BASE DE DATOS MAESTRA ---
+# --- BASE DE DATOS MAESTRA COMPLETA ---
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -198,6 +181,25 @@ PRODUCTOS_DATA = [
 df_productos = pd.DataFrame(PRODUCTOS_DATA)
 SECCIONES_ORDEN = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POSTRE", "RELLENOS Y CREMAS"]
 
+# --- ENCABEZADO ---
+def render_header(logo_path):
+    try:
+        with open(logo_path, "rb") as f:
+            data = base64.b64encode(f.read()).decode()
+        st.markdown(f"""
+            <div class="header-container">
+                <img src="data:image/png;base64,{data}" class="logo-img">
+                <div>
+                    <div class="main-title">Registro de Producción</div>
+                    <div class="sub-title">Gerencia de Alimentos Procesados</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+    except:
+        st.write("### Registro de Producción - Plaza's")
+
+render_header("logo_plaza.png")
+
 # --- LÓGICA DE ESTADO ---
 if 'secciones_data' not in st.session_state:
     st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
@@ -208,7 +210,7 @@ with col_sup:
 with col_fec:
     fecha_sel = st.date_input("Fecha", datetime.now())
 
-# --- RENDERIZADO POR SECCIONES ---
+# --- RENDERIZADO ---
 for seccion in SECCIONES_ORDEN:
     st.markdown(f'<div class="section-header">{seccion}</div>', unsafe_allow_html=True)
     opciones = df_productos[df_productos['Seccion'] == seccion]['Descripcion'].tolist()
@@ -236,7 +238,7 @@ for seccion in SECCIONES_ORDEN:
 
 st.write("---")
 st.markdown('<p style="color:black !important;">Observaciones:</p>', unsafe_allow_html=True)
-obs = st.text_area("", placeholder="Escriba aquí sus notas...", label_visibility="collapsed")
+obs = st.text_area("", placeholder="Notas de producción...", label_visibility="collapsed")
 
 # --- GUARDADO ---
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
@@ -261,12 +263,8 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
             df_actual = conn.read()
             df_nuevo = pd.concat([df_actual, pd.DataFrame(all_data)], ignore_index=True)
             conn.update(data=df_nuevo)
-            st.success("¡Registro completado exitosamente!"); st.balloons()
-            # Limpiar datos tras guardar
+            st.success("¡Registro exitoso!"); st.balloons()
             for sec in SECCIONES_ORDEN: st.session_state.secciones_data[sec] = []
             st.rerun()
         except Exception as e:
-            st.error(f"Error al guardar: {e}")
-    else:
-        st.warning("Agregue al menos un producto con cantidad mayor a cero.")
-
+            st.error(f"Error: {e}")
