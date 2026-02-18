@@ -91,22 +91,26 @@ df_productos = pd.DataFrame(PRODUCTOS_DATA)
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Gerencia de Alimentos Procesados", layout="wide")
 
-# CSS para forzar fondo blanco y botones negros con letras blancas
+# CSS AGRESIVO PARA FORZAR COLORES EN CUALQUIER MODO
 st.markdown("""
     <style>
-    /* Forzar fondo blanco total en cualquier modo */
+    /* 1. Fondo principal siempre blanco */
     html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: white !important;
         color: black !important;
     }
 
+    /* 2. Encabezado Verde Plazas */
     .header { background-color: #36b04b; color: white; padding: 15px; text-align: center; font-weight: bold; font-size: 24px; border-radius: 5px; }
     .section-header { background-color: #f0f2f6; color: #333; padding: 10px; font-weight: bold; text-align: center; margin-top: 25px; border-radius: 5px; border: 1px solid #ddd; }
     
-    /* Caja de código: fondo gris muy claro, texto negro siempre */
+    /* 3. Forzar texto negro en etiquetas, párrafos y spans (Calendario, Supervisor, etc) */
+    label, p, span, div { color: black !important; }
+
+    /* 4. Caja de código: siempre texto negro sobre gris */
     .codigo-box { background-color: #f0f0f0; padding: 8px; border-radius: 4px; text-align: center; font-family: monospace; border: 1px solid #ccc; color: black !important; height: 38px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
     
-    /* Botones Negros: Fondo negro, texto blanco */
+    /* 5. BOTONES: Fondo Negro, Texto Blanco (Añadir y Finalizar) */
     .stButton > button { 
         width: 100% !important; 
         border: none !important; 
@@ -114,29 +118,34 @@ st.markdown("""
         color: white !important; 
         font-weight: bold !important;
     }
+    .stButton > button:hover { background-color: #333 !important; color: white !important; }
     
-    /* Forzar visibilidad del texto en botones */
-    .stButton > button p {
-        color: white !important;
-    }
-    
-    /* Botón de Finalizar (Primary): También negro con texto blanco */
-    div.stButton > button[kind="primary"] {
-        background-color: black !important;
-        color: white !important;
-        border: none !important;
-    }
+    /* Forzar que el texto de adentro del botón sea blanco */
+    .stButton > button div, .stButton > button p { color: white !important; }
 
-    /* Observaciones y otros inputs: Fondo blanco, texto negro */
-    textarea, input, div[data-baseweb="select"] {
+    /* 6. INPUTS: Fondo Blanco, Texto Negro (Incluso en modo oscuro) */
+    input, textarea, div[data-baseweb="select"], div[data-baseweb="input"] {
         background-color: white !important;
         color: black !important;
         border: 1px solid #ccc !important;
     }
-    
-    /* Forzar color de texto negro en todo el cuerpo para etiquetas y placeholders */
-    label, span, div, p {
+
+    /* 7. CALENDARIO Y DESPLEGABLES: Forzar visibilidad */
+    /* Este selector ayuda a que el pop-up del calendario se vea sobre blanco */
+    div[data-baseweb="popover"], div[role="listbox"] {
+        background-color: white !important;
         color: black !important;
+    }
+    
+    /* Asegurar que el texto dentro de los selectores sea negro */
+    div[data-testid="stSelectbox"] div, div[data-testid="stDateInput"] div {
+        color: black !important;
+    }
+
+    /* 8. Botón Finalizar (Primary) forzado a negro */
+    div.stButton > button[kind="primary"] {
+        background-color: black !important;
+        color: white !important;
     }
     </style>
     <div class="header">Registro de producción <br><span style="font-size: 14px;">Gerencia de Alimentos Procesados</span></div>
@@ -171,10 +180,10 @@ for seccion in SECCIONES:
             st.markdown(f'<div class="codigo-box">{item["Codigo"]}</div>', unsafe_allow_html=True)
             
         with c3:
+            # Los números también deben verse negros
             item['Cantidad'] = st.number_input(f"Q_{seccion}_{i}", min_value=0, value=item['Cantidad'], key=f"q_{seccion}_{i}", label_visibility="collapsed")
             
         with c4:
-            # Botón X pequeño: Lo mantenemos negro con texto blanco por consistencia
             if st.button("X", key=f"x_{seccion}_{i}"):
                 st.session_state.secciones_data[seccion].pop(i)
                 st.rerun()
