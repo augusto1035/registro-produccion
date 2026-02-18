@@ -36,29 +36,29 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- PUNTO DE ANCLA (PARA EL AUTO-SCROLL) ---
-# Ponemos un div vacío al inicio con un ID específico
-st.markdown('<div id="inicio"></div>', unsafe_allow_html=True)
-
 # --- INICIALIZACIÓN DE ESTADOS ---
+SECCIONES = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POSTRE", "RELLENOS Y CREMAS"]
+
 if 'secciones_data' not in st.session_state:
-    st.session_state.secciones_data = {sec: [] for sec in ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POSTRE", "RELLENOS Y CREMAS"]}
+    st.session_state.secciones_data = {sec: [] for sec in SECCIONES}
 if 'exito' not in st.session_state:
     st.session_state.exito = False
 if 'texto_obs' not in st.session_state:
     st.session_state.texto_obs = ""
 
-# --- LÓGICA DE ÉXITO ---
+# --- LÓGICA DE ÉXITO Y AUTO-SCROLL ---
 if st.session_state.exito:
-    st.success("✅ ¡Registro guardado exitosamente!")
-    st.balloons()
-    # TRUCO DE ANCLA: Inyectamos un link invisible que se auto-ejecuta para saltar al ID "inicio"
+    # Este script es más agresivo: busca el contenedor de scroll de Streamlit y lo resetea
     st.markdown("""
-        <a id="link_inicio" href="#inicio" target="_self" style="display: none;">subir</a>
         <script>
-            document.getElementById('link_inicio').click();
+            var mainContainer = window.parent.document.querySelector('section.main');
+            if (mainContainer) {
+                mainContainer.scrollTo(0, 0);
+            }
         </script>
     """, unsafe_allow_html=True)
+    st.success("✅ ¡Registro guardado exitosamente!")
+    st.balloons()
     st.session_state.exito = False
 
 # --- HEADER ---
@@ -80,7 +80,8 @@ def render_header(logo_path):
 
 render_header("logo_plaza.png")
 
-# --- PRODUCTOS Y SECCIONES ---
+# --- DATA PRODUCTOS ---
+# (Se mantiene la lista original de PRODUCTOS_DATA que ya tienes)
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -128,7 +129,7 @@ PRODUCTOS_DATA = [
     {"Codigo": "27667", "Descripcion": "PIE DE LIMON PLAZAS", "Seccion": "POSTRE"},
     {"Codigo": "27673", "Descripcion": "QUESILLO INDIVIDUAL PLAZAS", "Seccion": "POSTRE"},
     {"Codigo": "27637", "Descripcion": "MINI TORTA PLAZAS UND (UN)", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
-    {"Codigo": "27676", "Descripcion": "PIE DE PARCHITA PLAZAS", "Seccion": "POSTRE"},
+    {"Codigo": "27676", "稼": "PIE DE PARCHITA PLAZAS", "Seccion": "POSTRE"},
     {"Codigo": "27678", "Descripcion": "GELATINA PLAZAS FRESA Y LECHE UND", "Seccion": "POSTRE"},
     {"Codigo": "27679", "Descripcion": "GELATINA PLAZAS FRAMBUESA Y LECHE UND", "Seccion": "POSTRE"},
     {"Codigo": "27680", "Descripcion": "GELATINA PLAZAS PINA Y LECHE UND", "Seccion": "POSTRE"},
@@ -162,11 +163,9 @@ PRODUCTOS_DATA = [
     {"Codigo": "1", "Descripcion": "BASE DE COCO COCO PEQUEÑA", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
     {"Codigo": "2", "Descripcion": "BASE DE RED VELVET", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"}
 ]
-
 df_productos = pd.DataFrame(PRODUCTOS_DATA)
-SECCIONES_ORDEN = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POSTRE", "RELLENOS Y CREMAS"]
 
-# CALLBACK
+# CALLBACKS
 def actualizar_producto(seccion_key, index_key, selectbox_key):
     nuevo_nombre = st.session_state[selectbox_key]
     nuevo_codigo = df_productos[df_productos['Descripcion'] == nuevo_nombre]['Codigo'].values[0]
@@ -241,7 +240,7 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
             df_total = pd.concat([df_existente, df_nuevo], ignore_index=True)
             conn.update(worksheet="Hoja1", data=df_total)
             
-            # --- RESETEO TOTAL ---
+            # RESETEO
             st.session_state.exito = True
             st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
             st.session_state.texto_obs = ""
