@@ -7,15 +7,13 @@ from streamlit_gsheets import GSheetsConnection
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
 
-# --- CSS VISUAL ---
+# --- CSS VISUAL (MANTENEMOS TU DISEÑO) ---
 st.markdown("""
     <style>
     :root { color-scheme: light; }
     html, body, [data-testid="stAppViewContainer"] { background-color: #f8f9fa !important; color: black !important; }
     input, textarea, select, div[data-baseweb="select"] > div {
-        background-color: #ffffff !important;
-        color: #000000 !important;
-        border: 1px solid #ced4da !important;
+        background-color: #ffffff !important; color: #000000 !important; border: 1px solid #ced4da !important;
     }
     .block-container { padding-top: 2rem !important; max-width: 100% !important; }
     .codigo-box {
@@ -57,7 +55,7 @@ def render_header(logo_path):
 
 render_header("logo_plaza.png")
 
-# --- DATA ---
+# --- DATA PRODUCTOS ---
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -143,19 +141,21 @@ PRODUCTOS_DATA = [
 df_productos = pd.DataFrame(PRODUCTOS_DATA)
 SECCIONES_ORDEN = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POSTRE", "RELLENOS Y CREMAS"]
 
-# --- INICIALIZACIÓN DE SESSION STATE ---
+# --- INICIALIZACIÓN ---
 if 'secciones_data' not in st.session_state:
     st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
 if 'exito' not in st.session_state:
     st.session_state.exito = False
+if 'texto_observaciones' not in st.session_state:
+    st.session_state.texto_observaciones = ""
 
-# MOSTRAR MENSAJE DE ÉXITO SI EXISTE
+# MENSAJE DE ÉXITO
 if st.session_state.exito:
     st.success("✅ ¡Registro guardado exitosamente!")
     st.balloons()
-    st.session_state.exito = False # Se limpia para la próxima vez
+    st.session_state.exito = False
 
-# CALLBACK PARA ACTUALIZACIÓN INSTANTÁNEA
+# CALLBACKS
 def actualizar_producto(seccion_key, index_key, selectbox_key):
     nuevo_nombre = st.session_state[selectbox_key]
     nuevo_codigo = df_productos[df_productos['Descripcion'] == nuevo_nombre]['Codigo'].values[0]
@@ -167,7 +167,7 @@ col_sup, col_fec = st.columns(2)
 with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
 with col_fec: fecha_sel = st.date_input("Fecha", datetime.now())
 
-# RENDERIZADO
+# RENDERIZADO PRODUCTOS
 for seccion in SECCIONES_ORDEN:
     st.markdown(f'<div class="section-header">{seccion}</div>', unsafe_allow_html=True)
     opciones = df_productos[df_productos['Seccion'] == seccion]['Descripcion'].tolist()
@@ -202,7 +202,15 @@ for seccion in SECCIONES_ORDEN:
 
 st.write("---")
 st.header("Observaciones")
-obs = st.text_area("", placeholder="Notas...", label_visibility="collapsed")
+
+# --- OBSERVACIONES CON VALOR VINCULADO PARA EL RESETEO ---
+obs = st.text_area(
+    "", 
+    value=st.session_state.texto_observaciones, # <--- Vinculado al estado
+    placeholder="Notas...", 
+    label_visibility="collapsed", 
+    key="obs_input"
+)
 
 # --- LÓGICA DE GUARDADO ---
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
@@ -210,6 +218,9 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
     registros = []
     timestamp_id = datetime.now().strftime("%Y%m%d%H%M%S")
     
+    # Recoger el texto actual del widget antes de resetear
+    texto_final_obs = st.session_state.obs_input
+
     for seccion, items in st.session_state.secciones_data.items():
         for item in items:
             if item['Cantidad'] > 0:
@@ -220,7 +231,7 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
                     "Codigo_Articulo": item['Codigo'],
                     "Descripcion": item['Descripcion'],
                     "Cantidad": item['Cantidad'],
-                    "Observaciones": obs
+                    "Observaciones": texto_final_obs # <--- Usar el texto recolectado
                 })
     
     if not registros:
@@ -232,9 +243,11 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
             df_total = pd.concat([df_existente, df_nuevo], ignore_index=True)
             conn.update(worksheet="Hoja1", data=df_total)
             
-            # ACTIVAR ÉXITO Y LIMPIAR
+            # --- RESETEO TOTAL ---
             st.session_state.exito = True
             st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
+            st.session_state.texto_observaciones = "" # <--- Limpia el valor vinculado
+            
             st.rerun()
             
         except Exception as e:
