@@ -91,45 +91,58 @@ df_productos = pd.DataFrame(PRODUCTOS_DATA)
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Gerencia de Alimentos Procesados", layout="wide")
 
-# CSS REFORZADO PARA VISIBILIDAD DE SELECTORES
+# CSS "CONTRASTE TOTAL" PARA SELECTORES
 st.markdown("""
     <style>
-    /* 1. Fondo principal forzado */
+    /* Forzar fondo blanco en toda la app */
     html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: white !important;
-    }
-
-    /* 2. FORZAR TEXTO NEGRO EN SELECTORES (SUPERVISOR Y DESCRIPCIÓN) */
-    /* Atacamos el texto seleccionado y el placeholder */
-    div[data-baseweb="select"] div {
         color: black !important;
     }
+
+    /* FORZAR TEXTO NEGRO EN SELECTBOX (Supervisor y Descripción) */
+    /* Atacamos directamente los elementos internos de Baseweb (la librería de Streamlit) */
+    div[data-baseweb="select"] * {
+        color: black !important;
+        -webkit-text-fill-color: black !important;
+    }
     
-    /* Atacamos las etiquetas (Labels) */
+    /* Atacamos el texto cuando la lista está cerrada */
+    .stSelectbox div[data-baseweb="select"] > div {
+        color: black !important;
+    }
+
+    /* Atacamos las etiquetas de los campos */
     label, p, span {
         color: black !important;
     }
 
-    /* 3. Encabezado */
+    /* Estilo del Encabezado Verde */
     .header { background-color: #36b04b !important; color: white !important; padding: 15px; text-align: center; font-weight: bold; font-size: 24px; border-radius: 5px; }
     .section-header { background-color: #f0f2f6 !important; color: #333 !important; padding: 10px; font-weight: bold; text-align: center; margin-top: 25px; border-radius: 5px; border: 1px solid #ddd; }
 
-    /* 4. Caja de Código */
+    /* Caja de Código gris */
     .codigo-box { background-color: #f0f0f0 !important; color: black !important; padding: 8px; border-radius: 4px; text-align: center; font-family: monospace; border: 1px solid #ccc; height: 38px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
     
-    /* 5. Botones Negros */
-    .stButton > button { background-color: black !important; color: white !important; border: none !important; font-weight: bold !important; }
+    /* Botones Negros con Texto Blanco */
+    .stButton > button { 
+        background-color: black !important; 
+        color: white !important; 
+        border: none !important;
+        font-weight: bold !important;
+    }
     .stButton > button * { color: white !important; }
 
-    /* 6. Inputs siempre con fondo blanco y texto negro */
-    input, textarea, div[data-baseweb="select"], div[data-baseweb="popover"], div[role="listbox"] {
-        background-color: white !important;
+    /* Forzar que el Calendario siga viéndose bien */
+    [data-baseweb="calendar"] * {
         color: black !important;
     }
-
-    /* 7. Forzar color negro en las opciones de la lista al desplegar */
-    div[role="option"] * {
+    
+    /* Inputs numéricos y otros */
+    input, textarea {
+        background-color: white !important;
         color: black !important;
+        -webkit-text-fill-color: black !important;
     }
     </style>
     <div class="header">Registro de producción <br><span style="font-size: 14px; color: white !important;">Gerencia de Alimentos Procesados</span></div>
