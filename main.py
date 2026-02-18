@@ -7,69 +7,33 @@ from streamlit_gsheets import GSheetsConnection
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
 
-# --- CSS VISUAL (MANTENIENDO EL APILAMIENTO EN MÓVIL) ---
+# --- CSS VISUAL ---
 st.markdown("""
     <style>
     :root { color-scheme: light; }
     html, body, [data-testid="stAppViewContainer"] { background-color: #f8f9fa !important; color: black !important; }
-    
-    /* Inputs Blancos */
     input, textarea, select, div[data-baseweb="select"] > div {
         background-color: #ffffff !important;
         color: #000000 !important;
         border: 1px solid #ced4da !important;
     }
-    
     .block-container { padding-top: 2rem !important; max-width: 100% !important; }
-
-    /* Caja Código */
     .codigo-box {
-        background-color: #e9ecef;
-        border: 1px solid #ced4da;
-        color: #495057;
-        font-weight: bold;
-        padding: 5px;
-        text-align: center;
-        border-radius: 4px;
-        font-size: 14px;
-        min-height: 42px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        background-color: #e9ecef; border: 1px solid #ced4da; color: #495057;
+        font-weight: bold; padding: 5px; text-align: center; border-radius: 4px;
+        font-size: 14px; min-height: 42px; display: flex; align-items: center; justify-content: center;
     }
-
-    /* Headers */
     .section-header {
-        background: #36b04b;
-        color: white;
-        padding: 8px;
-        text-align: center;
-        font-weight: bold;
-        border-radius: 4px;
-        margin-top: 20px;
-        margin-bottom: 10px;
-        font-size: 16px;
+        background: #36b04b; color: white; padding: 8px; text-align: center;
+        font-weight: bold; border-radius: 4px; margin-top: 20px; margin-bottom: 10px; font-size: 16px;
     }
-
-    /* Botones */
     .stButton > button {
-        background-color: #36b04b !important;
-        color: white !important;
-        font-weight: bold;
-        border: none;
-        width: 100%;
-        min-height: 40px;
+        background-color: #36b04b !important; color: white !important;
+        font-weight: bold; border: none; width: 100%; min-height: 40px;
     }
-    .stButton > button:hover { background-color: #2a8a3b !important; }
-
-    /* Móvil */
     @media (max-width: 640px) {
         [data-testid="column"] { margin-bottom: 5px !important; }
-        div[data-testid="column"] .stButton button {
-            background-color: #dc3545 !important;
-            width: 100% !important;
-            margin-top: 5px;
-        }
+        div[data-testid="column"] .stButton button { background-color: #dc3545 !important; width: 100% !important; margin-top: 5px; }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -179,10 +143,19 @@ PRODUCTOS_DATA = [
 df_productos = pd.DataFrame(PRODUCTOS_DATA)
 SECCIONES_ORDEN = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POSTRE", "RELLENOS Y CREMAS"]
 
+# --- INICIALIZACIÓN DE SESSION STATE ---
 if 'secciones_data' not in st.session_state:
     st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
+if 'exito' not in st.session_state:
+    st.session_state.exito = False
 
-# CALLBACK (Corrige el retraso)
+# MOSTRAR MENSAJE DE ÉXITO SI EXISTE
+if st.session_state.exito:
+    st.success("✅ ¡Registro guardado exitosamente!")
+    st.balloons()
+    st.session_state.exito = False # Se limpia para la próxima vez
+
+# CALLBACK PARA ACTUALIZACIÓN INSTANTÁNEA
 def actualizar_producto(seccion_key, index_key, selectbox_key):
     nuevo_nombre = st.session_state[selectbox_key]
     nuevo_codigo = df_productos[df_productos['Descripcion'] == nuevo_nombre]['Codigo'].values[0]
@@ -202,7 +175,6 @@ for seccion in SECCIONES_ORDEN:
 
     for i, item in enumerate(st.session_state.secciones_data[seccion]):
         c1, c2, c3, c4 = st.columns([2, 6, 2, 1]) 
-        
         with c1:
             st.markdown(f"**Código:**")
             st.markdown(f'<div class="codigo-box">{item["Codigo"]}</div>', unsafe_allow_html=True)
@@ -211,7 +183,6 @@ for seccion in SECCIONES_ORDEN:
             key_sel = f"sel_{seccion}_{i}"
             try: idx_actual = opciones.index(item['Descripcion'])
             except: idx_actual = 0
-            
             st.selectbox(label="d", options=opciones, index=idx_actual, key=key_sel, label_visibility="collapsed", on_change=actualizar_producto, args=(seccion, i, key_sel))
         with c3:
             st.markdown(f"**Cantidad:**")
@@ -233,18 +204,15 @@ st.write("---")
 st.header("Observaciones")
 obs = st.text_area("", placeholder="Notas...", label_visibility="collapsed")
 
-# --- LÓGICA DE GUARDADO (REAL CON ST.CONNECTION) ---
+# --- LÓGICA DE GUARDADO ---
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
-    # 1. Crear conexión
     conn = st.connection("gsheets", type=GSheetsConnection)
-    
-    # 2. Recopilar datos
     registros = []
-    timestamp_id = datetime.now().strftime("%Y%m%d%H%M%S") # Generar ID Único por lote
+    timestamp_id = datetime.now().strftime("%Y%m%d%H%M%S")
     
     for seccion, items in st.session_state.secciones_data.items():
         for item in items:
-            if item['Cantidad'] > 0: # Solo guardamos si hay cantidad (opcional)
+            if item['Cantidad'] > 0:
                 registros.append({
                     "ID_Registro": timestamp_id,
                     "Supervisor": supervisor,
@@ -259,22 +227,13 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
         st.warning("No hay productos con cantidad > 0 para guardar.")
     else:
         df_nuevo = pd.DataFrame(registros)
-        
         try:
-            # 3. Leer (CON TTL=0 PARA QUE NO LEA CACHÉ VIEJA) y Actualizar
-            # TTL=0 es la clave para que no borre lo anterior
             df_existente = conn.read(worksheet="Hoja1", ttl=0) 
-            
-            # Unir lo viejo con lo nuevo
             df_total = pd.concat([df_existente, df_nuevo], ignore_index=True)
-            
-            # Guardar todo junto
             conn.update(worksheet="Hoja1", data=df_total)
             
-            st.success("¡Datos guardados exitosamente en Google Sheets!")
-            st.balloons()
-            
-            # Limpiar datos después de guardar
+            # ACTIVAR ÉXITO Y LIMPIAR
+            st.session_state.exito = True
             st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
             st.rerun()
             
