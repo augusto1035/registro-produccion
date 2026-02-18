@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime
 from streamlit_gsheets import GSheetsConnection
 
-# 1. BASE DE DATOS ACTUALIZADA (TORTA AREQUIPE PEQ en DECORACIÓN)
+# 1. BASE DE DATOS
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -101,7 +101,6 @@ st.markdown("""
     <div class="header">Registro de producción <br><span style="font-size: 14px;">Gerencia de Alimentos Procesados</span></div>
     """, unsafe_allow_html=True)
 
-# 3. SECCIONES (PASTELERIA UNIFICADA EN DECORACION)
 SECCIONES = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POSTRE", "RELLENOS Y CREMAS"]
 
 for sec in SECCIONES:
@@ -111,7 +110,7 @@ col_sup, col_fec = st.columns(2)
 with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
 with col_fec: fecha_sel = st.date_input("Fecha", datetime.now())
 
-# 4. RENDERIZADO CON LÓGICA DE SINCRONIZACIÓN FORZADA
+# 4. RENDERIZADO CON LÓGICA DE ACTUALIZACIÓN REAL
 for seccion in SECCIONES:
     st.markdown(f'<div class="section-header">{seccion}</div>', unsafe_allow_html=True)
     opciones = df_productos[df_productos['Seccion'] == seccion]['Descripcion'].tolist()
@@ -119,24 +118,23 @@ for seccion in SECCIONES:
     if not opciones: continue
 
     for i, item in enumerate(st.session_state[seccion]):
+        # Definimos las columnas
         c1, c2, c3, c4 = st.columns([1, 3.2, 1, 0.3])
         
+        # PASO 1: Dibujamos la columna 2 (El Selector) primero para capturar el cambio
         with c2:
-            # Selector de descripción
-            desc_elegida = st.selectbox(
+            sel = st.selectbox(
                 f"S_{seccion}_{i}", 
                 options=opciones, 
                 key=f"sel_{seccion}_{i}", 
                 label_visibility="collapsed"
             )
-            item['Descripcion'] = desc_elegida
-            
-            # SINCRONIZACIÓN INSTANTÁNEA: Buscamos el código basado en la selección actual
-            codigo_vinculado = df_productos[df_productos['Descripcion'] == desc_elegida]['Codigo'].values[0]
-            item['Codigo'] = codigo_vinculado
+            item['Descripcion'] = sel
+            # Buscamos el código correspondiente
+            item['Codigo'] = df_productos[df_productos['Descripcion'] == sel]['Codigo'].values[0]
 
+        # PASO 2: Dibujamos la columna 1 (El Código) usando el valor YA actualizado
         with c1:
-            # El campo de código se dibuja con el valor actualizado cada vez que el script corre
             st.text_input(f"C_{seccion}_{i}", value=item['Codigo'], disabled=True, key=f"disp_{seccion}_{i}", label_visibility="collapsed")
             
         with c3:
@@ -148,10 +146,7 @@ for seccion in SECCIONES:
                 st.rerun()
 
     if st.button(f"➕ Añadir a {seccion.lower()}", key=f"btn_{seccion}"):
-        # Al añadir, inicializamos con el primer producto de la lista
-        primera_desc = opciones[0]
-        primer_cod = df_productos[df_productos['Descripcion'] == primera_desc]['Codigo'].values[0]
-        st.session_state[seccion].append({"Codigo": primer_cod, "Descripcion": primera_desc, "Cantidad": 0})
+        st.session_state[seccion].append({"Codigo": "", "Descripcion": opciones[0], "Cantidad": 0})
         st.rerun()
 
 st.write("---")
@@ -182,5 +177,3 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
             for sec in SECCIONES: st.session_state[sec] = []
             st.rerun()
         except Exception as e: st.error(f"Error: {e}")
-    else:
-        st.warning("Ingrese al menos una cantidad mayor a 0.")
