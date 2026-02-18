@@ -91,37 +91,53 @@ df_productos = pd.DataFrame(PRODUCTOS_DATA)
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Gerencia de Alimentos Procesados", layout="wide")
 
-# CSS para forzar colores y evitar que se pierdan en modo oscuro/claro
+# CSS para forzar fondo blanco y botones negros con letras blancas
 st.markdown("""
     <style>
-    /* Forzar fondo blanco solo en componentes críticos si es necesario, 
-       pero aquí nos enfocamos en que el texto siempre sea visible */
-    
+    /* Forzar fondo blanco total incluso en modo oscuro */
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stSidebar"] {
+        background-color: white !important;
+        color: black !important;
+    }
+
     .header { background-color: #36b04b; color: white; padding: 15px; text-align: center; font-weight: bold; font-size: 24px; border-radius: 5px; }
     .section-header { background-color: #f0f2f6; color: #333; padding: 10px; font-weight: bold; text-align: center; margin-top: 25px; border-radius: 5px; border: 1px solid #ddd; }
     
-    /* Caja de código: siempre texto oscuro sobre fondo gris claro */
-    .codigo-box { background-color: #eeeeee; padding: 8px; border-radius: 4px; text-align: center; font-family: monospace; border: 1px solid #ccc; color: #333 !important; height: 38px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+    /* Caja de código: fondo gris muy claro, texto negro */
+    .codigo-box { background-color: #f0f0f0; padding: 8px; border-radius: 4px; text-align: center; font-family: monospace; border: 1px solid #ccc; color: black !important; height: 38px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
     
-    /* Botones de añadir: Texto siempre gris oscuro/negro para que se lea en fondo claro/oscuro */
+    /* Botones de añadir: Fondo negro, letras blancas */
     .stButton > button { 
         width: 100% !important; 
-        border: 1px solid #ccc !important; 
-        background-color: #f9f9f9 !important; 
-        color: #333333 !important; 
+        border: none !important; 
+        background-color: black !important; 
+        color: white !important; 
         font-weight: bold !important;
     }
     
-    /* Botón de Finalizar: Texto blanco sobre verde, siempre */
+    /* Botón de Finalizar: Fondo negro, letras blancas (forzado) */
     div.stButton > button[kind="primary"] {
-        background-color: #36b04b !important;
+        background-color: black !important;
         color: white !important;
         border: none !important;
     }
 
-    /* Área de texto (Observaciones): Texto siempre oscuro */
+    /* Inputs y Selectores: forzar fondo blanco y texto negro */
+    input, select, textarea, div[data-baseweb="select"] {
+        background-color: white !important;
+        color: black !important;
+    }
+    
+    /* Observaciones: forzar fondo blanco y texto negro */
     .stTextArea textarea {
-        color: #333 !important;
+        background-color: white !important;
+        color: black !important;
+        border: 1px solid #ccc !important;
+    }
+
+    /* Etiquetas (Supervisor, Fecha) */
+    label, p, span {
+        color: black !important;
     }
     </style>
     <div class="header">Registro de producción <br><span style="font-size: 14px;">Gerencia de Alimentos Procesados</span></div>
@@ -159,6 +175,7 @@ for seccion in SECCIONES:
             item['Cantidad'] = st.number_input(f"Q_{seccion}_{i}", min_value=0, value=item['Cantidad'], key=f"q_{seccion}_{i}", label_visibility="collapsed")
             
         with c4:
+            # Botón eliminar con estilo por defecto (blanco/gris para diferenciar)
             if st.button("X", key=f"x_{seccion}_{i}"):
                 st.session_state.secciones_data[seccion].pop(i)
                 st.rerun()
@@ -172,7 +189,7 @@ for seccion in SECCIONES:
 st.write("---")
 obs = st.text_area("Observaciones", placeholder="Escriba aquí sus notas...")
 
-# Botón Finalizar con estilo primario forzado en CSS
+# Botón Finalizar
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
     all_data = []
     for seccion in SECCIONES:
