@@ -51,7 +51,7 @@ PRODUCTOS_DATA = [
     {"Codigo": "27667", "Descripcion": "PIE DE LIMON PLAZAS", "Seccion": "POSTRE"},
     {"Codigo": "27673", "Descripcion": "QUESILLO INDIVIDUAL PLAZAS", "Seccion": "POSTRE"},
     {"Codigo": "27637", "Descripcion": "MINI TORTA PLAZAS UND (UN)", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
-    {"Codigo": "27676", "Descripcion": "PIE DE PARCHITA PLAZAS", "Seccion": "POSTRE"},
+    {"Codigo": "27676", "PIE DE PARCHITA PLAZAS": "POSTRE", "Seccion": "POSTRE"},
     {"Codigo": "27678", "Descripcion": "GELATINA PLAZAS FRESA Y LECHE UND", "Seccion": "POSTRE"},
     {"Codigo": "27679", "Descripcion": "GELATINA PLAZAS FRAMBUESA Y LECHE UND", "Seccion": "POSTRE"},
     {"Codigo": "27680", "Descripcion": "GELATINA PLAZAS PINA Y LECHE UND", "Seccion": "POSTRE"},
@@ -93,55 +93,57 @@ st.set_page_config(page_title="Gerencia de Alimentos Procesados", layout="wide")
 
 st.markdown("""
     <style>
-    /* 1. Fondo principal forzado blanco */
+    /* 1. Fondo Blanco Forzado */
     html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: white !important;
         color: black !important;
     }
 
-    /* 2. FORZADO DE SELECTORES (Cajas de Supervisor y Productos) */
-    /* Este selector ataca específicamente el valor seleccionado */
+    /* 2. FORZAR TEXTO NEGRO EN CANTIDADES Y INPUTS NUMÉRICOS */
+    input[type="number"], div[data-testid="stNumberInput"] input {
+        background-color: white !important;
+        color: black !important;
+        -webkit-text-fill-color: black !important;
+        border: 1px solid #ccc !important;
+    }
+
+    /* 3. CALENDARIO: Forzar visibilidad total */
+    div[data-baseweb="calendar"] * {
+        color: black !important;
+        -webkit-text-fill-color: black !important;
+    }
+    /* Flechas del calendario y cabecera */
+    div[data-baseweb="calendar"] button {
+        background-color: transparent !important;
+        color: black !important;
+    }
+    /* Día seleccionado */
+    div[data-baseweb="calendar"] [aria-selected="true"] {
+        background-color: #36b04b !important;
+        color: white !important;
+        -webkit-text-fill-color: white !important;
+    }
+
+    /* 4. SELECTORES (Supervisor y Descripciones) */
     div[data-baseweb="select"] > div {
         background-color: white !important;
         color: black !important;
         -webkit-text-fill-color: black !important;
     }
-
-    /* Forzar que el texto interno de la caja de selección sea negro */
-    div[data-testid="stSelectbox"] div, div[data-testid="stDateInput"] div {
+    div[role="listbox"] *, div[role="option"] * {
         color: black !important;
         -webkit-text-fill-color: black !important;
     }
 
-    /* 3. FORZADO DE LISTAS DESPLEGABLES (Menú al abrir) */
-    div[data-baseweb="popover"], div[role="listbox"], div[role="option"] {
-        background-color: white !important;
-    }
-    
-    div[role="option"] *, div[role="listbox"] * {
-        color: black !important;
-        -webkit-text-fill-color: black !important;
-    }
-
-    /* 4. Encabezado Verde */
+    /* 5. Estética General */
     .header { background-color: #36b04b !important; color: white !important; padding: 15px; text-align: center; font-weight: bold; font-size: 24px; border-radius: 5px; }
     .section-header { background-color: #f0f2f6 !important; color: #333 !important; padding: 10px; font-weight: bold; text-align: center; margin-top: 25px; border-radius: 5px; border: 1px solid #ddd; }
-
-    /* 5. Etiquetas (Labels) */
-    label, p, span { color: black !important; }
-
-    /* 6. Caja de Código gris */
     .codigo-box { background-color: #f0f0f0 !important; color: black !important; padding: 8px; border-radius: 4px; text-align: center; font-family: monospace; border: 1px solid #ccc; height: 38px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-    
-    /* 7. Botones Negros */
     .stButton > button { background-color: black !important; color: white !important; border: none !important; font-weight: bold !important; }
-    .stButton > button p { color: white !important; }
-
-    /* 8. Calendario */
-    div[data-baseweb="calendar"] * { color: black !important; }
+    label, p, span { color: black !important; }
     </style>
     
-    <div class="header">Registro de producción <br><span style="size: 14px; color: white !important;">Gerencia de Alimentos Procesados</span></div>
+    <div class="header">Registro de producción <br><span style="font-size: 14px; color: white !important;">Gerencia de Alimentos Procesados</span></div>
     """, unsafe_allow_html=True)
 
 SECCIONES = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POSTRE", "RELLENOS Y CREMAS"]
@@ -154,6 +156,7 @@ col_sup, col_fec = st.columns(2)
 with col_sup:
     supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
 with col_fec:
+    # El date_input ahora tiene forzado el texto negro en el calendario
     fecha_sel = st.date_input("Fecha", datetime.now())
 
 # RENDERIZADO
@@ -176,6 +179,7 @@ for seccion in SECCIONES:
             st.markdown(f'<div class="codigo-box">{item["Codigo"]}</div>', unsafe_allow_html=True)
             
         with c3:
+            # Forzado de texto negro para el número de cantidad
             item['Cantidad'] = st.number_input(f"Q_{seccion}_{i}", min_value=0, value=item['Cantidad'], key=f"q_{seccion}_{i}", label_visibility="collapsed")
             
         with c4:
