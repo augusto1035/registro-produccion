@@ -88,63 +88,35 @@ PRODUCTOS_DATA = [
 
 df_productos = pd.DataFrame(PRODUCTOS_DATA)
 
-# --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Gerencia de Alimentos Procesados", layout="wide")
 
-# CSS AGRESIVO: SOBREESCRIBE CUALQUIER MODO OSCURO DEL SISTEMA
+# CSS para forzar colores negros y visibilidad
 st.markdown("""
     <style>
-    /* 1. Fondo principal y barra lateral siempre blanco */
-    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stSidebar"] {
-        background-color: white !important;
-        color: black !important;
-    }
-
-    /* 2. Encabezado Verde Plazas */
+    /* Forzar fondo blanco */
+    [data-testid="stAppViewContainer"] { background-color: white !important; color: black !important; }
+    
     .header { background-color: #36b04b; color: white !important; padding: 15px; text-align: center; font-weight: bold; font-size: 24px; border-radius: 5px; }
     .section-header { background-color: #f0f2f6; color: #333 !important; padding: 10px; font-weight: bold; text-align: center; margin-top: 25px; border-radius: 5px; border: 1px solid #ddd; }
     
-    /* 3. Forzar texto negro en todo el cuerpo (Especialmente Calendario y Supervisor) */
-    * { color: black !important; font-family: 'Segoe UI', sans-serif; }
-    .header * { color: white !important; }
-
-    /* 4. Caja de código: Texto negro sobre fondo gris claro */
+    /* Caja de código: Fondo gris claro, letras negras */
     .codigo-box { background-color: #f0f0f0 !important; color: black !important; padding: 8px; border-radius: 4px; text-align: center; font-family: monospace; border: 1px solid #ccc; height: 38px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
     
-    /* 5. BOTONES: Fondo Negro, Texto Blanco */
+    /* BOTONES: Fondo Negro, Texto Blanco */
     .stButton > button { 
-        width: 100% !important; 
-        border: none !important; 
         background-color: black !important; 
         color: white !important; 
+        border: none !important;
         font-weight: bold !important;
     }
-    /* Forzar texto blanco dentro de botones */
-    .stButton > button p, .stButton > button div, .stButton > button span { 
-        color: white !important; 
-    }
+    /* Forzar texto blanco en botones para modo oscuro */
+    .stButton > button p, .stButton > button div { color: white !important; }
 
-    /* 6. INPUTS Y SELECTORES: Fondo Blanco forzado */
-    div[data-baseweb="select"], div[data-baseweb="input"], input, textarea {
-        background-color: white !important;
-        color: black !important;
-    }
-
-    /* 7. POP-UPS (Calendario y Lista de productos) */
-    div[data-baseweb="popover"], div[role="listbox"], div[data-baseweb="calendar"] {
-        background-color: white !important;
-        color: black !important;
-    }
-    /* Forzar visibilidad de días en calendario */
-    div[data-baseweb="calendar"] * {
-        color: black !important;
-    }
-
-    /* 8. Botón Finalizar (Primary) */
-    div.stButton > button[kind="primary"] {
-        background-color: black !important;
-        color: white !important;
-    }
+    /* Inputs y Selectores: Forzar texto negro */
+    input, textarea, [data-baseweb="select"] * { color: black !important; }
+    
+    /* Calendario: Forzar visibilidad de números */
+    [data-baseweb="calendar"] * { color: black !important; }
     </style>
     <div class="header">Registro de producción <br><span style="font-size: 14px; color: white !important;">Gerencia de Alimentos Procesados</span></div>
     """, unsafe_allow_html=True)
@@ -158,28 +130,22 @@ col_sup, col_fec = st.columns(2)
 with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
 with col_fec: fecha_sel = st.date_input("Fecha", datetime.now())
 
-# --- RENDERIZADO ---
 for seccion in SECCIONES:
     st.markdown(f'<div class="section-header">{seccion}</div>', unsafe_allow_html=True)
     opciones = df_productos[df_productos['Seccion'] == seccion]['Descripcion'].tolist()
-    
     if not opciones: continue
 
     for i, item in enumerate(st.session_state.secciones_data[seccion]):
         c1, c2, c3, c4 = st.columns([1, 3.2, 1, 0.3])
-        
         with c2:
             seleccion = st.selectbox(f"S_{seccion}_{i}", options=opciones, key=f"sel_{seccion}_{i}", label_visibility="collapsed")
             item['Descripcion'] = seleccion
             match = df_productos[df_productos['Descripcion'] == seleccion]
             item['Codigo'] = match['Codigo'].values[0] if not match.empty else "N/A"
-
         with c1:
             st.markdown(f'<div class="codigo-box">{item["Codigo"]}</div>', unsafe_allow_html=True)
-            
         with c3:
             item['Cantidad'] = st.number_input(f"Q_{seccion}_{i}", min_value=0, value=item['Cantidad'], key=f"q_{seccion}_{i}", label_visibility="collapsed")
-            
         with c4:
             if st.button("X", key=f"x_{seccion}_{i}"):
                 st.session_state.secciones_data[seccion].pop(i)
@@ -194,7 +160,6 @@ for seccion in SECCIONES:
 st.write("---")
 obs = st.text_area("Observaciones", placeholder="Escriba aquí sus notas...")
 
-# Botón Finalizar
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
     all_data = []
     for seccion in SECCIONES:
@@ -209,7 +174,6 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
                     "Cantidad": row['Cantidad'],
                     "Observaciones": obs
                 })
-    
     if all_data:
         try:
             conn = st.connection("gsheets", type=GSheetsConnection)
@@ -220,5 +184,3 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
             for sec in SECCIONES: st.session_state.secciones_data[sec] = []
             st.rerun()
         except Exception as e: st.error(f"Error: {e}")
-    else:
-        st.warning("Ingrese al menos una cantidad mayor a 0.")
