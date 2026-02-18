@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime
 from streamlit_gsheets import GSheetsConnection
 
-# 1. BASE DE DATOS MAESTRA (Aseguramos que la data esté limpia)
+# 1. BASE DE DATOS MAESTRA
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -91,22 +91,46 @@ df_productos = pd.DataFrame(PRODUCTOS_DATA)
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Gerencia de Alimentos Procesados", layout="wide")
 
+# CSS para forzar colores y evitar que se pierdan en modo oscuro/claro
 st.markdown("""
     <style>
-    html, body, [data-testid="stAppViewContainer"] { background-color: white !important; }
+    /* Forzar fondo blanco solo en componentes críticos si es necesario, 
+       pero aquí nos enfocamos en que el texto siempre sea visible */
+    
     .header { background-color: #36b04b; color: white; padding: 15px; text-align: center; font-weight: bold; font-size: 24px; border-radius: 5px; }
     .section-header { background-color: #f0f2f6; color: #333; padding: 10px; font-weight: bold; text-align: center; margin-top: 25px; border-radius: 5px; border: 1px solid #ddd; }
-    /* Estilo para que el código se vea limpio */
-    .codigo-box { background-color: #eeeeee; padding: 8px; border-radius: 4px; text-align: center; font-family: monospace; border: 1px solid #ccc; color: #333; height: 38px; display: flex; align-items: center; justify-content: center; }
-    .stButton > button { width: 100% !important; border: 1px solid #ccc !important; background-color: white !important; }
+    
+    /* Caja de código: siempre texto oscuro sobre fondo gris claro */
+    .codigo-box { background-color: #eeeeee; padding: 8px; border-radius: 4px; text-align: center; font-family: monospace; border: 1px solid #ccc; color: #333 !important; height: 38px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+    
+    /* Botones de añadir: Texto siempre gris oscuro/negro para que se lea en fondo claro/oscuro */
+    .stButton > button { 
+        width: 100% !important; 
+        border: 1px solid #ccc !important; 
+        background-color: #f9f9f9 !important; 
+        color: #333333 !important; 
+        font-weight: bold !important;
+    }
+    
+    /* Botón de Finalizar: Texto blanco sobre verde, siempre */
+    div.stButton > button[kind="primary"] {
+        background-color: #36b04b !important;
+        color: white !important;
+        border: none !important;
+    }
+
+    /* Área de texto (Observaciones): Texto siempre oscuro */
+    .stTextArea textarea {
+        color: #333 !important;
+    }
     </style>
     <div class="header">Registro de producción <br><span style="font-size: 14px;">Gerencia de Alimentos Procesados</span></div>
     """, unsafe_allow_html=True)
 
 SECCIONES = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POSTRE", "RELLENOS Y CREMAS"]
 
-for sec in SECCIONES:
-    if sec not in st.session_state: st.session_state[sec] = []
+if 'secciones_data' not in st.session_state:
+    st.session_state.secciones_data = {sec: [] for sec in SECCIONES}
 
 col_sup, col_fec = st.columns(2)
 with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
@@ -119,25 +143,16 @@ for seccion in SECCIONES:
     
     if not opciones: continue
 
-    for i, item in enumerate(st.session_state[seccion]):
+    for i, item in enumerate(st.session_state.secciones_data[seccion]):
         c1, c2, c3, c4 = st.columns([1, 3.2, 1, 0.3])
         
         with c2:
-            # Capturamos la selección
-            seleccion = st.selectbox(
-                f"S_{seccion}_{i}", 
-                options=opciones, 
-                key=f"sel_{seccion}_{i}", 
-                label_visibility="collapsed"
-            )
+            seleccion = st.selectbox(f"S_{seccion}_{i}", options=opciones, key=f"sel_{seccion}_{i}", label_visibility="collapsed")
             item['Descripcion'] = seleccion
-            # Buscamos el código asociado
             match = df_productos[df_productos['Descripcion'] == seleccion]
             item['Codigo'] = match['Codigo'].values[0] if not match.empty else "N/A"
 
         with c1:
-            # SOLUCIÓN: Usamos HTML directo para mostrar el código. 
-            # El HTML no tiene "memoria de input", por lo que se actualizará SIEMPRE.
             st.markdown(f'<div class="codigo-box">{item["Codigo"]}</div>', unsafe_allow_html=True)
             
         with c3:
@@ -145,22 +160,23 @@ for seccion in SECCIONES:
             
         with c4:
             if st.button("X", key=f"x_{seccion}_{i}"):
-                st.session_state[seccion].pop(i)
+                st.session_state.secciones_data[seccion].pop(i)
                 st.rerun()
 
     if st.button(f"➕ Añadir a {seccion.lower()}", key=f"btn_{seccion}"):
         primera_desc = opciones[0]
         primer_cod = df_productos[df_productos['Descripcion'] == primera_desc]['Codigo'].values[0]
-        st.session_state[seccion].append({"Codigo": primer_cod, "Descripcion": primera_desc, "Cantidad": 0})
+        st.session_state.secciones_data[seccion].append({"Codigo": primer_cod, "Descripcion": primera_desc, "Cantidad": 0})
         st.rerun()
 
 st.write("---")
-obs = st.text_area("Observaciones")
+obs = st.text_area("Observaciones", placeholder="Escriba aquí sus notas...")
 
+# Botón Finalizar con estilo primario forzado en CSS
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
     all_data = []
     for seccion in SECCIONES:
-        for row in st.session_state[seccion]:
+        for row in st.session_state.secciones_data[seccion]:
             if row['Cantidad'] > 0:
                 all_data.append({
                     "ID_Registro": datetime.now().strftime("%Y%m%d%H%M%S"),
@@ -179,7 +195,7 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
             df_final = pd.concat([df_actual, pd.DataFrame(all_data)], ignore_index=True)
             conn.update(data=df_final)
             st.success("¡Guardado exitoso!"); st.balloons()
-            for sec in SECCIONES: st.session_state[sec] = []
+            for sec in SECCIONES: st.session_state.secciones_data[sec] = []
             st.rerun()
         except Exception as e: st.error(f"Error: {e}")
     else:
