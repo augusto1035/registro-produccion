@@ -91,44 +91,44 @@ df_productos = pd.DataFrame(PRODUCTOS_DATA)
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Gerencia de Alimentos Procesados", layout="wide")
 
-# CSS para forzar colores y estructura
+# CSS REFORZADO PARA VISIBILIDAD DE SELECTORES
 st.markdown("""
     <style>
-    /* Forzar variables de Streamlit para ignorar modo oscuro */
-    :root {
-        --primary-color: #36b04b;
-        --background-color: #ffffff;
-        --secondary-background-color: #f0f2f6;
-        --text-color: #000000;
-    }
-    
+    /* 1. Fondo principal forzado */
     html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: white !important;
+    }
+
+    /* 2. FORZAR TEXTO NEGRO EN SELECTORES (SUPERVISOR Y DESCRIPCIÓN) */
+    /* Atacamos el texto seleccionado y el placeholder */
+    div[data-baseweb="select"] div {
+        color: black !important;
+    }
+    
+    /* Atacamos las etiquetas (Labels) */
+    label, p, span {
         color: black !important;
     }
 
-    /* Forzar texto negro en etiquetas y widgets */
-    label, p, span, div, input, select, textarea {
-        color: black !important;
-    }
-
+    /* 3. Encabezado */
     .header { background-color: #36b04b !important; color: white !important; padding: 15px; text-align: center; font-weight: bold; font-size: 24px; border-radius: 5px; }
     .section-header { background-color: #f0f2f6 !important; color: #333 !important; padding: 10px; font-weight: bold; text-align: center; margin-top: 25px; border-radius: 5px; border: 1px solid #ddd; }
-    
+
+    /* 4. Caja de Código */
     .codigo-box { background-color: #f0f0f0 !important; color: black !important; padding: 8px; border-radius: 4px; text-align: center; font-family: monospace; border: 1px solid #ccc; height: 38px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
     
-    /* Botones negros con texto blanco forzado */
-    .stButton > button { 
-        background-color: black !important; 
-        color: white !important; 
-        border: none !important;
-        font-weight: bold !important;
-    }
+    /* 5. Botones Negros */
+    .stButton > button { background-color: black !important; color: white !important; border: none !important; font-weight: bold !important; }
     .stButton > button * { color: white !important; }
 
-    /* Inputs siempre con fondo blanco */
-    [data-baseweb="select"], [data-baseweb="input"], [data-baseweb="popover"], [data-baseweb="calendar"], input, textarea {
+    /* 6. Inputs siempre con fondo blanco y texto negro */
+    input, textarea, div[data-baseweb="select"], div[data-baseweb="popover"], div[role="listbox"] {
         background-color: white !important;
+        color: black !important;
+    }
+
+    /* 7. Forzar color negro en las opciones de la lista al desplegar */
+    div[role="option"] * {
         color: black !important;
     }
     </style>
@@ -140,14 +140,14 @@ SECCIONES = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POSTRE", 
 if 'secciones_data' not in st.session_state:
     st.session_state.secciones_data = {sec: [] for sec in SECCIONES}
 
-# --- REGRESO A COLUMNAS PARA SUPERVISOR Y FECHA ---
+# Columnas Supervisor y Fecha
 col_sup, col_fec = st.columns(2)
 with col_sup:
     supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
 with col_fec:
     fecha_sel = st.date_input("Fecha", datetime.now())
 
-# --- RENDERIZADO DE SECCIONES ---
+# RENDERIZADO
 for seccion in SECCIONES:
     st.markdown(f'<div class="section-header">{seccion}</div>', unsafe_allow_html=True)
     opciones = df_productos[df_productos['Seccion'] == seccion]['Descripcion'].tolist()
@@ -208,3 +208,4 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
             for sec in SECCIONES: st.session_state.secciones_data[sec] = []
             st.rerun()
         except Exception as e: st.error(f"Error: {e}")
+            
