@@ -6,153 +6,115 @@ import base64
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
 
-# --- CSS DE FUERZA BRUTA (SOLUCIÓN FINAL) ---
+# --- CSS MAESTRO (GRID SYSTEM) ---
 st.markdown("""
     <style>
-    /* 1. FORZAR MODO CLARO Y REPARAR COLORES NEGROS */
+    /* 1. BLINDAJE DE COLOR (TODO BLANCO Y NEGRO) */
     :root { color-scheme: light; }
-    
-    /* Fondo global blanco */
-    html, body, [data-testid="stAppViewContainer"] { 
-        background-color: #ffffff !important; 
-        color: #000000 !important; 
-    }
+    html, body, [data-testid="stAppViewContainer"] { background-color: #ffffff !important; color: black !important; }
 
-    /* FORZAR INPUTS, CALENDARIO Y TEXTAREA A BLANCO CON LETRA NEGRA */
-    input, textarea, div[data-baseweb="select"] > div, div[data-baseweb="input"] {
-        background-color: #ffffff !important;
-        color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
-        border-color: #cccccc !important;
-    }
-    
-    /* Arreglo específico para el calendario (Date Input) */
-    [data-testid="stDateInput"] input {
-        background-color: #ffffff !important;
-        color: #000000 !important;
-    }
-
-    /* 2. ARREGLAR CINTILLO CORTADO */
+    /* 2. ARREGLO DEL CINTILLO CORTADO */
     .block-container {
-        padding-top: 1rem !important; /* Más espacio arriba */
+        padding-top: 3.5rem !important; /* ESPACIO PARA QUE QUEPA EL LOGO */
         padding-left: 0.5rem !important;
         padding-right: 0.5rem !important;
         padding-bottom: 3rem !important;
         max-width: 100% !important;
     }
 
-    /* 3. SOLUCIÓN AL APILAMIENTO EN MÓVIL (LA CLAVE) */
-    /* Esta regla detecta pantallas pequeñas y PROHÍBE apilar columnas */
-    @media (max-width: 640px) {
-        [data-testid="stHorizontalBlock"] {
-            flex-direction: row !important; /* OBLIGA A FILA HORIZONTAL */
-            flex-wrap: nowrap !important;   /* PROHÍBE BAJAR DE LÍNEA */
-        }
-    }
-
-    /* Aseguramos que la fila horizontal funcione siempre */
-    [data-testid="stHorizontalBlock"] {
-        align-items: center !important;
-        gap: 2px !important;
+    /* 3. SISTEMA DE GRILLA INTELIGENTE */
+    
+    /* CASO A: FILAS DE PRODUCTOS (4 COLUMNAS) */
+    /* Detectamos si el bloque tiene 4 hijos y aplicamos medidas exactas */
+    [data-testid="stHorizontalBlock"]:has(> [data-testid="column"]:nth-child(4)) {
+        display: grid !important;
+        grid-template-columns: 45px 1fr 50px 35px !important; /* MEDIDAS EXACTAS */
+        gap: 3px !important;
         width: 100% !important;
     }
 
-    /* 4. DEFINICIÓN DE ANCHOS (ESTRICTOS) */
-    
-    /* COLUMNA 1: CÓDIGO (50px Fijos) */
-    div[data-testid="column"]:nth-of-type(1) {
-        flex: 0 0 50px !important;
-        min-width: 50px !important;
-        max-width: 50px !important;
-        overflow: hidden !important;
-        padding: 0 !important;
+    /* CASO B: FILTROS SUPERIORES (2 COLUMNAS) */
+    /* Si no tiene 4 hijos, asumimos que es el header de filtros (50% / 50%) */
+    [data-testid="stHorizontalBlock"]:not(:has(> [data-testid="column"]:nth-child(4))) {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important;
     }
 
-    /* COLUMNA 2: DESCRIPCIÓN (Flexible - El resto del espacio) */
-    div[data-testid="column"]:nth-of-type(2) {
-        flex: 1 1 auto !important;
-        min-width: 50px !important;
-        overflow: hidden !important;
+    /* 4. RESETEO DE COLUMNAS DE STREAMLIT */
+    [data-testid="column"] {
+        width: auto !important;
+        min-width: 0 !important;
+        flex: none !important;
         padding: 0 !important;
+        overflow: visible !important;
     }
 
-    /* COLUMNA 3: CANTIDAD (60px Fijos - 4 dígitos cómodos) */
-    div[data-testid="column"]:nth-of-type(3) {
-        flex: 0 0 60px !important;
-        min-width: 60px !important;
-        max-width: 60px !important;
-        padding: 0 !important;
-    }
-
-    /* COLUMNA 4: BOTÓN X (40px Fijos) */
-    div[data-testid="column"]:nth-of-type(4) {
-        flex: 0 0 40px !important;
-        min-width: 40px !important;
-        max-width: 40px !important;
-        padding: 0 !important;
-    }
-
-    /* 5. COMPONENTES ULTRA COMPACTOS */
+    /* 5. CAJAS Y INPUTS (COMPACTOS Y VISIBLES) */
     div[data-baseweb="select"] > div, 
-    [data-testid="stNumberInput"] input {
-        min-height: 40px !important; /* Altura táctil */
-        height: 40px !important;
+    [data-testid="stNumberInput"] input,
+    [data-testid="stDateInput"] input {
+        min-height: 38px !important;
+        height: 38px !important;
         padding: 0px 4px !important;
         font-size: 11px !important;
-        border-radius: 4px !important;
+        background-color: white !important;
         border: 1px solid #999 !important;
+        color: black !important;
+        border-radius: 4px !important;
     }
 
-    /* Caja de Código */
+    /* Caja de Código (Gris) */
     .codigo-box {
         background-color: #e0e0e0;
         border: 1px solid #999;
-        color: #000000;
+        color: black;
         font-weight: bold;
-        height: 40px;
+        height: 38px;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 10px;
         border-radius: 4px;
         width: 100%;
-        line-height: 1;
     }
 
-    /* Botones Verdes */
+    /* Botones Verdes (Plaza's) */
     .stButton > button {
         background-color: #36b04b !important;
         color: white !important;
         border: none !important;
-        height: 40px !important;
-        min-height: 40px !important;
+        height: 38px !important;
+        min-height: 38px !important;
         width: 100% !important;
         padding: 0 !important;
+        border-radius: 4px;
         font-weight: bold !important;
-        font-size: 14px !important;
     }
     .stButton > button:hover { background-color: #2a8a3b !important; }
-
-    /* 6. CORRECCIÓN DE FILTROS SUPERIORES */
-    /* Para que Supervisor y Fecha sigan siendo 50/50 y no se rompan */
-    [data-testid="stHorizontalBlock"]:not(:has(> [data-testid="column"]:nth-child(4))) > [data-testid="column"] {
-        flex: 1 1 50% !important;
-        max-width: 50% !important;
+    
+    /* 6. HEADER GRANDE (HTML PURO) */
+    .header-layout {
+        display: flex; 
+        align-items: center; 
+        padding-bottom: 10px; 
+        border-bottom: 3px solid #36b04b; 
+        margin-bottom: 15px;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- HEADER (HTML) ---
+# --- HEADER ---
 def render_header(logo_path):
     try:
         with open(logo_path, "rb") as f:
             data = base64.b64encode(f.read()).decode()
         st.markdown(f"""
-            <div style="display: flex; align-items: center; padding-bottom: 10px; border-bottom: 3px solid #36b04b; margin-bottom: 20px;">
-                <img src="data:image/png;base64,{data}" style="height: 65px; margin-right: 15px;">
+            <div class="header-layout">
+                <img src="data:image/png;base64,{data}" style="height: 70px; margin-right: 15px;">
                 <div>
-                    <div style="color: #1a3a63; font-size: 22px; font-weight: 800; line-height: 1.1;">Registro de Producción</div>
-                    <div style="color: #444; font-size: 13px;">Gerencia de Alimentos Procesados</div>
+                    <div style="color:#1a3a63; font-size:22px; font-weight:800; line-height:1.1;">Registro de Producción</div>
+                    <div style="color:#444; font-size:13px;">Gerencia de Alimentos Procesados</div>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -161,7 +123,7 @@ def render_header(logo_path):
 
 render_header("logo_plaza.png")
 
-# --- DATA ---
+# --- DATOS ---
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -250,7 +212,7 @@ SECCIONES_ORDEN = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POS
 if 'secciones_data' not in st.session_state:
     st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
 
-# SUPERVISOR Y FECHA
+# SUPERVISOR Y FECHA (2 Columnas = 50% / 50%)
 col_sup, col_fec = st.columns(2)
 with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
 with col_fec: fecha_sel = st.date_input("Fecha", datetime.now())
@@ -263,6 +225,7 @@ for seccion in SECCIONES_ORDEN:
     if not opciones: continue
 
     for i, item in enumerate(st.session_state.secciones_data[seccion]):
+        # STREAMLIT COLUMNS + CSS GRID MAGIA
         c1, c2, c3, c4 = st.columns(4) 
         
         with c1:
