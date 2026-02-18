@@ -6,125 +6,131 @@ import base64
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
 
-# --- CSS DE "CIRUGÍA PLÁSTICA" PARA LAS CAJAS ---
+# --- CSS QUIRÚRGICO (SOLUCIÓN DEFINITIVA) ---
 st.markdown("""
     <style>
-    /* 1. MODO CLARO OBLIGATORIO */
+    /* 1. BLINDAJE VISUAL: MODO CLARO Y SIN MÁRGENES */
     :root { color-scheme: light; }
     html, body, [data-testid="stAppViewContainer"] { background-color: #ffffff !important; color: black !important; }
-
-    /* 2. ELIMINAR LOS MÁRGENES LATERALES PARA GANAR CADA PIXEL */
+    
     .block-container {
-        padding-top: 1rem !important;
+        padding-top: 0.5rem !important;
         padding-bottom: 2rem !important;
-        padding-left: 0.1rem !important; /* Casi cero */
-        padding-right: 0.1rem !important;
+        padding-left: 0.2rem !important;
+        padding-right: 0.2rem !important;
+        max-width: 100% !important;
     }
 
-    /* 3. FORZAR LA FILA A NO ROMPERSE (NO WRAP) */
+    /* 2. REGLA MAESTRA PARA FILAS HORIZONTALES */
     [data-testid="stHorizontalBlock"] {
         flex-wrap: nowrap !important;
         align-items: center !important;
-        gap: 1px !important;
+        gap: 2px !important;
+        width: 100% !important;
+    }
+    
+    /* 3. QUITAR RELLENO DE TODAS LAS COLUMNAS */
+    [data-testid="column"] {
+        padding: 0 !important;
+        min-width: 0 !important;
     }
 
-    /* 4. DEFINICIÓN DE LOS ANCHOS DE LAS CAJAS (AQUÍ ESTÁ LA SOLUCIÓN) */
+    /* ============================================================
+       4. CONTROL DE ANCHOS EXCLUSIVO PARA LA FILA DE PRODUCTOS
+       Usamos :has para detectar que es la fila de 4 columnas
+       ============================================================ */
     
-    /* CAJA 1: CÓDIGO (45px Fijos - Solo el ancho del número) */
-    div[data-testid="column"]:nth-of-type(1) {
+    /* COLUMNA 1: CÓDIGO (45px) */
+    [data-testid="stHorizontalBlock"]:has(> [data-testid="column"]:nth-child(4)) > [data-testid="column"]:nth-child(1) {
         flex: 0 0 45px !important;
-        min-width: 45px !important;
+        width: 45px !important;
         max-width: 45px !important;
-        padding: 0 !important;
         overflow: hidden !important;
     }
 
-    /* CAJA 2: DESCRIPCIÓN (Flexible - Ocupa el resto) */
-    div[data-testid="column"]:nth-of-type(2) {
+    /* COLUMNA 2: DESCRIPCIÓN (AUTO - EL RESTO) */
+    [data-testid="stHorizontalBlock"]:has(> [data-testid="column"]:nth-child(4)) > [data-testid="column"]:nth-child(2) {
         flex: 1 1 auto !important;
-        min-width: 100px !important;
-        padding: 0 !important;
-        overflow: hidden !important;
-    }
-
-    /* CAJA 3: CANTIDAD (50px Fijos - Solo el ancho de 4 dígitos) */
-    div[data-testid="column"]:nth-of-type(3) {
-        flex: 0 0 50px !important;
         min-width: 50px !important;
+    }
+
+    /* COLUMNA 3: CANTIDAD (50px - 4 dígitos) */
+    [data-testid="stHorizontalBlock"]:has(> [data-testid="column"]:nth-child(4)) > [data-testid="column"]:nth-child(3) {
+        flex: 0 0 50px !important;
+        width: 50px !important;
         max-width: 50px !important;
-        padding: 0 !important;
     }
 
-    /* CAJA 4: BOTÓN X (35px Fijos) */
-    div[data-testid="column"]:nth-of-type(4) {
+    /* COLUMNA 4: BOTÓN X (35px) */
+    [data-testid="stHorizontalBlock"]:has(> [data-testid="column"]:nth-child(4)) > [data-testid="column"]:nth-child(4) {
         flex: 0 0 35px !important;
-        min-width: 35px !important;
+        width: 35px !important;
         max-width: 35px !important;
-        padding: 0 !important;
     }
 
-    /* 5. ESTILO DE LOS INPUTS (LAS CAJAS EN SÍ MISMAS) */
+    /* ============================================================
+       5. ESTILOS DE COMPONENTES (INPUTS, BOTONES, CAJAS)
+       ============================================================ */
     
-    /* El selector y el input de número deben ser bajitos y sin aire */
+    /* Inputs y Selectores compactos */
     div[data-baseweb="select"] > div, 
     [data-testid="stNumberInput"] input {
         min-height: 35px !important;
         height: 35px !important;
-        padding: 0px 2px !important; /* Sin relleno interno */
+        padding: 0px 4px !important;
         font-size: 11px !important;
         background-color: white !important;
-        border: 1px solid #aaa !important; /* Borde visible */
+        border: 1px solid #aaa !important;
         color: black !important;
     }
 
-    /* 6. ESTILO DE LA CAJA DE CÓDIGO (GRIS) */
-    .codigo-container {
+    /* Caja Gris del Código */
+    .codigo-box {
         background-color: #e0e0e0;
         border: 1px solid #aaa;
         color: black;
         font-weight: bold;
-        font-size: 10px;
         height: 35px;
         display: flex;
         align-items: center;
         justify-content: center;
+        font-size: 10px;
         border-radius: 4px;
         width: 100%;
-        white-space: nowrap; /* Que no se parta el numero */
+        line-height: 1;
     }
 
-    /* 7. BOTONES VERDES (PLAZA'S) */
+    /* TODOS LOS BOTONES VERDES */
     .stButton > button {
         background-color: #36b04b !important;
         color: white !important;
         border: none !important;
         height: 35px !important;
+        min-height: 35px !important;
         width: 100% !important;
         padding: 0 !important;
         border-radius: 4px;
+        font-weight: bold !important;
     }
+    .stButton > button p { color: white !important; }
     
-    /* 8. HEADER (RESTAURADO) */
-    /* Protegemos el header para que las reglas de columnas no lo rompan */
-    .header-layout {
-        display: flex; 
-        align-items: center; 
-        padding-bottom: 5px; 
-        border-bottom: 3px solid #36b04b; 
-        margin-bottom: 10px;
+    /* Arreglo para que el selector de Supervisor (2 columnas) no se rompa */
+    [data-testid="stHorizontalBlock"]:not(:has(> [data-testid="column"]:nth-child(4))) > [data-testid="column"] {
+        flex: 1 1 50% !important;
+        width: 50% !important;
     }
+
     </style>
     """, unsafe_allow_html=True)
 
-# --- HEADER ---
+# --- HEADER (HTML Puro para seguridad) ---
 def render_header(logo_path):
-    # Usamos HTML directo para que no le afecten las columnas de Streamlit
     try:
         with open(logo_path, "rb") as f:
             data = base64.b64encode(f.read()).decode()
         st.markdown(f"""
-            <div class="header-layout">
-                <img src="data:image/png;base64,{data}" style="height: 60px; margin-right: 10px;">
+            <div style="display:flex; align-items:center; padding-bottom:5px; border-bottom:3px solid #36b04b; margin-bottom:10px;">
+                <img src="data:image/png;base64,{data}" style="height: 60px; margin-right: 15px;">
                 <div>
                     <div style="color:#1a3a63; font-size:20px; font-weight:800; line-height:1.1;">Registro de Producción</div>
                     <div style="color:#444; font-size:12px;">Gerencia de Alimentos Procesados</div>
@@ -136,7 +142,7 @@ def render_header(logo_path):
 
 render_header("logo_plaza.png")
 
-# --- DATA ---
+# --- DATOS ---
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -225,8 +231,7 @@ SECCIONES_ORDEN = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POS
 if 'secciones_data' not in st.session_state:
     st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
 
-# SUPERVISOR Y FECHA (FUERA DEL LOOP DE PRODUCTOS PARA QUE NO SE ROMPA)
-# Usamos columnas estándar aquí porque no necesitamos el ajuste micrométrico de la tabla
+# SUPERVISOR Y FECHA
 col_sup, col_fec = st.columns(2)
 with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
 with col_fec: fecha_sel = st.date_input("Fecha", datetime.now())
@@ -239,11 +244,11 @@ for seccion in SECCIONES_ORDEN:
     if not opciones: continue
 
     for i, item in enumerate(st.session_state.secciones_data[seccion]):
-        # AQUÍ USAMOS ST.COLUMNS(4) PERO EL CSS "HACKEA" SUS ANCHOS
+        # COLUMNAS: Streamlit crea las cajas, pero el CSS de arriba fuerza los anchos
         c1, c2, c3, c4 = st.columns(4) 
         
         with c1:
-            st.markdown(f'<div class="codigo-container">{item["Codigo"]}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="codigo-box">{item["Codigo"]}</div>', unsafe_allow_html=True)
         with c2:
             seleccion = st.selectbox(f"s_{seccion}_{i}", options=opciones, key=f"sel_{seccion}_{i}", label_visibility="collapsed")
             item['Descripcion'] = seleccion
