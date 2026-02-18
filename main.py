@@ -6,67 +6,83 @@ import base64
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
 
-# --- CSS DE PRECISIÓN (PIXEL PERFECT) ---
+# --- CSS DE ARQUITECTURA FIJA (SOLUCIÓN FINAL) ---
 st.markdown("""
     <style>
-    /* 1. MODO CLARO Y RESET */
+    /* 1. OBLIGAR MODO CLARO (Soluciona "todo oscuro" en web) */
     :root { color-scheme: light; }
     html, body, [data-testid="stAppViewContainer"] { background-color: #ffffff !important; color: black !important; }
-    
-    /* 2. GANAR ESPACIO EN PANTALLA */
+
+    /* 2. MAXIMIZAR ESPACIO LATERAL */
     .block-container {
         padding-top: 1rem !important;
-        padding-left: 0.2rem !important;
-        padding-right: 0.2rem !important;
-        padding-bottom: 5rem !important;
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+        max-width: 100% !important;
     }
 
-    /* 3. CONTROL TOTAL DE LA FILA (FLEXBOX) */
+    /* 3. LÓGICA DE FILA FLEXIBLE (NO WRAP) */
     [data-testid="stHorizontalBlock"] {
-        flex-wrap: nowrap !important; /* Nunca bajar de línea */
+        flex-wrap: nowrap !important;
         align-items: center !important;
         gap: 2px !important;
         width: 100% !important;
     }
 
-    /* 4. DEFINICIÓN DE ANCHOS POR COLUMNA (LO QUE PEDISTE) */
+    /* 4. DEFINICIÓN EXACTA DE COLUMNAS (MÓVIL Y WEB) */
+    /* Esto aplica a las filas de 4 columnas. Los filtros de arriba (2 cols) no se afectan igual */
     
-    /* Columna 1: CÓDIGO (Fijo 50px - Cabe el código más largo) */
-    [data-testid="column"]:nth-of-type(1) {
+    /* COLUMNA 1: CÓDIGO (FIJO 50px) */
+    div[data-testid="column"]:nth-of-type(1) {
         flex: 0 0 50px !important;
         min-width: 50px !important;
         max-width: 50px !important;
         overflow: hidden !important;
     }
 
-    /* Columna 2: DESCRIPCIÓN (Flexible - Ocupa el resto) */
-    [data-testid="column"]:nth-of-type(2) {
-        flex: 1 1 auto !important; /* Crece para llenar espacio */
-        min-width: 0px !important;
+    /* COLUMNA 2: DESCRIPCIÓN (FLEXIBLE - LLENA EL RESTO) */
+    div[data-testid="column"]:nth-of-type(2) {
+        flex: 1 1 auto !important;
+        min-width: 100px !important; /* Mínimo para que no desaparezca */
         overflow: hidden !important;
     }
 
-    /* Columna 3: CANTIDAD (Fijo 50px - Caben 4 dígitos) */
-    [data-testid="column"]:nth-of-type(3) {
-        flex: 0 0 50px !important;
-        min-width: 50px !important;
-        max-width: 50px !important;
+    /* COLUMNA 3: CANTIDAD (FIJO 55px) */
+    div[data-testid="column"]:nth-of-type(3) {
+        flex: 0 0 55px !important;
+        min-width: 55px !important;
+        max-width: 55px !important;
     }
 
-    /* Columna 4: BORRAR X (Fijo 35px - Cuadrado) */
-    [data-testid="column"]:nth-of-type(4) {
+    /* COLUMNA 4: BOTÓN X (FIJO 35px) */
+    div[data-testid="column"]:nth-of-type(4) {
         flex: 0 0 35px !important;
         min-width: 35px !important;
         max-width: 35px !important;
     }
 
-    /* 5. ESTILOS DE LOS ELEMENTOS INTERNOS */
+    /* 5. COMPONENTES COMPACTOS */
+    div[data-baseweb="select"] > div, 
+    [data-testid="stNumberInput"] input {
+        min-height: 35px !important;
+        height: 35px !important;
+        font-size: 11px !important;
+        padding: 0px 4px !important;
+        background-color: white !important;
+        color: black !important;
+        border: 1px solid #ccc !important;
+    }
     
-    /* Caja Gris del Código */
+    /* Eliminar padding de las columnas */
+    div[data-testid="column"] > div {
+        width: 100% !important;
+    }
+
+    /* 6. CAJA DE CÓDIGO */
     .codigo-box {
         background-color: #e0e0e0;
         color: black;
-        border: 1px solid #ccc;
+        border: 1px solid #999;
         font-weight: bold;
         height: 35px;
         display: flex;
@@ -77,19 +93,7 @@ st.markdown("""
         width: 100%;
     }
 
-    /* Selectores y Inputs */
-    div[data-baseweb="select"] > div, 
-    [data-testid="stNumberInput"] input {
-        min-height: 35px !important;
-        height: 35px !important;
-        font-size: 11px !important;
-        padding: 0px 2px !important;
-        background-color: white !important;
-        color: black !important;
-        border: 1px solid #ccc !important;
-    }
-    
-    /* Botones (Todos Verdes) */
+    /* 7. BOTONES VERDES (TODOS) */
     .stButton > button {
         background-color: #36b04b !important;
         color: white !important;
@@ -99,15 +103,20 @@ st.markdown("""
         padding: 0 !important;
     }
     .stButton > button:hover { background-color: #2a8a3b !important; }
+    .stButton > button p { font-size: 14px !important; font-weight: bold !important; }
 
-    /* 6. HEADER */
+    /* 8. ENCABEZADO */
     .header-container { display: flex; align-items: center; padding-bottom: 5px; border-bottom: 3px solid #36b04b; margin-bottom: 10px; }
-    .logo-img { height: 50px; margin-right: 10px; }
-    .main-title { color: #1a3a63 !important; font-size: 18px; font-weight: 800; margin: 0; line-height: 1.1; }
-    .sub-title { color: #444444 !important; font-size: 10px; margin: 0; }
+    .logo-img { height: 60px; margin-right: 15px; }
+    .main-title { color: #1a3a63 !important; font-size: 22px; font-weight: 800; margin: 0; line-height: 1.1; }
+    .sub-title { color: #444444 !important; font-size: 12px; margin: 0; }
     
-    /* Títulos de Sección */
-    .section-title { background: #f0f2f6; padding: 5px; font-weight: bold; text-align: center; font-size: 12px; margin-top: 10px; margin-bottom: 5px; color: black; border-radius: 4px; }
+    /* 9. SELECTORES DE FILTRO (Arreglo para que no se rompan con la regla de columnas) */
+    /* Las columnas dentro del bloque de filtros (que son 2) deben ser iguales */
+    [data-testid="stHorizontalBlock"]:has(div:nth-of-type(2):last-child) > [data-testid="column"] {
+        flex: 1 1 50% !important;
+        max-width: 50% !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -126,7 +135,7 @@ def render_header(logo_path):
             </div>
             """, unsafe_allow_html=True)
     except:
-        st.markdown("### Plaza's Producción")
+        st.markdown("### Producción Plaza's")
 
 render_header("logo_plaza.png")
 
@@ -226,14 +235,13 @@ with col_fec: fecha_sel = st.date_input("Fecha", datetime.now())
 
 # RENDERIZADO
 for seccion in SECCIONES_ORDEN:
-    st.markdown(f'<div class="section-title">{seccion}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="background:#f0f2f6; color:black; font-weight:bold; text-align:center; padding:5px; margin-top:15px; border-radius:4px;">{seccion}</div>', unsafe_allow_html=True)
     
     opciones = df_productos[df_productos['Seccion'] == seccion]['Descripcion'].tolist()
     if not opciones: continue
 
     for i, item in enumerate(st.session_state.secciones_data[seccion]):
-        # COLUMNAS POR DEFECTO (ST) PERO CONTROLADAS POR EL CSS ARRIBA
-        # El CSS 'nth-of-type' es el que hace la magia de los anchos fijos
+        # Las proporciones ahora las controla el CSS global (50px, Flex, 55px, 35px)
         c1, c2, c3, c4 = st.columns(4) 
         
         with c1:
