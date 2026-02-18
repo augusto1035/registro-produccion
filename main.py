@@ -6,59 +6,43 @@ import base64
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
 
-# --- CSS DE ESTABILIDAD (ACEPTANDO EL APILAMIENTO) ---
+# --- CSS (ESTILO ESTABLE) ---
 st.markdown("""
     <style>
-    /* 1. FUERZA BRUTA CONTRA EL MODO OSCURO
-       Esto obliga a los inputs específicos a ser blancos con texto negro. */
+    /* 1. BLINDAJE VISUAL: TODO BLANCO Y NEGRO */
+    :root { color-scheme: light; }
+    html, body, [data-testid="stAppViewContainer"] { background-color: #f8f9fa !important; color: black !important; }
+
+    /* 2. FORZAR INPUTS A BLANCO */
+    input, textarea, select, div[data-baseweb="select"] > div {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        border: 1px solid #ced4da !important;
+    }
     
-    /* Calendario, Inputs Numéricos y Selectores */
-    [data-testid="stDateInput"] input,
-    [data-testid="stNumberInput"] input,
-    div[data-baseweb="select"] > div {
-        background-color: #ffffff !important;
-        color: #000000 !important;
-        border: 1px solid #cccccc !important;
-    }
-    /* Área de Texto (Observaciones) */
-    [data-testid="stTextArea"] textarea {
-        background-color: #ffffff !important;
-        color: #000000 !important;
-         border: 1px solid #cccccc !important;
-    }
-    /* Fondo general para asegurar contraste */
-    [data-testid="stAppViewContainer"] {
-        background-color: #f8f9fa; /* Un gris muy claro para que no sea tan brillante */
-    }
+    /* 3. ESPACIADO DEL CINTILLO */
     .block-container {
         padding-top: 2rem !important;
         max-width: 100% !important;
     }
 
-    /* 2. ESTILOS GENERALES DE COMPONENTES */
-    
-    /* Caja de Código */
+    /* 4. CAJA DE CÓDIGO (GRIS) */
     .codigo-box {
         background-color: #e9ecef;
         border: 1px solid #ced4da;
         color: #495057;
         font-weight: bold;
-        padding: 8px;
+        padding: 5px;
         text-align: center;
         border-radius: 4px;
         font-size: 14px;
+        min-height: 42px; /* Misma altura que los inputs */
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
-    /* Botones "Añadir" y "Finalizar" (Verdes Plaza's) */
-    .stButton > button {
-        background-color: #36b04b !important;
-        color: white !important;
-        font-weight: bold;
-        border: none;
-    }
-    .stButton > button:hover { background-color: #2a8a3b !important; }
-
-    /* Títulos de Sección */
+    /* 5. TÍTULOS DE SECCIÓN */
     .section-header {
         background: #36b04b;
         color: white;
@@ -68,31 +52,38 @@ st.markdown("""
         border-radius: 4px;
         margin-top: 20px;
         margin-bottom: 10px;
+        font-size: 16px;
     }
 
-    /* 3. REGLAS ESPECÍFICAS PARA MÓVIL (CUANDO SE APILA) */
+    /* 6. BOTONES */
+    .stButton > button {
+        background-color: #36b04b !important;
+        color: white !important;
+        font-weight: bold;
+        border: none;
+        width: 100%;
+        min-height: 40px;
+    }
+    .stButton > button:hover { background-color: #2a8a3b !important; }
+
+    /* -----------------------------------------------------------
+       REGLAS PARA MÓVIL (APILAMIENTO CONTROLADO)
+       ----------------------------------------------------------- */
     @media (max-width: 640px) {
-        /* Cuando se apilan, dar un poco de espacio entre elementos */
+        /* Separación entre elementos apilados */
         [data-testid="column"] {
-            margin-bottom: 8px !important;
+            margin-bottom: 5px !important;
+        }
+
+        /* BOTÓN X: CUADRADO Y ROJO EN MÓVIL */
+        div[data-testid="column"] .stButton button {
+            background-color: #dc3545 !important;
+            width: 100% !important; /* Ocupa ancho completo en móvil para ser fácil de tocar */
+            margin-top: 5px;
         }
         
-        /* EL BOTÓN X CUADRADO (SOLUCIÓN PEDIDA) */
-        /* Buscamos los botones dentro de las filas de productos y los hacemos cuadrados y rojos */
-        [data-testid="stHorizontalBlock"] [data-testid="column"] .stButton button {
-            width: 50px !important;  /* Ancho fijo */
-            height: 50px !important; /* Alto fijo = Cuadrado */
-            margin: 0 auto !important; /* Centrado horizontal */
-            display: block !important;
-            background-color: #dc3545 !important; /* Rojo para eliminar */
-            font-size: 20px !important;
-        }
-        
-        /* Ajustar inputs para que se vean bien apilados */
-        [data-testid="stNumberInput"] input,
-        div[data-baseweb="select"] > div {
-            min-height: 40px;
-        }
+        /* Ajuste de textos */
+        p { font-size: 14px !important; font-weight: bold; margin-bottom: 2px !important; }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -106,8 +97,8 @@ def render_header(logo_path):
             <div style="display: flex; align-items: center; padding-bottom: 10px; border-bottom: 4px solid #36b04b; margin-bottom: 20px;">
                 <img src="data:image/png;base64,{data}" style="height: 70px; margin-right: 15px; object-fit: contain;">
                 <div>
-                    <h2 style="color:#1a3a63; margin:0; font-weight:900;">Registro de Producción</h2>
-                    <p style="color:#666; margin:0;">Gerencia de Alimentos Procesados</p>
+                    <h2 style="color:#1a3a63; margin:0; font-weight:900; font-size: 20px;">Registro de Producción</h2>
+                    <p style="color:#666; margin:0; font-size: 12px;">Gerencia de Alimentos Procesados</p>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -217,35 +208,42 @@ for seccion in SECCIONES_ORDEN:
     if not opciones: continue
 
     for i, item in enumerate(st.session_state.secciones_data[seccion]):
-        # EN MÓVIL ESTO SE APILARÁ AUTOMÁTICAMENTE (LO QUE PEDISTE)
-        # EN WEB SE VERÁ EN 4 COLUMNAS BIEN DISTRIBUIDAS
+        
+        # En Móvil se apilarán. En Web serán columnas.
         c1, c2, c3, c4 = st.columns([2, 6, 2, 1]) 
         
         with c1:
-            # Usamos st.write con markdown para que se alinee mejor en móvil
             st.markdown(f"**Código:**")
             st.markdown(f'<div class="codigo-box">{item["Codigo"]}</div>', unsafe_allow_html=True)
         with c2:
             st.markdown(f"**Descripción:**")
             seleccion = st.selectbox(f"s_{seccion}_{i}", options=opciones, key=f"sel_{seccion}_{i}", label_visibility="collapsed")
             item['Descripcion'] = seleccion
+            # ACTUALIZAR EL CÓDIGO BASADO EN LA SELECCIÓN
             item['Codigo'] = df_productos[df_productos['Descripcion'] == seleccion]['Codigo'].values[0]
         with c3:
             st.markdown(f"**Cantidad:**")
             item['Cantidad'] = st.number_input(f"q_{seccion}_{i}", min_value=0, step=1, key=f"q_{seccion}_{i}", label_visibility="collapsed")
         with c4:
-            # Espacio vacío para alinear el botón X en móvil
-            st.write("") 
-            st.write("")
+            st.markdown("**Acción:**")
             if st.button("X", key=f"x_{seccion}_{i}"):
                 st.session_state.secciones_data[seccion].pop(i)
                 st.rerun()
         
-        # Separador visual en móvil
-        st.markdown('<hr style="margin: 10px 0; border-top: 1px solid #eee;">', unsafe_allow_html=True)
+        st.markdown('<hr style="margin: 5px 0; border-top: 1px solid #ddd;">', unsafe_allow_html=True)
 
+    # AQUÍ ESTABA EL ERROR DE LÓGICA ANTES, AHORA CORREGIDO:
     if st.button(f"➕ Añadir Producto", key=f"btn_{seccion}"):
-        st.session_state.secciones_data[seccion].append({"Codigo": opciones[0], "Descripcion": opciones[0], "Cantidad": 0})
+        # 1. Buscamos el código REAL del primer producto de la lista
+        primer_producto = opciones[0]
+        codigo_real = df_productos[df_productos['Descripcion'] == primer_producto]['Codigo'].values[0]
+        
+        # 2. Añadimos el objeto con el CÓDIGO CORRECTO, no con el nombre
+        st.session_state.secciones_data[seccion].append({
+            "Codigo": codigo_real,  # <--- CORRECCIÓN AQUÍ
+            "Descripcion": primer_producto,
+            "Cantidad": 0
+        })
         st.rerun()
 
 st.write("---")
