@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime
 from streamlit_gsheets import GSheetsConnection
 
-# 1. BASE DE DATOS DE PRODUCTOS CORREGIDA
+# 1. BASE DE DATOS ACTUALIZADA (Sección Pastelería eliminada)
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -18,7 +18,7 @@ PRODUCTOS_DATA = [
     {"Codigo": "27198", "Descripcion": "TORTA CHOCO MANI VAINILLA PLAZAS PEQ", "Seccion": "DECORACIÓN"},
     {"Codigo": "27216", "Descripcion": "PAN DULCE PLAZAS", "Seccion": "PANES"},
     {"Codigo": "27284", "Descripcion": "TORTA DE NARANJA PEQUEÑA", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
-    {"Codigo": "27285", "Descripcion": "TORTA DE AREQUIPE PEQUEÑA", "Seccion": "PASTELERIA"},
+    {"Codigo": "27285", "Descripcion": "TORTA DE AREQUIPE PEQUEÑA", "Seccion": "DECORACIÓN"}, # Cambio solicitado
     {"Codigo": "27287", "Descripcion": "TORTA DE ZANAHORIA CON NUECES PEQUEÑA", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
     {"Codigo": "27289", "Descripcion": "TORTA DE PIÑA PEQUEÑA", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
     {"Codigo": "27290", "Descripcion": "TORTA DE VAINILLA CON CHOCOLATE PEQUEÑA", "Seccion": "DECORACIÓN"},
@@ -101,7 +101,8 @@ st.markdown("""
     <div class="header">Registro de producción <br><span style="font-size: 14px;">Gerencia de Alimentos Procesados</span></div>
     """, unsafe_allow_html=True)
 
-SECCIONES = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "PASTELERIA", "POSTRE", "RELLENOS Y CREMAS"]
+# 3. SECCIONES (Pastelería eliminada)
+SECCIONES = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POSTRE", "RELLENOS Y CREMAS"]
 
 for sec in SECCIONES:
     if sec not in st.session_state: st.session_state[sec] = []
@@ -110,7 +111,7 @@ col_sup, col_fec = st.columns(2)
 with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado"])
 with col_fec: fecha_sel = st.date_input("Fecha", datetime.now())
 
-# 3. RENDERIZADO CON LÓGICA DE ACTUALIZACIÓN DE CÓDIGO
+# 4. RENDERIZADO CON BUSCADOR Y AUTO-ACTUALIZACIÓN
 for seccion in SECCIONES:
     st.markdown(f'<div class="section-header">{seccion}</div>', unsafe_allow_html=True)
     opciones = df_productos[df_productos['Seccion'] == seccion]['Descripcion'].tolist()
@@ -118,18 +119,31 @@ for seccion in SECCIONES:
     if not opciones: continue
 
     for i, item in enumerate(st.session_state[seccion]):
-        c1, c2, c3, c4 = st.columns([1.2, 3, 1, 0.3])
+        c1, c2, c3, c4 = st.columns([1, 3.2, 1, 0.3])
         
         with c2:
-            # Selector con búsqueda
-            sel = st.selectbox(f"D_{seccion}_{i}", options=opciones, key=f"sel_{seccion}_{i}", label_visibility="collapsed")
+            # st.selectbox incluye buscador por defecto. 
+            # Al usar 'index', forzamos a que si el item ya tiene una descripción, se mantenga.
+            try:
+                idx_actual = opciones.index(item['Descripcion'])
+            except:
+                idx_actual = 0
+
+            sel = st.selectbox(
+                f"S_{seccion}_{i}", 
+                options=opciones, 
+                index=idx_actual,
+                key=f"sel_{seccion}_{i}", 
+                label_visibility="collapsed"
+            )
+            
+            # Actualizamos el estado del item con la nueva selección
             item['Descripcion'] = sel
-            # BUSCAMOS EL CÓDIGO ACTUALIZADO
             match = df_productos[df_productos['Descripcion'] == sel]
             item['Codigo'] = match['Codigo'].values[0] if not match.empty else "N/A"
 
         with c1:
-            # El código ahora se actualiza visualmente al cambiar la descripción
+            # Mostramos el código vinculado a la descripción actual
             st.text_input(f"C_{seccion}_{i}", value=item['Codigo'], disabled=True, key=f"disp_{seccion}_{i}", label_visibility="collapsed")
             
         with c3:
@@ -141,7 +155,8 @@ for seccion in SECCIONES:
                 st.rerun()
 
     if st.button(f"➕ Añadir a {seccion.lower()}", key=f"btn_{seccion}"):
-        st.session_state[seccion].append({"Codigo": "", "Descripcion": opciones[0], "Cantidad": 0})
+        # Añadimos el primer producto de la lista por defecto
+        st.session_state[seccion].append({"Codigo": df_productos[df_productos['Descripcion'] == opciones[0]]['Codigo'].values[0], "Descripcion": opciones[0], "Cantidad": 0})
         st.rerun()
 
 st.write("---")
@@ -173,4 +188,4 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
             st.rerun()
         except Exception as e: st.error(f"Error: {e}")
     else:
-        st.warning("Ingrese al menos una cantidad.")
+        st.warning("Ingrese al menos una cantidad mayor a 0.")
