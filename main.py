@@ -12,68 +12,72 @@ hora_actual = datetime.now(ve_tz)
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
 
-# --- CSS VISUAL REFORZADO ---
+# --- CSS VISUAL BLINDADO (PARA MODO CLARO Y OSCURO) ---
 st.markdown("""
     <style>
-    /* Fondo general */
-    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
-        background-color: #f8f9fa !important;
+    /* 1. Forzar fondo blanco en todas las capas posibles */
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stSidebar"] {
+        background-color: #ffffff !important;
     }
-    
-    /* Forzar texto negro */
-    .stMarkdown, p, h1, h2, h3, h4, span, label, td, th {
+
+    /* 2. Forzar texto negro en TODO (Supervisor, Fecha, Tablas, Markdown) */
+    * {
         color: #000000 !important;
     }
 
-    /* Espaciado de columnas y contenedores */
-    .block-container { padding-top: 3.5rem !important; max-width: 100% !important; }
+    /* 3. Excepción para el texto dentro de los encabezados verdes (Secciones) */
+    .section-header, .section-header * {
+        background-color: #36b04b !important;
+        color: #ffffff !important;
+    }
 
-    /* Estilo de los bloques de código */
-    .codigo-box {
-        background-color: #e9ecef !important; 
+    /* 4. Estilo de los inputs (Para que se vea lo que escriben) */
+    input, textarea, select, div[data-baseweb="select"] > div {
+        background-color: #f1f3f5 !important;
         color: #000000 !important;
-        font-weight: bold; padding: 5px; text-align: center; border-radius: 4px;
-        font-size: 14px; min-height: 42px; display: flex; align-items: center; justify-content: center;
-        margin-bottom: 10px;
+        border: 1px solid #ced4da !important;
     }
 
-    /* Encabezados de sección */
-    .section-header {
-        background: #36b04b !important; 
-        color: #ffffff !important; 
-        padding: 8px; text-align: center;
-        font-weight: bold; border-radius: 4px; margin-top: 25px; margin-bottom: 15px;
+    /* 5. Estilo de los Botones (Texto Blanco Siempre) */
+    .stButton > button {
+        background-color: #36b04b !important;
+        border: none !important;
+    }
+    .stButton > button p, .stButton > button span {
+        color: #ffffff !important;
+        font-weight: bold !important;
     }
 
-    /* Cuadro de resumen para capture */
+    /* 6. Cuadro de Resumen para Capture */
     .resumen-box {
-        background-color: #ffffff !important; 
-        padding: 20px; border: 3px solid #36b04b; border-radius: 10px;
+        background-color: #ffffff !important;
+        padding: 20px;
+        border: 3px solid #36b04b;
+        border-radius: 10px;
         margin-bottom: 20px;
     }
 
-    /* BOTONES: Texto blanco y separación */
-    .stButton > button {
-        background-color: #36b04b !important; 
-        color: #ffffff !important;
-        font-weight: bold !important;
-        border: none; width: 100%; min-height: 42px;
-        margin-bottom: 15px !important; /* Espacio para que no se peguen */
-    }
-    
-    /* Forzar color blanco en el párrafo interno del botón (Streamlit 1.30+) */
-    .stButton > button p {
-        color: #ffffff !important;
+    /* 7. Ajuste de las cajas de código */
+    .codigo-box {
+        background-color: #e9ecef !important;
+        color: #000000 !important;
+        font-weight: bold;
+        padding: 5px;
+        text-align: center;
+        border-radius: 4px;
+        min-height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
-    /* Tablas */
-    [data-testid="stTable"] {
-        background-color: white !important;
-    }
+    /* 8. Quitar el índice de las tablas de Streamlit */
+    [data-testid="stTable"] thead th:first-child { display: none; }
+    [data-testid="stTable"] tbody td:first-child { display: none; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- FUNCIÓN CARGAR LOGO Y CABECERA ---
+# --- FUNCIÓN CARGAR LOGO ---
 def render_header():
     try:
         with open("logo_plaza.png", "rb") as f:
@@ -82,20 +86,59 @@ def render_header():
             <div style="display: flex; align-items: center; padding-bottom: 10px; border-bottom: 4px solid #36b04b; margin-bottom: 20px;">
                 <img src="data:image/png;base64,{data}" style="height: 70px; margin-right: 15px; object-fit: contain;">
                 <div>
-                    <h2 style="color:#1a3a63; margin:0; font-weight:900; font-size: 20px;">Registro de Producción</h2>
-                    <p style="color:#666; margin:0; font-size: 12px;">Gerencia de Alimentos Procesados</p>
+                    <h2 style="color:#1a3a63 !important; margin:0; font-weight:900; font-size: 20px;">Registro de Producción</h2>
+                    <p style="color:#666 !important; margin:0; font-size: 12px;">Gerencia de Alimentos Procesados</p>
                 </div>
             </div>
             """, unsafe_allow_html=True)
     except:
-        st.markdown("## 🟢 Registro de Producción Plaza's")
+        st.markdown("<h2 style='color:#36b04b;'>Registro de Producción Plaza's</h2>", unsafe_allow_html=True)
 
-# --- DATA PRODUCTOS ---
+# --- INICIALIZACIÓN DE ESTADOS ---
+if 'secciones_data' not in st.session_state:
+    st.session_state.secciones_data = {sec: [] for sec in ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POSTRE", "RELLENOS Y CREMAS"]}
+if 'exito' not in st.session_state:
+    st.session_state.exito = False
+if 'datos_finales' not in st.session_state:
+    st.session_state.datos_finales = None
+
+# --- VISTA DE RESUMEN (CAPTURE) ---
+if st.session_state.exito and st.session_state.datos_finales:
+    render_header()
+    df_res = st.session_state.datos_finales['df']
+    meta = st.session_state.datos_finales['meta']
+
+    st.markdown('<div class="resumen-box">', unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center; color: #36b04b;'>✓ REPORTE DE PRODUCCIÓN</h2>", unsafe_allow_html=True)
+    st.write(f"**Supervisor:** {meta['supervisor']}")
+    st.write(f"**Fecha y Hora:** {meta['fecha_hora']}")
+    st.write("---")
+    
+    st.table(df_res)
+    
+    if meta['obs']:
+        st.markdown(f"**Observaciones:** {meta['obs']}")
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    st.write("📸 *Toma un capture para WhatsApp.*")
+    if st.button("Nuevo Registro"):
+        st.session_state.exito = False
+        st.session_state.datos_finales = None
+        st.rerun()
+    st.stop()
+
+# --- FORMULARIO PRINCIPAL ---
+render_header()
+col_sup, col_fec = st.columns(2)
+with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado", "Jesus Ramirez"])
+with col_fec: fecha_sel = st.date_input("Fecha", hora_actual.date())
+
+# DATA PRODUCTOS (Lista original)
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
     {"Codigo": "27115", "Descripcion": "TORTA DE AREQUIPE GRANDE", "Seccion": "DECORACIÓN"},
-    {"Codigo": "27119", "Descripcion": "TORTA DE ZANAHORIA CON NUECES GRANDE", "Seccion": "BASES, BISCOCHOS DE TARTALETAS"},
+    {"Codigo": "27119", "Descripcion": "TORTA DE ZANAHORIA CON NUECES GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
     {"Codigo": "27121", "Descripcion": "TORTA DE ZANAHORIA CON QUESO CREMA GRANDE", "Seccion": "DECORACIÓN"},
     {"Codigo": "27127", "Descripcion": "TORTA DE CHOCOLATE GRANDE", "Seccion": "DECORACIÓN"},
     {"Codigo": "27133", "Descripcion": "TORTA DE PIÑA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -175,47 +218,6 @@ PRODUCTOS_DATA = [
 df_productos = pd.DataFrame(PRODUCTOS_DATA)
 SECCIONES_ORDEN = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POSTRE", "RELLENOS Y CREMAS"]
 
-# --- ESTADOS DE SESIÓN ---
-if 'secciones_data' not in st.session_state:
-    st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
-if 'exito' not in st.session_state:
-    st.session_state.exito = False
-if 'final_df' not in st.session_state:
-    st.session_state.final_df = None
-if 'final_meta' not in st.session_state:
-    st.session_state.final_meta = {}
-
-# --- VISTA DE RESUMEN (REPORTE) ---
-if st.session_state.exito and st.session_state.final_df is not None:
-    render_header()
-    st.markdown('<div class="resumen-box">', unsafe_allow_html=True)
-    st.markdown("<h2 style='text-align: center; color: #36b04b; margin-top:0;'>✓ REPORTE DE PRODUCCIÓN</h2>", unsafe_allow_html=True)
-    
-    meta = st.session_state.final_meta
-    st.write(f"**Supervisor:** {meta.get('supervisor')}")
-    st.write(f"**Fecha y Hora:** {meta.get('fecha_hora')}")
-    st.write("---")
-    
-    # Mostrar tabla limpia (el index oculto se configuró en el guardado)
-    st.table(st.session_state.final_df)
-    
-    if meta.get('obs'):
-        st.info(f"**Observaciones:** {meta.get('obs')}")
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    st.write("📸 *Toma un capture de esta pantalla para WhatsApp.*")
-    if st.button("Hacer otro registro", key="btn_otro"):
-        st.session_state.exito = False
-        st.session_state.final_df = None
-        st.rerun()
-    st.stop()
-
-# --- FORMULARIO DE ENTRADA ---
-render_header()
-col_sup, col_fec = st.columns(2)
-with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado", "Jesus Ramirez"])
-with col_fec: fecha_sel = st.date_input("Fecha", hora_actual.date())
-
 def actualizar_producto(seccion_key, index_key, selectbox_key):
     nuevo_nombre = st.session_state[selectbox_key]
     nuevo_codigo = df_productos[df_productos['Descripcion'] == nuevo_nombre]['Codigo'].values[0]
@@ -240,31 +242,28 @@ for seccion in SECCIONES_ORDEN:
                 st.rerun()
 
     if st.button(f"➕ Añadir {seccion}", key=f"add_{seccion}"):
-        st.session_state.secciones_data[seccion].append({
-            "Codigo": df_productos[df_productos['Seccion']==seccion].iloc[0]['Codigo'], 
-            "Descripcion": opciones[0], "Cantidad": 0
-        })
+        st.session_state.secciones_data[seccion].append({"Codigo": df_productos[df_productos['Seccion']==seccion].iloc[0]['Codigo'], "Descripcion": opciones[0], "Cantidad": 0})
         st.rerun()
 
 st.write("---")
 obs_input = st.text_area("Observaciones", placeholder="Notas...")
 
-if st.button("FINALIZAR Y GUARDAR TODO", type="primary", key="btn_finalizar"):
+if st.button("FINALIZAR Y GUARDAR TODO", type="primary"):
     conn = st.connection("gsheets", type=GSheetsConnection)
+    f_h = datetime.now(ve_tz).strftime("%d/%m/%Y %I:%M %p")
+    
     filas_hoja = []
     filas_resumen = []
-    f_h = datetime.now(ve_tz).strftime("%d/%m/%Y %I:%M %p")
-    id_reg = datetime.now(ve_tz).strftime("%Y%m%d%H%M%S")
-
+    
     for sec, items in st.session_state.secciones_data.items():
         for it in items:
             if it['Cantidad'] > 0:
                 filas_hoja.append({
-                    "ID_Registro": id_reg, "Supervisor": supervisor, "Fecha_Hora": f_h,
+                    "ID_Registro": datetime.now(ve_tz).strftime("%Y%m%d%H%M%S"),
+                    "Supervisor": supervisor, "Fecha_Hora": f_h,
                     "Codigo_Articulo": it['Codigo'], "Descripcion": it['Descripcion'],
                     "Cantidad": it['Cantidad'], "Observaciones": obs_input
                 })
-                # Estructura del Resumen: Código, Producto, Cant.
                 filas_resumen.append({
                     "Código": it['Codigo'],
                     "Producto": it['Descripcion'],
@@ -272,17 +271,11 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", key="btn_finalizar"):
                 })
 
     if filas_hoja:
-        try:
-            df_ex = conn.read(worksheet="Hoja1", ttl=0)
-            df_total = pd.concat([df_ex, pd.DataFrame(filas_hoja)], ignore_index=True)
-            conn.update(worksheet="Hoja1", data=df_total)
-            
-            # Guardamos el DataFrame sin la columna de índice automática
-            st.session_state.final_df = pd.DataFrame(filas_resumen).set_index("Código")
-            st.session_state.final_meta = {"supervisor": supervisor, "fecha_hora": f_h, "obs": obs_input}
-            st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
-            st.session_state.exito = True
-            st.rerun()
-        except Exception as e:
-            st.error(f"Error: {e}")
-            
+        df_total = pd.concat([conn.read(worksheet="Hoja1", ttl=0), pd.DataFrame(filas_hoja)], ignore_index=True)
+        conn.update(worksheet="Hoja1", data=df_total)
+        st.session_state.datos_finales = {"df": pd.DataFrame(filas_resumen), "meta": {"supervisor": supervisor, "fecha_hora": f_h, "obs": obs_input}}
+        st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
+        st.session_state.exito = True
+        st.rerun()
+    else:
+        st.warning("Sin registros.")
