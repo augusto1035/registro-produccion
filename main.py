@@ -12,67 +12,70 @@ hora_actual = datetime.now(ve_tz)
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
 
-# --- CSS DEFINITIVO: FOCO EN COLORES Y ANCHOS CORRECTOS ---
+# --- CSS RADICAL: FORZAR COLORES POR VARIABLES DE TEMA ---
 st.markdown("""
     <style>
-    /* 1. Fondo de la App siempre claro */
-    .stApp { background-color: white !important; }
-
-    /* 2. Blindaje de textos: Forzamos Negro en lo que debe ser negro */
-    h1, h2, p, span, label, td, th, div {
-        color: #000000 !important;
-        font-family: sans-serif;
+    /* Forzar el tema claro en las variables internas de Streamlit */
+    :root {
+        --primary-color: #36b04b;
+        --background-color: #ffffff;
+        --secondary-background-color: #f0f2f6;
+        --text-color: #000000;
+        --font: sans-serif;
     }
 
-    /* 3. Corregir anchos de cajas verdes (Secciones) */
+    /* Blindaje total del fondo y texto */
+    .stApp {
+        background-color: white !important;
+        color: black !important;
+    }
+
+    /* Forzar negro en todos los textos de la interfaz */
+    h1, h2, h3, p, span, label, td, th, div, input, select {
+        color: black !important;
+    }
+
+    /* Arreglar los Selectboxes (Listas Desplegables) */
+    div[data-baseweb="select"] > div {
+        background-color: #f8f9fa !important;
+        border: 1px solid #36b04b !important;
+    }
+    
+    /* Estilo de los encabezados verdes (Secciones) - Más delgados */
     .section-header {
         background-color: #36b04b !important;
-        padding: 8px 15px !important;
+        padding: 5px 10px !important;
         border-radius: 4px;
-        margin: 15px 0px !important;
+        margin: 10px 0px !important;
         width: 100%;
-        display: block;
     }
     .section-header h3 {
         color: white !important;
         margin: 0 !important;
-        font-size: 1.1rem !important;
+        font-size: 1rem !important;
         text-align: center;
     }
 
-    /* 4. Blindaje de Listas Desplegables (Selectbox) */
-    /* Forzamos que el fondo sea claro y el texto negro siempre */
-    div[data-baseweb="select"] > div {
-        background-color: #f1f3f5 !important;
-        border: 1px solid #36b04b !important;
-    }
-    div[data-baseweb="select"] * {
-        color: #000000 !important;
-    }
-
-    /* 5. Botones: Evitar que se deformen y forzar texto blanco */
+    /* Botones con texto blanco forzado */
     .stButton > button {
         background-color: #36b04b !important;
         color: white !important;
         border: none !important;
-        padding: 5px 15px !important;
-        width: auto !important; /* Ancho automático para que no se vea gigante */
     }
     .stButton > button p {
         color: white !important;
         font-weight: bold !important;
     }
 
-    /* 6. Cuadro de Resumen (Blindaje total) */
+    /* Cuadro de Resumen para Capture */
     .resumen-box {
-        background-color: #ffffff !important;
-        padding: 20px;
+        background-color: white !important;
+        padding: 15px;
         border: 2px solid #36b04b;
         border-radius: 8px;
     }
-    .resumen-box * { color: black !important; }
 
-    /* 7. Ocultar el índice (columna 0) de las tablas */
+    /* Quitar columna 0 (índice) */
     [data-testid="stTable"] thead th:first-child, 
     [data-testid="stTable"] tbody td:first-child { 
         display: none !important; 
@@ -87,17 +90,17 @@ def render_header():
             data = base64.b64encode(f.read()).decode()
         st.markdown(f"""
             <div style="display: flex; align-items: center; border-bottom: 2px solid #36b04b; padding-bottom: 10px; margin-bottom: 20px;">
-                <img src="data:image/png;base64,{data}" style="height: 55px; margin-right: 15px;">
+                <img src="data:image/png;base64,{data}" style="height: 50px; margin-right: 15px;">
                 <div>
-                    <h2 style="color:#1a3a63 !important; margin:0; font-size: 1.4rem;">Registro de Producción</h2>
-                    <p style="color:#666 !important; margin:0; font-size: 0.8rem;">Gerencia de Alimentos Procesados</p>
+                    <h2 style="color:#1a3a63 !important; margin:0; font-size: 1.2rem;">Registro de Producción</h2>
+                    <p style="color:#666 !important; margin:0; font-size: 0.7rem;">Gerencia de Alimentos Procesados</p>
                 </div>
             </div>
             """, unsafe_allow_html=True)
     except:
         st.subheader("🟢 Registro de Producción Plaza's")
 
-# --- PRODUCTOS ---
+# --- DATA PRODUCTOS ---
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -195,23 +198,23 @@ if st.session_state.exito and st.session_state.res_final:
     render_header()
     rf = st.session_state.res_final
     st.markdown('<div class="resumen-box">', unsafe_allow_html=True)
-    st.markdown("<h2 style='text-align: center; color: #36b04b !important;'>✓ REPORTE DE PRODUCCIÓN</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center; color: #36b04b;'>REPORTE DE PRODUCCIÓN</h2>", unsafe_allow_html=True)
     st.write(f"**Supervisor:** {rf['supervisor']}")
     st.write(f"**Fecha y Hora:** {rf['fecha_hora']}")
     st.write("---")
     st.table(rf['df'])
     if rf['obs']: st.write(f"**Observaciones:** {rf['obs']}")
     st.markdown('</div>', unsafe_allow_html=True)
-    if st.button("Hacer otro registro"):
+    if st.button("Hacer nuevo registro"):
         st.session_state.exito = False
         st.rerun()
     st.stop()
 
 # --- FORMULARIO ---
 render_header()
-col1, col2 = st.columns(2)
-with col1: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado", "Jesus Ramirez"])
-with col2: fecha_sel = st.date_input("Fecha", hora_actual.date())
+c_sup, c_fec = st.columns(2)
+with c_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado", "Jesus Ramirez"])
+with c_fec: fecha_sel = st.date_input("Fecha", hora_actual.date())
 
 def act_prod(sec, idx, key):
     nom = st.session_state[key]
@@ -222,18 +225,20 @@ def act_prod(sec, idx, key):
 for sec in SECCIONES_ORDEN:
     st.markdown(f'<div class="section-header"><h3>{sec}</h3></div>', unsafe_allow_html=True)
     opcs = df_productos[df_productos['Seccion'] == sec]['Descripcion'].tolist()
+    
     for i, item in enumerate(st.session_state.secciones_data[sec]):
-        c1, c2, c3, c4 = st.columns([1, 4, 1.5, 0.5])
-        with c1: st.write(item['Codigo'])
-        with c2:
+        col1, col2, col3, col4 = st.columns([1, 4, 1.5, 0.5])
+        with col1: st.write(item['Codigo'])
+        with col2:
             key = f"sel_{sec}_{i}"
             st.selectbox("P", opcs, index=opcs.index(item['Descripcion']), key=key, label_visibility="collapsed", on_change=act_prod, args=(sec, i, key))
-        with c3:
+        with col3:
             item['Cantidad'] = st.number_input("C", min_value=0, step=1, key=f"q_{sec}_{i}", label_visibility="collapsed")
-        with c4:
+        with col4:
             if st.button("X", key=f"x_{sec}_{i}"):
                 st.session_state.secciones_data[sec].pop(i)
                 st.rerun()
+
     if st.button(f"➕ Añadir {sec}", key=f"add_{sec}"):
         st.session_state.secciones_data[sec].append({"Codigo": df_productos[df_productos['Seccion']==sec].iloc[0]['Codigo'], "Descripcion": opcs[0], "Cantidad": 0})
         st.rerun()
@@ -252,8 +257,8 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary"):
                 filas_h.append({"ID": datetime.now(ve_tz).strftime("%Y%m%d%H%M%S"), "Supervisor": supervisor, "Fecha": f_h, "Codigo": it['Codigo'], "Producto": it['Descripcion'], "Cant": it['Cantidad'], "Obs": obs})
                 filas_r.append({"Código": it['Codigo'], "Producto": it['Descripcion'], "Cant.": it['Cantidad']})
     if filas_h:
-        df_total = pd.concat([conn.read(worksheet="Hoja1", ttl=0), pd.DataFrame(filas_h)], ignore_index=True)
-        conn.update(worksheet="Hoja1", data=df_total)
+        df_sheet = pd.concat([conn.read(worksheet="Hoja1", ttl=0), pd.DataFrame(filas_h)], ignore_index=True)
+        conn.update(worksheet="Hoja1", data=df_sheet)
         st.session_state.res_final = {"df": pd.DataFrame(filas_r).set_index("Código"), "supervisor": supervisor, "fecha_hora": f_h, "obs": obs}
         st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
         st.session_state.exito = True
