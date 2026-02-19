@@ -12,62 +12,68 @@ hora_actual = datetime.now(ve_tz)
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
 
-# --- CSS VISUAL REFORZADO (ANTI MODO OSCURO Y BOTONES) ---
+# --- CSS VISUAL REFORZADO ---
 st.markdown("""
     <style>
+    /* Fondo general */
     html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: #f8f9fa !important;
     }
     
-    /* Texto negro total */
+    /* Forzar texto negro */
     .stMarkdown, p, h1, h2, h3, h4, span, label, td, th {
         color: #000000 !important;
     }
 
-    input, textarea, select, div[data-baseweb="select"] > div {
-        background-color: #ffffff !important; 
-        color: #000000 !important; 
-        border: 1px solid #ced4da !important;
-    }
+    /* Espaciado de columnas y contenedores */
+    .block-container { padding-top: 3.5rem !important; max-width: 100% !important; }
 
+    /* Estilo de los bloques de código */
     .codigo-box {
         background-color: #e9ecef !important; 
         color: #000000 !important;
         font-weight: bold; padding: 5px; text-align: center; border-radius: 4px;
         font-size: 14px; min-height: 42px; display: flex; align-items: center; justify-content: center;
+        margin-bottom: 10px;
     }
 
+    /* Encabezados de sección */
     .section-header {
         background: #36b04b !important; 
         color: #ffffff !important; 
         padding: 8px; text-align: center;
-        font-weight: bold; border-radius: 4px; margin-top: 20px;
+        font-weight: bold; border-radius: 4px; margin-top: 25px; margin-bottom: 15px;
     }
 
+    /* Cuadro de resumen para capture */
     .resumen-box {
         background-color: #ffffff !important; 
         padding: 20px; border: 3px solid #36b04b; border-radius: 10px;
+        margin-bottom: 20px;
     }
 
-    /* FORZAR TEXTO BLANCO EN BOTONES */
+    /* BOTONES: Texto blanco y separación */
     .stButton > button {
         background-color: #36b04b !important; 
         color: #ffffff !important;
         font-weight: bold !important;
-        border: none; width: 100%; min-height: 40px;
+        border: none; width: 100%; min-height: 42px;
+        margin-bottom: 15px !important; /* Espacio para que no se peguen */
     }
     
+    /* Forzar color blanco en el párrafo interno del botón (Streamlit 1.30+) */
     .stButton > button p {
         color: #ffffff !important;
     }
 
+    /* Tablas */
     [data-testid="stTable"] {
         background-color: white !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- FUNCIÓN CARGAR LOGO ---
+# --- FUNCIÓN CARGAR LOGO Y CABECERA ---
 def render_header():
     try:
         with open("logo_plaza.png", "rb") as f:
@@ -82,14 +88,14 @@ def render_header():
             </div>
             """, unsafe_allow_html=True)
     except:
-        st.markdown("## Registro de Producción Plaza's")
+        st.markdown("## 🟢 Registro de Producción Plaza's")
 
 # --- DATA PRODUCTOS ---
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
     {"Codigo": "27115", "Descripcion": "TORTA DE AREQUIPE GRANDE", "Seccion": "DECORACIÓN"},
-    {"Codigo": "27119", "Descripcion": "TORTA DE ZANAHORIA CON NUECES GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
+    {"Codigo": "27119", "Descripcion": "TORTA DE ZANAHORIA CON NUECES GRANDE", "Seccion": "BASES, BISCOCHOS DE TARTALETAS"},
     {"Codigo": "27121", "Descripcion": "TORTA DE ZANAHORIA CON QUESO CREMA GRANDE", "Seccion": "DECORACIÓN"},
     {"Codigo": "27127", "Descripcion": "TORTA DE CHOCOLATE GRANDE", "Seccion": "DECORACIÓN"},
     {"Codigo": "27133", "Descripcion": "TORTA DE PIÑA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -179,7 +185,7 @@ if 'final_df' not in st.session_state:
 if 'final_meta' not in st.session_state:
     st.session_state.final_meta = {}
 
-# --- VISTA DE RESUMEN ---
+# --- VISTA DE RESUMEN (REPORTE) ---
 if st.session_state.exito and st.session_state.final_df is not None:
     render_header()
     st.markdown('<div class="resumen-box">', unsafe_allow_html=True)
@@ -190,21 +196,21 @@ if st.session_state.exito and st.session_state.final_df is not None:
     st.write(f"**Fecha y Hora:** {meta.get('fecha_hora')}")
     st.write("---")
     
-    # Tabla limpia sin índice
+    # Mostrar tabla limpia (el index oculto se configuró en el guardado)
     st.table(st.session_state.final_df)
     
     if meta.get('obs'):
         st.info(f"**Observaciones:** {meta.get('obs')}")
     st.markdown('</div>', unsafe_allow_html=True)
     
-    st.write("📸 *Captura esta pantalla para WhatsApp.*")
-    if st.button("Hacer otro registro"):
+    st.write("📸 *Toma un capture de esta pantalla para WhatsApp.*")
+    if st.button("Hacer otro registro", key="btn_otro"):
         st.session_state.exito = False
         st.session_state.final_df = None
         st.rerun()
     st.stop()
 
-# --- FORMULARIO PRINCIPAL ---
+# --- FORMULARIO DE ENTRADA ---
 render_header()
 col_sup, col_fec = st.columns(2)
 with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado", "Jesus Ramirez"])
@@ -236,15 +242,14 @@ for seccion in SECCIONES_ORDEN:
     if st.button(f"➕ Añadir {seccion}", key=f"add_{seccion}"):
         st.session_state.secciones_data[seccion].append({
             "Codigo": df_productos[df_productos['Seccion']==seccion].iloc[0]['Codigo'], 
-            "Descripcion": opciones[0], 
-            "Cantidad": 0
+            "Descripcion": opciones[0], "Cantidad": 0
         })
         st.rerun()
 
 st.write("---")
 obs_input = st.text_area("Observaciones", placeholder="Notas...")
 
-if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
+if st.button("FINALIZAR Y GUARDAR TODO", type="primary", key="btn_finalizar"):
     conn = st.connection("gsheets", type=GSheetsConnection)
     filas_hoja = []
     filas_resumen = []
@@ -259,7 +264,7 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
                     "Codigo_Articulo": it['Codigo'], "Descripcion": it['Descripcion'],
                     "Cantidad": it['Cantidad'], "Observaciones": obs_input
                 })
-                # ORDEN: Código, Producto, Cant.
+                # Estructura del Resumen: Código, Producto, Cant.
                 filas_resumen.append({
                     "Código": it['Codigo'],
                     "Producto": it['Descripcion'],
@@ -272,13 +277,12 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
             df_total = pd.concat([df_ex, pd.DataFrame(filas_hoja)], ignore_index=True)
             conn.update(worksheet="Hoja1", data=df_total)
             
-            # Guardamos el resumen sin índice
-            st.session_state.final_df = pd.DataFrame(filas_resumen).set_index('Código')
+            # Guardamos el DataFrame sin la columna de índice automática
+            st.session_state.final_df = pd.DataFrame(filas_resumen).set_index("Código")
             st.session_state.final_meta = {"supervisor": supervisor, "fecha_hora": f_h, "obs": obs_input}
             st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
             st.session_state.exito = True
             st.rerun()
         except Exception as e:
             st.error(f"Error: {e}")
-    else:
-        st.warning("No hay productos registrados.")
+            
