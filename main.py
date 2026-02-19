@@ -12,25 +12,20 @@ hora_actual = datetime.now(ve_tz)
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
 
-# --- EL CSS QUE YA FUNCIONABA (RECUPERADO Y AJUSTADO) ---
+# --- CSS BLINDADO (REPARACIÓN MODO OSCURO Y SECCIONES DELGADAS) ---
 st.markdown("""
     <style>
-    /* 1. EL BLINDAJE ORIGINAL: FONDO BLANCO Y TEXTO NEGRO FORZADO */
-    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+    html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: #ffffff !important;
     }
-    
-    /* Forzar texto negro en todo (Labels, selectbox, tablas) */
-    .stMarkdown, p, h1, h2, h3, h4, span, label, td, th {
+    h1, h2, h3, p, span, label, td, th, div, li, input, select {
         color: #000000 !important;
     }
-
-    /* 2. CATEGORÍAS VERDES: AHORA MÁS DELGADAS */
     .section-header {
         background-color: #36b04b !important;
-        padding: 3px 10px !important; /* Reducido al mínimo */
+        padding: 4px 10px !important;
         border-radius: 4px;
-        margin: 8px 0px !important;
+        margin: 10px 0px 8px 0px !important;
         width: 100%;
         text-align: center;
     }
@@ -40,18 +35,11 @@ st.markdown("""
         font-size: 0.9rem !important;
         font-weight: bold;
     }
-
-    /* 3. SELECTBOXES: FONDO BLANCO Y LETRA NEGRA (LA QUE FUNCIONABA) */
-    div[data-baseweb="select"] > div, input, textarea {
+    div[data-baseweb="select"] > div {
         background-color: #ffffff !important;
-        color: #000000 !important;
-        border: 1px solid #ced4da !important;
+        border: 1px solid #36b04b !important;
     }
-    div[data-baseweb="select"] * {
-        color: #000000 !important;
-    }
-
-    /* 4. BOTONES: TEXTO BLANCO */
+    div[data-baseweb="select"] * { color: #000000 !important; }
     .stButton > button {
         background-color: #36b04b !important;
         color: #ffffff !important;
@@ -61,16 +49,12 @@ st.markdown("""
         color: #ffffff !important;
         font-weight: bold !important;
     }
-
-    /* 5. RESUMEN FINAL (CAPTURE) */
     .resumen-box {
         background-color: #ffffff !important;
         padding: 15px;
-        border: 3px solid #36b04b;
-        border-radius: 10px;
+        border: 2px solid #36b04b;
+        border-radius: 8px;
     }
-
-    /* 6. QUITAR ÍNDICE DE TABLAS */
     [data-testid="stTable"] thead th:first-child, 
     [data-testid="stTable"] tbody td:first-child { 
         display: none !important; 
@@ -78,24 +62,24 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- FUNCIÓN CABECERA CON LOGO ---
+# --- CABECERA ---
 def render_header():
     try:
         with open("logo_plaza.png", "rb") as f:
             data = base64.b64encode(f.read()).decode()
         st.markdown(f"""
-            <div style="display: flex; align-items: center; border-bottom: 3px solid #36b04b; padding-bottom: 10px; margin-bottom: 20px;">
-                <img src="data:image/png;base64,{data}" style="height: 60px; margin-right: 15px;">
+            <div style="display: flex; align-items: center; border-bottom: 2px solid #36b04b; padding-bottom: 8px; margin-bottom: 15px;">
+                <img src="data:image/png;base64,{data}" style="height: 50px; margin-right: 15px;">
                 <div>
-                    <h2 style="color: #1a3a63 !important; margin: 0; font-size: 1.4rem;">Registro de Producción</h2>
-                    <p style="color: #666 !important; margin: 0; font-size: 0.8rem;">Gerencia de Alimentos Procesados</p>
+                    <h2 style="color:#1a3a63 !important; margin:0; font-size: 1.2rem;">Registro de Producción</h2>
+                    <p style="color:#666 !important; margin:0; font-size: 0.7rem;">Gerencia de Alimentos Procesados</p>
                 </div>
             </div>
             """, unsafe_allow_html=True)
     except:
-        st.header("🟢 Registro de Producción Plaza's")
+        st.markdown("<h2 style='color:#36b04b !important; margin:0;'>🟢 Registro de Producción Plaza's</h2>", unsafe_allow_html=True)
 
-# --- DATA PRODUCTOS ---
+# --- PRODUCTOS ---
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -188,7 +172,7 @@ if 'exito' not in st.session_state:
 if 'final_data' not in st.session_state:
     st.session_state.final_data = None
 
-# --- VISTA RESUMEN (REPORTE) ---
+# --- VISTA RESUMEN ---
 if st.session_state.exito and st.session_state.final_data:
     render_header()
     fd = st.session_state.final_data
@@ -207,9 +191,9 @@ if st.session_state.exito and st.session_state.final_data:
 
 # --- FORMULARIO ---
 render_header()
-col_sup, col_fec = st.columns(2)
-with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado", "Jesus Ramirez"])
-with col_fec: fecha_sel = st.date_input("Fecha", hora_actual.date())
+c_sup, c_fec = st.columns(2)
+with c_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado", "Jesus Ramirez"])
+with c_fec: fecha_sel = st.date_input("Fecha", hora_actual.date())
 
 def act_prod(sec, idx, key):
     nom = st.session_state[key]
@@ -222,14 +206,14 @@ for sec in SECCIONES_ORDEN:
     opcs = df_productos[df_productos['Seccion'] == sec]['Descripcion'].tolist()
     
     for i, item in enumerate(st.session_state.secciones_data[sec]):
-        col_c, col_p, col_q, col_x = st.columns([1, 4.5, 1.5, 0.5])
-        with col_c: st.write(item['Codigo'])
-        with col_p:
-            k = f"sel_{sec}_{i}"
-            st.selectbox("P", opcs, index=opcs.index(item['Descripcion']), key=k, label_visibility="collapsed", on_change=act_prod, args=(sec, i, k))
-        with col_q:
+        col1, col2, col3, col4 = st.columns([1, 4.5, 1.5, 0.5])
+        with col1: st.write(item['Codigo'])
+        with col2:
+            key = f"sel_{sec}_{i}"
+            st.selectbox("P", opcs, index=opcs.index(item['Descripcion']), key=key, label_visibility="collapsed", on_change=act_prod, args=(sec, i, key))
+        with col3:
             item['Cantidad'] = st.number_input("C", min_value=0, step=1, key=f"q_{sec}_{i}", label_visibility="collapsed")
-        with col_x:
+        with col4:
             if st.button("X", key=f"x_{sec}_{i}"):
                 st.session_state.secciones_data[sec].pop(i)
                 st.rerun()
@@ -241,21 +225,60 @@ for sec in SECCIONES_ORDEN:
 st.write("---")
 obs = st.text_area("Observaciones")
 
+# --- GUARDADO CORREGIDO ---
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary"):
     conn = st.connection("gsheets", type=GSheetsConnection)
     f_h = datetime.now(ve_tz).strftime("%d/%m/%Y %I:%M %p")
-    filas_h = []
-    filas_r = []
+    id_reg = datetime.now(ve_tz).strftime("%Y%m%d%H%M%S")
+    
+    filas_hoja = []
+    filas_resumen = []
+    
     for s, items in st.session_state.secciones_data.items():
         for it in items:
             if it['Cantidad'] > 0:
-                filas_h.append({"ID": datetime.now(ve_tz).strftime("%Y%m%d%H%M%S"), "Supervisor": supervisor, "Fecha": f_h, "Codigo": it['Codigo'], "Producto": it['Descripcion'], "Cant": it['Cantidad'], "Obs": obs})
-                filas_r.append({"Código": it['Codigo'], "Producto": it['Descripcion'], "Cant.": it['Cantidad']})
-    if filas_h:
-        df_sheet = pd.concat([conn.read(worksheet="Hoja1", ttl=0), pd.DataFrame(filas_h)], ignore_index=True)
-        conn.update(worksheet="Hoja1", data=df_sheet)
-        st.session_state.final_data = {"df": pd.DataFrame(filas_r).set_index("Código"), "supervisor": supervisor, "fecha_hora": f_h, "obs": obs}
-        st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
-        st.session_state.exito = True
-        st.rerun()
+                # ESTRUCTURA EXACTA DE TU GOOGLE SHEETS (Columnas A a G)
+                filas_hoja.append({
+                    "ID_Registro": id_reg,
+                    "Supervisor": supervisor,
+                    "Fecha_Hora": f_h,
+                    "Codigo_Articulo": it['Codigo'],
+                    "Descripcion": it['Descripcion'],
+                    "Cantidad": it['Cantidad'],
+                    "Observaciones": obs
+                })
+                # Estructura visual para el reporte en pantalla
+                filas_resumen.append({
+                    "Código": it['Codigo'],
+                    "Producto": it['Descripcion'],
+                    "Cant.": it['Cantidad']
+                })
+
+    if filas_hoja:
+        try:
+            # Leer datos actuales
+            df_existente = conn.read(worksheet="Hoja1", ttl=0)
+            
+            # Asegurar que solo usamos las primeras 7 columnas si hay basura a la derecha
+            df_existente = df_existente.iloc[:, :7]
+            
+            # Crear el nuevo bloque de datos con las mismas columnas
+            df_nuevo = pd.DataFrame(filas_hoja)
+            
+            # Unir y actualizar
+            df_final = pd.concat([df_existente, df_nuevo], ignore_index=True)
+            conn.update(worksheet="Hoja1", data=df_final)
+            
+            # Guardar para la vista de resumen
+            st.session_state.final_data = {
+                "df": pd.DataFrame(filas_resumen).set_index("Código"),
+                "supervisor": supervisor,
+                "fecha_hora": f_h,
+                "obs": obs
+            }
+            st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
+            st.session_state.exito = True
+            st.rerun()
+        except Exception as e:
+            st.error(f"Error al conectar: {e}")
 
