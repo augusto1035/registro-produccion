@@ -118,7 +118,7 @@ PRODUCTOS_DATA = [
     {"Codigo": "27365", "Descripcion": "TORTA PLAZAS DE COCO Y DULCE DE LECHE PEQUEÑA", "Seccion": "DECORACIÓN"},
     {"Codigo": "27366", "Descripcion": "TORTA PLAZAS HALLOWEEN CHOCOLATE PEQ", "Seccion": "DECORACIÓN"},
     {"Codigo": "27368", "Descripcion": "TORTA BLACK FRIDAY VAINILLA CHOCOLAT PEQ", "Seccion": "DECORACIÓN"},
-    {"Codigo": "27371", "Descripcion": "TORTA DE VAINILLA CON CHOCOLATE PEQUEÑA ESPECIAL", "Seccion": "DECORACIÓN"},
+    {"Codigo": "27371", "Descripcion": "TORTA DE VAINILLA CON CHOCOLATE PEQUEÑA ESPCIAL", "Seccion": "DECORACIÓN"},
     {"Codigo": "27470", "Descripcion": "PAN DE COCO PLAZAS PAQUETE 4UND", "Seccion": "PANES"},
     {"Codigo": "27471", "Descripcion": "PAN DE AREQUIPE PLAZAS PAQUETE 4UND", "Seccion": "PANES"},
     {"Codigo": "27476", "Descripcion": "TORTA PLAZAS TROPICAL PEQUEÑA", "Seccion": "DECORACIÓN"},
@@ -166,7 +166,8 @@ PRODUCTOS_DATA = [
     {"Codigo": "27145", "Descripcion": "CREMA DE QUESO CREMA PARA TORTA", "Seccion": "RELLENOS Y CREMAS"},
     {"Codigo": "27701", "Descripcion": "BIZCOCHUELO DE VAINILLA UND (BASE)", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
     {"Codigo": "1", "Descripcion": "BASE DE COCO COCO PEQUEÑA", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
-    {"Codigo": "2", "Descripcion": "BASE DE RED VELVET", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"}
+    {"Codigo": "2", "Descripcion": "BASE DE RED VELVET", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
+    {"Codigo": "27087", "Descripcion": "CREMA DE CHOCOLATE", "Seccion": "RELLENOS Y CREMAS"}
 ]
 df_productos = pd.DataFrame(PRODUCTOS_DATA)
 SECCIONES_ORDEN = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POSTRE", "RELLENOS Y CREMAS"]
@@ -214,7 +215,7 @@ for sec in SECCIONES_ORDEN:
         with col_c: st.write(item['Codigo'])
         with col_p:
             k = f"sel_{sec}_{i}"
-            st.selectbox("P", opcs, index=opcs.index(item['Descripcion']), key=k, label_visibility="collapsed", on_change=act_prod, args=(sec, i, k))
+            st.selectbox("P", opcs, index=opcs.index(item['Descripcion']), key=k, label_visibility="collapsed", on_change=act_prod, args=(sec, i, key))
         with col_q:
             item['Cantidad'] = st.number_input("C", min_value=0, step=1, key=f"q_{sec}_{i}", label_visibility="collapsed")
         with col_x:
@@ -229,7 +230,6 @@ for sec in SECCIONES_ORDEN:
 st.write("---")
 obs = st.text_area("Observaciones")
 
-# --- GUARDADO REPARADO CON TUS COLUMNAS ORIGINALES ---
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary"):
     conn = st.connection("gsheets", type=GSheetsConnection)
     f_h = datetime.now(ve_tz).strftime("%d/%m/%Y %I:%M %p")
@@ -241,7 +241,6 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary"):
     for s, items in st.session_state.secciones_data.items():
         for it in items:
             if it['Cantidad'] > 0:
-                # ESTRUCTURA EXACTA: ID_Registro, Supervisor, Fecha_Hora, Codigo_Articulo, Descripcion, Cantidad, Observaciones
                 filas_hoja.append({
                     "ID_Registro": id_reg,
                     "Supervisor": supervisor,
@@ -255,19 +254,13 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary"):
     
     if filas_hoja:
         try:
-            # Leemos la hoja actual asegurando que solo agarre las 7 columnas que importan (A a G)
             df_existente = conn.read(worksheet="Hoja1", ttl=0).iloc[:, :7]
             df_nuevo = pd.DataFrame(filas_hoja)
             df_final = pd.concat([df_existente, df_nuevo], ignore_index=True)
-            
-            # Subimos la actualización
             conn.update(worksheet="Hoja1", data=df_final)
-            
             st.session_state.final_data = {"df": pd.DataFrame(filas_resumen).set_index("Código"), "supervisor": supervisor, "fecha_hora": f_h, "obs": obs}
             st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
             st.session_state.exito = True
             st.rerun()
         except Exception as e:
             st.error(f"Error al guardar: {e}")
-
-
