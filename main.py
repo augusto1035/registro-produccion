@@ -12,38 +12,66 @@ hora_actual = datetime.now(ve_tz)
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
 
-# --- CSS VISUAL ---
+# --- CSS VISUAL REFORZADO (ANTI MODO OSCURO) ---
 st.markdown("""
     <style>
-    :root { color-scheme: light; }
-    html, body, [data-testid="stAppViewContainer"] { background-color: #f8f9fa !important; color: black !important; }
-    input, textarea, select, div[data-baseweb="select"] > div {
-        background-color: #ffffff !important; color: #000000 !important; border: 1px solid #ced4da !important;
+    /* Forzar fondo claro y texto negro en toda la app */
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+        background-color: #f8f9fa !important;
     }
+    
+    /* Forzar color negro en TODOS los textos, etiquetas y tablas */
+    .stMarkdown, p, h1, h2, h3, h4, span, label, td, th {
+        color: #000000 !important;
+    }
+
+    input, textarea, select, div[data-baseweb="select"] > div {
+        background-color: #ffffff !important; 
+        color: #000000 !important; 
+        border: 1px solid #ced4da !important;
+    }
+
     .block-container { padding-top: 3.5rem !important; max-width: 100% !important; }
+
     .codigo-box {
-        background-color: #e9ecef; border: 1px solid #ced4da; color: #495057;
+        background-color: #e9ecef !important; 
+        border: 1px solid #ced4da; 
+        color: #000000 !important;
         font-weight: bold; padding: 5px; text-align: center; border-radius: 4px;
         font-size: 14px; min-height: 42px; display: flex; align-items: center; justify-content: center;
     }
+
     .section-header {
-        background: #36b04b; color: white; padding: 8px; text-align: center;
+        background: #36b04b !important; 
+        color: white !important; 
+        padding: 8px; text-align: center;
         font-weight: bold; border-radius: 4px; margin-top: 20px; margin-bottom: 10px; font-size: 16px;
     }
+
     .resumen-box {
-        background-color: #ffffff; padding: 20px; border: 3px solid #36b04b;
-        border-radius: 10px; color: #1a3a63; margin-top: 10px;
+        background-color: #ffffff !important; 
+        padding: 20px; 
+        border: 3px solid #36b04b;
+        border-radius: 10px; 
+        margin-top: 10px;
     }
+
     .stButton > button {
-        background-color: #36b04b !important; color: white !important;
+        background-color: #36b04b !important; 
+        color: white !important;
         font-weight: bold; border: none; width: 100%; min-height: 40px;
     }
-    /* Estilo para que la tabla de resumen se vea bien en capturas */
-    .stTable { background-color: white; border-radius: 5px; }
+
+    /* Estilo específico para tablas de resumen */
+    [data-testid="stTable"] {
+        background-color: white !important;
+        color: black !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
 # --- DATA PRODUCTOS ---
+# (Se mantiene tu lista original de PRODUCTOS_DATA)
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -150,7 +178,7 @@ def render_header():
         </div>
         """, unsafe_allow_html=True)
 
-# --- VISTA DE RESUMEN ---
+# --- VISTA DE RESUMEN (CAPTURE) ---
 if st.session_state.exito and st.session_state.final_df is not None:
     render_header()
     st.markdown('<div class="resumen-box">', unsafe_allow_html=True)
@@ -161,8 +189,8 @@ if st.session_state.exito and st.session_state.final_df is not None:
     st.write(f"**Fecha y Hora:** {meta.get('fecha_hora')}")
     st.write("---")
     
-    # Mostrar la tabla guardada
-    st.table(st.session_state.final_df)
+    # Renderizar tabla SIN ÍNDICE (para quitar el 0)
+    st.table(st.session_state.final_df.assign(index='').set_index('index'))
     
     if meta.get('obs'):
         st.info(f"**Observaciones:** {meta.get('obs')}")
@@ -240,17 +268,16 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
                 })
                 filas_resumen.append({
                     "Cant.": it['Cantidad'],
-                    "Descripción del Producto": it['Descripcion']
+                    "Producto": it['Descripcion']
                 })
 
     if filas_hoja:
         try:
-            # 1. Guardar en Google Sheets
             df_ex = conn.read(worksheet="Hoja1", ttl=0)
             df_total = pd.concat([df_ex, pd.DataFrame(filas_hoja)], ignore_index=True)
             conn.update(worksheet="Hoja1", data=df_total)
             
-            # 2. Guardar datos en Session State para que sobrevivan al rerun
+            # Guardamos el DataFrame del resumen en Session State
             st.session_state.final_df = pd.DataFrame(filas_resumen)
             st.session_state.final_meta = {
                 "supervisor": supervisor,
@@ -258,7 +285,6 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
                 "obs": obs_input
             }
             
-            # 3. Limpiar formulario y disparar vista resumen
             st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
             st.session_state.exito = True
             st.rerun()
@@ -266,7 +292,3 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
             st.error(f"Error: {e}")
     else:
         st.warning("No hay productos con cantidad > 0.")
-
-
-
-
