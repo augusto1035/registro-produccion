@@ -250,4 +250,34 @@ for seccion in SECCIONES_ORDEN:
 st.write("---")
 obs_input = st.text_area("Observaciones", placeholder="Escribir novedades aquí...")
 
-if st.button("FINALIZAR Y GUARDAR TODO", type
+if st.button("FINALIZAR Y GUARDAR TODO", type="primary", key="btn_final"):
+    conn = st.connection("gsheets", type=GSheetsConnection)
+    filas_hoja = []
+    filas_resumen = []
+    ahora_ve = datetime.now(ve_tz)
+    f_h = ahora_ve.strftime("%d/%m/%Y %I:%M %p")
+
+    for sec, items in st.session_state.secciones_data.items():
+        for it in items:
+            if it['Cantidad'] > 0:
+                filas_hoja.append({
+                    "ID_Registro": ahora_ve.strftime("%Y%m%d%H%M%S"),
+                    "Supervisor": supervisor, "Fecha_Hora": f_h,
+                    "Codigo_Articulo": it['Codigo'], "Descripcion": it['Descripcion'],
+                    "Cantidad": it['Cantidad'], "Observaciones": obs_input
+                })
+                filas_resumen.append({"Código": it['Codigo'], "Producto": it['Descripcion'], "Cant.": it['Cantidad']})
+
+    if filas_hoja:
+        df_sheet = pd.concat([conn.read(worksheet="Hoja1", ttl=0), pd.DataFrame(filas_hoja)], ignore_index=True)
+        conn.update(worksheet="Hoja1", data=df_sheet)
+        
+        # GUARDAR DATA Y ESTABLECER CÓDIGO COMO ÍNDICE PARA OCULTAR COLUMNA 0
+        st.session_state.final_data = {
+            "df": pd.DataFrame(filas_resumen).set_index("Código"),
+            "supervisor": supervisor, "fecha_hora": f_h, "obs": obs_input
+        }
+        st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
+        st.session_state.exito = True
+        st.rerun()
+
