@@ -38,6 +38,8 @@ st.markdown("""
         background-color: #36b04b !important; color: white !important;
         font-weight: bold; border: none; width: 100%; min-height: 40px;
     }
+    /* Estilo para que la tabla de resumen se vea bien en capturas */
+    .stTable { background-color: white; border-radius: 5px; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -131,8 +133,10 @@ if 'secciones_data' not in st.session_state:
     st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
 if 'exito' not in st.session_state:
     st.session_state.exito = False
-if 'datos_resumen' not in st.session_state:
-    st.session_state.datos_resumen = None
+if 'final_df' not in st.session_state:
+    st.session_state.final_df = None
+if 'final_meta' not in st.session_state:
+    st.session_state.final_meta = {}
 
 # --- HEADER ---
 def render_header():
@@ -147,33 +151,32 @@ def render_header():
         """, unsafe_allow_html=True)
 
 # --- VISTA DE RESUMEN ---
-if st.session_state.exito and st.session_state.datos_resumen:
+if st.session_state.exito and st.session_state.final_df is not None:
     render_header()
     st.markdown('<div class="resumen-box">', unsafe_allow_html=True)
-    st.markdown("<h2 style='text-align: center; color: #36b04b; margin-top:0;'>✓ REPORTE EXITOSO</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center; color: #36b04b; margin-top:0;'>✓ REPORTE DE PRODUCCIÓN</h2>", unsafe_allow_html=True)
     
-    res = st.session_state.datos_resumen
-    st.write(f"**Supervisor:** {res['supervisor']}")
-    st.write(f"**Fecha y Hora:** {res['fecha_hora']}")
+    meta = st.session_state.final_meta
+    st.write(f"**Supervisor:** {meta.get('supervisor')}")
+    st.write(f"**Fecha y Hora:** {meta.get('fecha_hora')}")
     st.write("---")
     
-    # Crear DataFrame para la tabla visual
-    df_tabla = pd.DataFrame(res['productos'])
-    st.table(df_tabla)
+    # Mostrar la tabla guardada
+    st.table(st.session_state.final_df)
     
-    if res['observaciones']:
-        st.info(f"**Observaciones:** {res['observaciones']}")
+    if meta.get('obs'):
+        st.info(f"**Observaciones:** {meta.get('obs')}")
         
     st.markdown('</div>', unsafe_allow_html=True)
-    st.write("📸 *Captura esta pantalla para enviar por WhatsApp.*")
+    st.write("📸 *Toma un capture de esta pantalla para WhatsApp.*")
     
-    if st.button("Nuevo Registro"):
+    if st.button("Hacer otro registro"):
         st.session_state.exito = False
-        st.session_state.datos_resumen = None
+        st.session_state.final_df = None
         st.rerun()
     st.stop()
 
-# --- FORMULARIO PRINCIPAL ---
+# --- FORMULARIO DE ENTRADA ---
 render_header()
 
 col_sup, col_fec = st.columns(2)
@@ -212,13 +215,13 @@ for seccion in SECCIONES_ORDEN:
         st.rerun()
 
 st.write("---")
-obs_input = st.text_area("Observaciones", placeholder="Escribe aquí si hay novedades...")
+obs_input = st.text_area("Observaciones", placeholder="Notas...")
 
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
     conn = st.connection("gsheets", type=GSheetsConnection)
     
-    lista_para_hoja = []
-    lista_para_resumen = []
+    filas_hoja = []
+    filas_resumen = []
     
     f_h = datetime.now(ve_tz).strftime("%d/%m/%Y %I:%M %p")
     id_reg = datetime.now(ve_tz).strftime("%Y%m%d%H%M%S")
@@ -226,8 +229,7 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
     for sec, items in st.session_state.secciones_data.items():
         for it in items:
             if it['Cantidad'] > 0:
-                # Datos para el Excel
-                lista_para_hoja.append({
+                filas_hoja.append({
                     "ID_Registro": id_reg,
                     "Supervisor": supervisor,
                     "Fecha_Hora": f_h,
@@ -236,29 +238,35 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
                     "Cantidad": it['Cantidad'],
                     "Observaciones": obs_input
                 })
-                # Datos para la Tabla Visual
-                lista_para_resumen.append({
+                filas_resumen.append({
                     "Cant.": it['Cantidad'],
                     "Descripción del Producto": it['Descripcion']
                 })
 
-    if lista_para_hoja:
+    if filas_hoja:
         try:
+            # 1. Guardar en Google Sheets
             df_ex = conn.read(worksheet="Hoja1", ttl=0)
-            df_total = pd.concat([df_ex, pd.DataFrame(lista_para_hoja)], ignore_index=True)
+            df_total = pd.concat([df_ex, pd.DataFrame(filas_hoja)], ignore_index=True)
             conn.update(worksheet="Hoja1", data=df_total)
             
-            # GUARDAR EN SESSION STATE ANTES DEL RERUN
-            st.session_state.datos_resumen = {
+            # 2. Guardar datos en Session State para que sobrevivan al rerun
+            st.session_state.final_df = pd.DataFrame(filas_resumen)
+            st.session_state.final_meta = {
                 "supervisor": supervisor,
                 "fecha_hora": f_h,
-                "productos": lista_para_resumen,
-                "observaciones": obs_input
+                "obs": obs_input
             }
+            
+            # 3. Limpiar formulario y disparar vista resumen
             st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
             st.session_state.exito = True
             st.rerun()
         except Exception as e:
             st.error(f"Error: {e}")
     else:
-        st.warning("Debes registrar al menos un producto con cantidad mayor a 0.")
+        st.warning("No hay productos con cantidad > 0.")
+
+
+
+
