@@ -12,15 +12,20 @@ hora_actual = datetime.now(ve_tz)
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
 
-# --- CSS BLINDADO (REPARACIÓN MODO OSCURO Y SECCIONES DELGADAS) ---
+# --- EL CSS QUE YA FUNCIONABA (RECUPERADO Y BLINDADO) ---
 st.markdown("""
     <style>
+    /* 1. BLINDAJE ORIGINAL: FONDO BLANCO Y TEXTO NEGRO FORZADO */
     html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: #ffffff !important;
     }
+    
+    /* Forzar texto negro para todo el contenido */
     h1, h2, h3, p, span, label, td, th, div, li, input, select {
         color: #000000 !important;
     }
+
+    /* 2. CATEGORÍAS VERDES: DELGADAS Y LETRA BLANCA */
     .section-header {
         background-color: #36b04b !important;
         padding: 4px 10px !important;
@@ -35,26 +40,38 @@ st.markdown("""
         font-size: 0.9rem !important;
         font-weight: bold;
     }
+
+    /* 3. LISTAS DESPLEGABLES: FONDO BLANCO FORZADO */
     div[data-baseweb="select"] > div {
         background-color: #ffffff !important;
         border: 1px solid #36b04b !important;
     }
-    div[data-baseweb="select"] * { color: #000000 !important; }
+    div[data-baseweb="select"] * {
+        color: #000000 !important;
+    }
+
+    /* 4. BOTONES: TEXTO BLANCO SIEMPRE */
     .stButton > button {
         background-color: #36b04b !important;
-        color: #ffffff !important;
         border: none !important;
     }
     .stButton > button p, .stButton > button span {
         color: #ffffff !important;
         font-weight: bold !important;
     }
+
+    /* 5. CUADRO DE RESUMEN (PARA EL CAPTURE) */
     .resumen-box {
         background-color: #ffffff !important;
         padding: 15px;
         border: 2px solid #36b04b;
         border-radius: 8px;
     }
+    .resumen-box * {
+        color: #000000 !important;
+    }
+
+    /* 6. QUITAR ÍNDICE DE TABLAS */
     [data-testid="stTable"] thead th:first-child, 
     [data-testid="stTable"] tbody td:first-child { 
         display: none !important; 
@@ -62,24 +79,24 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- CABECERA ---
+# --- FUNCIÓN CABECERA CON LOGO ---
 def render_header():
     try:
         with open("logo_plaza.png", "rb") as f:
             data = base64.b64encode(f.read()).decode()
         st.markdown(f"""
-            <div style="display: flex; align-items: center; border-bottom: 2px solid #36b04b; padding-bottom: 8px; margin-bottom: 15px;">
-                <img src="data:image/png;base64,{data}" style="height: 50px; margin-right: 15px;">
+            <div style="display: flex; align-items: center; border-bottom: 3px solid #36b04b; padding-bottom: 10px; margin-bottom: 20px;">
+                <img src="data:image/png;base64,{data}" style="height: 60px; margin-right: 15px;">
                 <div>
-                    <h2 style="color:#1a3a63 !important; margin:0; font-size: 1.2rem;">Registro de Producción</h2>
-                    <p style="color:#666 !important; margin:0; font-size: 0.7rem;">Gerencia de Alimentos Procesados</p>
+                    <h2 style="color: #1a3a63 !important; margin: 0; font-size: 1.4rem;">Registro de Producción</h2>
+                    <p style="color: #666 !important; margin: 0; font-size: 0.8rem;">Gerencia de Alimentos Procesados</p>
                 </div>
             </div>
             """, unsafe_allow_html=True)
     except:
-        st.markdown("<h2 style='color:#36b04b !important; margin:0;'>🟢 Registro de Producción Plaza's</h2>", unsafe_allow_html=True)
+        st.header("🟢 Registro de Producción Plaza's")
 
-# --- PRODUCTOS ---
+# --- DATA PRODUCTOS ---
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -169,20 +186,20 @@ if 'secciones_data' not in st.session_state:
     st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
 if 'exito' not in st.session_state:
     st.session_state.exito = False
-if 'final_data' not in st.session_state:
-    st.session_state.final_data = None
+if 'res_final' not in st.session_state:
+    st.session_state.res_final = None
 
 # --- VISTA RESUMEN ---
-if st.session_state.exito and st.session_state.final_data:
+if st.session_state.exito and st.session_state.res_final:
     render_header()
-    fd = st.session_state.final_data
+    rf = st.session_state.res_final
     st.markdown('<div class="resumen-box">', unsafe_allow_html=True)
-    st.markdown("<h2 style='text-align: center; color: #36b04b;'>REPORTE DE PRODUCCIÓN</h2>", unsafe_allow_html=True)
-    st.write(f"**Supervisor:** {fd['supervisor']}")
-    st.write(f"**Fecha y Hora:** {fd['fecha_hora']}")
+    st.markdown("<h2 style='text-align: center; color: #36b04b !important;'>REPORTE DE PRODUCCIÓN</h2>", unsafe_allow_html=True)
+    st.write(f"**Supervisor:** {rf['supervisor']}")
+    st.write(f"**Fecha y Hora:** {rf['fecha_hora']}")
     st.write("---")
-    st.table(fd['df'])
-    if fd['obs']: st.write(f"**Observaciones:** {fd['obs']}")
+    st.table(rf['df'])
+    if rf['obs']: st.write(f"**Observaciones:** {rf['obs']}")
     st.markdown('</div>', unsafe_allow_html=True)
     if st.button("Hacer otro registro"):
         st.session_state.exito = False
@@ -191,9 +208,9 @@ if st.session_state.exito and st.session_state.final_data:
 
 # --- FORMULARIO ---
 render_header()
-c_sup, c_fec = st.columns(2)
-with c_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado", "Jesus Ramirez"])
-with c_fec: fecha_sel = st.date_input("Fecha", hora_actual.date())
+c1, c2 = st.columns(2)
+with c1: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado", "Jesus Ramirez"])
+with c2: fecha_sel = st.date_input("Fecha", hora_actual.date())
 
 def act_prod(sec, idx, key):
     nom = st.session_state[key]
@@ -206,14 +223,14 @@ for sec in SECCIONES_ORDEN:
     opcs = df_productos[df_productos['Seccion'] == sec]['Descripcion'].tolist()
     
     for i, item in enumerate(st.session_state.secciones_data[sec]):
-        col1, col2, col3, col4 = st.columns([1, 4.5, 1.5, 0.5])
-        with col1: st.write(item['Codigo'])
-        with col2:
-            key = f"sel_{sec}_{i}"
-            st.selectbox("P", opcs, index=opcs.index(item['Descripcion']), key=key, label_visibility="collapsed", on_change=act_prod, args=(sec, i, key))
-        with col3:
+        col_c, col_p, col_q, col_x = st.columns([1, 4.5, 1.5, 0.5])
+        with col_c: st.write(item['Codigo'])
+        with col_p:
+            k = f"sel_{sec}_{i}"
+            st.selectbox("P", opcs, index=opcs.index(item['Descripcion']), key=k, label_visibility="collapsed", on_change=act_prod, args=(sec, i, k))
+        with col_q:
             item['Cantidad'] = st.number_input("C", min_value=0, step=1, key=f"q_{sec}_{i}", label_visibility="collapsed")
-        with col4:
+        with col_x:
             if st.button("X", key=f"x_{sec}_{i}"):
                 st.session_state.secciones_data[sec].pop(i)
                 st.rerun()
@@ -225,7 +242,7 @@ for sec in SECCIONES_ORDEN:
 st.write("---")
 obs = st.text_area("Observaciones")
 
-# --- GUARDADO CORREGIDO ---
+# --- GUARDADO REPARADO A LAS COLUMNAS A-G ---
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary"):
     conn = st.connection("gsheets", type=GSheetsConnection)
     f_h = datetime.now(ve_tz).strftime("%d/%m/%Y %I:%M %p")
@@ -237,7 +254,7 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary"):
     for s, items in st.session_state.secciones_data.items():
         for it in items:
             if it['Cantidad'] > 0:
-                # ESTRUCTURA EXACTA DE TU GOOGLE SHEETS (Columnas A a G)
+                # MAPEO EXACTO A TUS COLUMNAS DEL DRIVE
                 filas_hoja.append({
                     "ID_Registro": id_reg,
                     "Supervisor": supervisor,
@@ -247,38 +264,20 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary"):
                     "Cantidad": it['Cantidad'],
                     "Observaciones": obs
                 })
-                # Estructura visual para el reporte en pantalla
-                filas_resumen.append({
-                    "Código": it['Codigo'],
-                    "Producto": it['Descripcion'],
-                    "Cant.": it['Cantidad']
-                })
-
+                filas_resumen.append({"Código": it['Codigo'], "Producto": it['Descripcion'], "Cant.": it['Cantidad']})
+    
     if filas_hoja:
         try:
-            # Leer datos actuales
-            df_existente = conn.read(worksheet="Hoja1", ttl=0)
-            
-            # Asegurar que solo usamos las primeras 7 columnas si hay basura a la derecha
-            df_existente = df_existente.iloc[:, :7]
-            
-            # Crear el nuevo bloque de datos con las mismas columnas
+            # Forzamos que lea solo las columnas A-G (índice 0 al 6)
+            df_ex = conn.read(worksheet="Hoja1", ttl=0).iloc[:, :7]
             df_nuevo = pd.DataFrame(filas_hoja)
+            df_final = pd.concat([df_ex, df_nuevo], ignore_index=True)
             
-            # Unir y actualizar
-            df_final = pd.concat([df_existente, df_nuevo], ignore_index=True)
             conn.update(worksheet="Hoja1", data=df_final)
             
-            # Guardar para la vista de resumen
-            st.session_state.final_data = {
-                "df": pd.DataFrame(filas_resumen).set_index("Código"),
-                "supervisor": supervisor,
-                "fecha_hora": f_h,
-                "obs": obs
-            }
+            st.session_state.res_final = {"df": pd.DataFrame(filas_resumen).set_index("Código"), "supervisor": supervisor, "fecha_hora": f_h, "obs": obs}
             st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
             st.session_state.exito = True
             st.rerun()
         except Exception as e:
-            st.error(f"Error al conectar: {e}")
-
+            st.error(f"Error al guardar: {e}")
