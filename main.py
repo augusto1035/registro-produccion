@@ -264,3 +264,4 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary"):
             st.rerun()
         except Exception as e:
             st.error(f"Error al guardar: {e}")
+            
