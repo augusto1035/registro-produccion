@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime
 import base64
 from streamlit_gsheets import GSheetsConnection
-import pytz  # Asegúrate de que esta librería esté instalada
+import pytz 
 
 # --- CONFIGURACIÓN DE ZONA HORARIA VENEZUELA ---
 ve_tz = pytz.timezone('America/Caracas')
@@ -12,7 +12,7 @@ hora_actual = datetime.now(ve_tz)
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
 
-# --- CSS VISUAL (CON REPARACIÓN DE CINTILLO) ---
+# --- CSS VISUAL (REPARACIÓN CINTILLO Y DISEÑO) ---
 st.markdown("""
     <style>
     :root { color-scheme: light; }
@@ -65,7 +65,7 @@ if st.session_state.exito:
             }
         </script>
     """, unsafe_allow_html=True)
-    st.success(f"✅ ¡Registro guardado exitosamente!")
+    st.success("✅ ¡Registro guardado exitosamente!")
     st.balloons()
     st.session_state.exito = False
 
@@ -88,7 +88,7 @@ def render_header(logo_path):
 
 render_header("logo_plaza.png")
 
-# --- DATA PRODUCTOS ---
+# --- DATA PRODUCTOS (Mantenemos tu lista original) ---
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -226,10 +226,10 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
     conn = st.connection("gsheets", type=GSheetsConnection)
     registros = []
     
-    # CALCULAMOS HORA VE JUSTO AL GUARDAR
+    # CALCULAMOS HORA VE AL MOMENTO DEL GUARDADO
     ahora_ve = datetime.now(ve_tz)
-    timestamp_id = ahora_ve.strftime("%Y%m%d%H%M%S")
-    hora_humana = ahora_ve.strftime("%I:%M %p")
+    # Unificamos en la columna que usas en tu Sheets
+    fecha_hora_unificada = ahora_ve.strftime("%d/%m/%Y %I:%M %p")
     
     texto_final_obs = st.session_state.obs_input
 
@@ -237,10 +237,9 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
         for item in items:
             if item['Cantidad'] > 0:
                 registros.append({
-                    "ID_Registro": timestamp_id, 
+                    "ID_Registro": ahora_ve.strftime("%Y%m%d%H%M%S"), 
                     "Supervisor": supervisor,
-                    "Fecha": fecha_sel.strftime("%d/%m/%Y"),
-                    "Hora": hora_humana,
+                    "Fecha_Hora": fecha_hora_unificada, # <--- Volvemos al nombre original de tu columna
                     "Codigo_Articulo": item['Codigo'], 
                     "Descripcion": item['Descripcion'],
                     "Cantidad": item['Cantidad'], 
@@ -263,5 +262,4 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
             st.rerun()
             
         except Exception as e:
-            st.error(f"Error al guardar: {e}") 
-
+            st.error(f"Error al guardar: {e}")
