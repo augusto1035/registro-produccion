@@ -131,55 +131,50 @@ if 'secciones_data' not in st.session_state:
     st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
 if 'exito' not in st.session_state:
     st.session_state.exito = False
-if 'ultimo_resumen' not in st.session_state:
-    st.session_state.ultimo_resumen = None
+if 'datos_resumen' not in st.session_state:
+    st.session_state.datos_resumen = None
 
 # --- HEADER ---
-def render_header(logo_path):
-    try:
-        with open(logo_path, "rb") as f:
-            data = base64.b64encode(f.read()).decode()
-        st.markdown(f"""
-            <div style="display: flex; align-items: center; padding-bottom: 10px; border-bottom: 4px solid #36b04b; margin-bottom: 20px;">
-                <img src="data:image/png;base64,{data}" style="height: 70px; margin-right: 15px;">
-                <div>
-                    <h2 style="color:#1a3a63; margin:0; font-weight:900; font-size: 20px;">Registro de Producción</h2>
-                    <p style="color:#666; margin:0; font-size: 12px;">Gerencia de Alimentos Procesados</p>
-                </div>
+def render_header():
+    st.markdown(f"""
+        <div style="display: flex; align-items: center; padding-bottom: 10px; border-bottom: 4px solid #36b04b; margin-bottom: 20px;">
+            <div style="background-color: #36b04b; color: white; padding: 10px; border-radius: 5px; font-weight: bold; margin-right: 15px;">PLAZA'S</div>
+            <div>
+                <h2 style="color:#1a3a63; margin:0; font-weight:900; font-size: 20px;">Registro de Producción</h2>
+                <p style="color:#666; margin:0; font-size: 12px;">Gerencia de Alimentos Procesados</p>
             </div>
-            """, unsafe_allow_html=True)
-    except:
-        st.title("Registro de Producción Plaza's")
+        </div>
+        """, unsafe_allow_html=True)
 
-# --- VISTA DE RESUMEN POST-GUARDADO ---
-if st.session_state.exito and st.session_state.ultimo_resumen:
-    render_header("logo_plaza.png")
+# --- VISTA DE RESUMEN ---
+if st.session_state.exito and st.session_state.datos_resumen:
+    render_header()
     st.markdown('<div class="resumen-box">', unsafe_allow_html=True)
-    st.markdown("<h2 style='text-align: center; color: #36b04b;'>✓ REPORTE DE PRODUCCIÓN</h2>", unsafe_allow_html=True)
-    st.write(f"**Supervisor:** {st.session_state.ultimo_resumen['supervisor']}")
-    st.write(f"**Fecha y Hora:** {st.session_state.ultimo_resumen['fecha_hora']}")
+    st.markdown("<h2 style='text-align: center; color: #36b04b; margin-top:0;'>✓ REPORTE EXITOSO</h2>", unsafe_allow_html=True)
+    
+    res = st.session_state.datos_resumen
+    st.write(f"**Supervisor:** {res['supervisor']}")
+    st.write(f"**Fecha y Hora:** {res['fecha_hora']}")
     st.write("---")
     
-    # Lógica de tabla corregida
-    if st.session_state.ultimo_resumen['productos']:
-        df_res = pd.DataFrame(st.session_state.ultimo_resumen['productos'])
-        st.table(df_res)
-    else:
-        st.warning("No se registraron productos.")
-
-    if st.session_state.ultimo_resumen['obs']:
-        st.info(f"**Observaciones:** {st.session_state.ultimo_resumen['obs']}")
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Crear DataFrame para la tabla visual
+    df_tabla = pd.DataFrame(res['productos'])
+    st.table(df_tabla)
     
-    st.write("📸 *Toma un capture de este resumen para tu reporte de WhatsApp.*")
-    if st.button("Hacer otro registro"):
+    if res['observaciones']:
+        st.info(f"**Observaciones:** {res['observaciones']}")
+        
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.write("📸 *Captura esta pantalla para enviar por WhatsApp.*")
+    
+    if st.button("Nuevo Registro"):
         st.session_state.exito = False
-        st.session_state.ultimo_resumen = None
+        st.session_state.datos_resumen = None
         st.rerun()
     st.stop()
 
-# --- FORMULARIO DE ENTRADA ---
-render_header("logo_plaza.png")
+# --- FORMULARIO PRINCIPAL ---
+render_header()
 
 col_sup, col_fec = st.columns(2)
 with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado", "Jesus Ramirez"])
@@ -209,58 +204,62 @@ for seccion in SECCIONES_ORDEN:
                 st.rerun()
 
     if st.button(f"➕ Añadir {seccion}", key=f"add_{seccion}"):
-        st.session_state.secciones_data[seccion].append({"Codigo": df_productos[df_productos['Seccion']==seccion].iloc[0]['Codigo'], "Descripcion": opciones[0], "Cantidad": 0})
+        st.session_state.secciones_data[seccion].append({
+            "Codigo": df_productos[df_productos['Seccion']==seccion].iloc[0]['Codigo'], 
+            "Descripcion": opciones[0], 
+            "Cantidad": 0
+        })
         st.rerun()
 
 st.write("---")
-obs = st.text_area("Observaciones", placeholder="Notas adicionales...", key="obs_input")
+obs_input = st.text_area("Observaciones", placeholder="Escribe aquí si hay novedades...")
 
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
     conn = st.connection("gsheets", type=GSheetsConnection)
-    registros_para_hoja = []
-    resumen_list_para_tabla = [] # Esta lista es la que se muestra en pantalla
     
-    ahora_ve = datetime.now(ve_tz)
-    f_h = ahora_ve.strftime("%d/%m/%Y %I:%M %p")
+    lista_para_hoja = []
+    lista_para_resumen = []
     
+    f_h = datetime.now(ve_tz).strftime("%d/%m/%Y %I:%M %p")
+    id_reg = datetime.now(ve_tz).strftime("%Y%m%d%H%M%S")
+
     for sec, items in st.session_state.secciones_data.items():
         for it in items:
             if it['Cantidad'] > 0:
-                # 1. Preparar fila para Google Sheets
-                registros_para_hoja.append({
-                    "ID_Registro": ahora_ve.strftime("%Y%m%d%H%M%S"),
+                # Datos para el Excel
+                lista_para_hoja.append({
+                    "ID_Registro": id_reg,
                     "Supervisor": supervisor,
                     "Fecha_Hora": f_h,
                     "Codigo_Articulo": it['Codigo'],
                     "Descripcion": it['Descripcion'],
                     "Cantidad": it['Cantidad'],
-                    "Observaciones": obs
+                    "Observaciones": obs_input
                 })
-                # 2. Preparar fila para la tabla visual (nombres de columna bonitos)
-                resumen_list_para_tabla.append({
-                    "Cant.": it['Cantidad'], 
+                # Datos para la Tabla Visual
+                lista_para_resumen.append({
+                    "Cant.": it['Cantidad'],
                     "Descripción del Producto": it['Descripcion']
                 })
 
-    if registros_para_hoja:
+    if lista_para_hoja:
         try:
-            df_existente = conn.read(worksheet="Hoja1", ttl=0)
-            df_total = pd.concat([df_existente, pd.DataFrame(registros_para_hoja)], ignore_index=True)
+            df_ex = conn.read(worksheet="Hoja1", ttl=0)
+            df_total = pd.concat([df_ex, pd.DataFrame(lista_para_hoja)], ignore_index=True)
             conn.update(worksheet="Hoja1", data=df_total)
             
-            # Guardamos el resumen en el estado de sesión
-            st.session_state.ultimo_resumen = {
-                "supervisor": supervisor, 
-                "fecha_hora": f_h, 
-                "productos": resumen_list_para_tabla, 
-                "obs": obs
+            # GUARDAR EN SESSION STATE ANTES DEL RERUN
+            st.session_state.datos_resumen = {
+                "supervisor": supervisor,
+                "fecha_hora": f_h,
+                "productos": lista_para_resumen,
+                "observaciones": obs_input
             }
-            # Limpiamos el formulario y activamos éxito
             st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
             st.session_state.exito = True
             st.rerun()
         except Exception as e:
-            st.error(f"Error al guardar: {e}")
+            st.error(f"Error: {e}")
     else:
-        st.warning("No hay productos con cantidad mayor a 0 para registrar.")
+        st.warning("Debes registrar al menos un producto con cantidad mayor a 0.")
 
