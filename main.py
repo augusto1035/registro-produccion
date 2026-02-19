@@ -12,70 +12,75 @@ hora_actual = datetime.now(ve_tz)
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
 
-# --- CSS RADICAL: FORZAR COLORES POR VARIABLES DE TEMA ---
+# --- CSS BLINDADO (LA SOLUCIÓN QUE FUNCIONABA) ---
 st.markdown("""
     <style>
-    /* Forzar el tema claro en las variables internas de Streamlit */
-    :root {
-        --primary-color: #36b04b;
-        --background-color: #ffffff;
-        --secondary-background-color: #f0f2f6;
-        --text-color: #000000;
-        --font: sans-serif;
+    /* FORZAR COLORES INDEPENDIENTEMENTE DEL MODO DEL CELULAR */
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+        background-color: #ffffff !important;
+        color: #000000 !important;
     }
 
-    /* Blindaje total del fondo y texto */
-    .stApp {
-        background-color: white !important;
-        color: black !important;
+    /* Forzar color de texto negro en etiquetas, párrafos y tablas */
+    .stMarkdown, p, h1, h2, h3, h4, span, label, td, th {
+        color: #000000 !important;
     }
 
-    /* Forzar negro en todos los textos de la interfaz */
-    h1, h2, h3, p, span, label, td, th, div, input, select {
-        color: black !important;
+    /* Listas desplegables (Selectbox) y campos de texto */
+    div[data-baseweb="select"] > div, input, textarea {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        border: 1px solid #ced4da !important;
     }
 
-    /* Arreglar los Selectboxes (Listas Desplegables) */
-    div[data-baseweb="select"] > div {
-        background-color: #f8f9fa !important;
-        border: 1px solid #36b04b !important;
-    }
-    
-    /* Estilo de los encabezados verdes (Secciones) - Más delgados */
-    .section-header {
-        background-color: #36b04b !important;
-        padding: 5px 10px !important;
-        border-radius: 4px;
-        margin: 10px 0px !important;
-        width: 100%;
-    }
-    .section-header h3 {
-        color: white !important;
-        margin: 0 !important;
-        font-size: 1rem !important;
-        text-align: center;
-    }
-
-    /* Botones con texto blanco forzado */
+    /* Botones con texto BLANCO forzado */
     .stButton > button {
         background-color: #36b04b !important;
-        color: white !important;
+        color: #ffffff !important;
         border: none !important;
+        width: auto !important;
+        margin-bottom: 10px !important;
     }
-    .stButton > button p {
-        color: white !important;
+    
+    .stButton > button p, .stButton > button span {
+        color: #ffffff !important;
         font-weight: bold !important;
     }
 
-    /* Cuadro de Resumen para Capture */
-    .resumen-box {
-        background-color: white !important;
-        padding: 15px;
-        border: 2px solid #36b04b;
-        border-radius: 8px;
+    /* Encabezados de sección verdes con texto blanco */
+    .section-header {
+        background-color: #36b04b !important;
+        color: #ffffff !important;
+        padding: 8px;
+        text-align: center;
+        border-radius: 4px;
+        margin: 15px 0px;
+    }
+    
+    .section-header h3 {
+        color: #ffffff !important;
+        margin: 0 !important;
     }
 
-    /* Quitar columna 0 (índice) */
+    /* Cajas de código (Artículos) */
+    .codigo-box {
+        background-color: #e9ecef !important;
+        color: #000000 !important;
+        font-weight: bold;
+        padding: 8px;
+        border-radius: 4px;
+        text-align: center;
+    }
+
+    /* Cuadro de resumen final */
+    .resumen-box {
+        background-color: #ffffff !important;
+        padding: 20px;
+        border: 3px solid #36b04b;
+        border-radius: 10px;
+    }
+
+    /* Ocultar índice de las tablas */
     [data-testid="stTable"] thead th:first-child, 
     [data-testid="stTable"] tbody td:first-child { 
         display: none !important; 
@@ -83,22 +88,22 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- FUNCIÓN CABECERA ---
+# --- FUNCIÓN LOGO CABECERA ---
 def render_header():
     try:
         with open("logo_plaza.png", "rb") as f:
             data = base64.b64encode(f.read()).decode()
         st.markdown(f"""
-            <div style="display: flex; align-items: center; border-bottom: 2px solid #36b04b; padding-bottom: 10px; margin-bottom: 20px;">
-                <img src="data:image/png;base64,{data}" style="height: 50px; margin-right: 15px;">
+            <div style="display: flex; align-items: center; border-bottom: 3px solid #36b04b; padding-bottom: 10px; margin-bottom: 20px;">
+                <img src="data:image/png;base64,{data}" style="height: 60px; margin-right: 15px;">
                 <div>
-                    <h2 style="color:#1a3a63 !important; margin:0; font-size: 1.2rem;">Registro de Producción</h2>
-                    <p style="color:#666 !important; margin:0; font-size: 0.7rem;">Gerencia de Alimentos Procesados</p>
+                    <h2 style="color: #1a3a63 !important; margin: 0; font-size: 1.4rem;">Registro de Producción</h2>
+                    <p style="color: #666 !important; margin: 0; font-size: 0.8rem;">Gerencia de Alimentos Procesados</p>
                 </div>
             </div>
             """, unsafe_allow_html=True)
     except:
-        st.subheader("🟢 Registro de Producción Plaza's")
+        st.header("🟢 Registro de Producción Plaza's")
 
 # --- DATA PRODUCTOS ---
 PRODUCTOS_DATA = [
@@ -185,36 +190,42 @@ PRODUCTOS_DATA = [
 df_productos = pd.DataFrame(PRODUCTOS_DATA)
 SECCIONES_ORDEN = ["BASES, BISCOCHOS Y TARTALETAS", "DECORACIÓN", "PANES", "POSTRE", "RELLENOS Y CREMAS"]
 
-# --- ESTADOS ---
+# --- ESTADOS DE SESIÓN ---
 if 'secciones_data' not in st.session_state:
     st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
 if 'exito' not in st.session_state:
     st.session_state.exito = False
-if 'res_final' not in st.session_state:
-    st.session_state.res_final = None
+if 'final_data' not in st.session_state:
+    st.session_state.final_data = None
 
-# --- VISTA RESUMEN ---
-if st.session_state.exito and st.session_state.res_final:
+# --- VISTA DE RESUMEN (PARA CAPTURE) ---
+if st.session_state.exito and st.session_state.final_data:
     render_header()
-    rf = st.session_state.res_final
+    fd = st.session_state.final_data
     st.markdown('<div class="resumen-box">', unsafe_allow_html=True)
     st.markdown("<h2 style='text-align: center; color: #36b04b;'>REPORTE DE PRODUCCIÓN</h2>", unsafe_allow_html=True)
-    st.write(f"**Supervisor:** {rf['supervisor']}")
-    st.write(f"**Fecha y Hora:** {rf['fecha_hora']}")
+    st.write(f"**Supervisor:** {fd['supervisor']}")
+    st.write(f"**Fecha y Hora:** {fd['fecha_hora']}")
     st.write("---")
-    st.table(rf['df'])
-    if rf['obs']: st.write(f"**Observaciones:** {rf['obs']}")
+    
+    # Tabla final ordenada
+    st.table(fd['df'])
+    
+    if fd['obs']:
+        st.write(f"**Observaciones:** {fd['obs']}")
     st.markdown('</div>', unsafe_allow_html=True)
-    if st.button("Hacer nuevo registro"):
+    
+    st.write("📸 *Captura la pantalla para WhatsApp.*")
+    if st.button("Hacer otro registro"):
         st.session_state.exito = False
         st.rerun()
     st.stop()
 
-# --- FORMULARIO ---
+# --- FORMULARIO PRINCIPAL ---
 render_header()
-c_sup, c_fec = st.columns(2)
-with c_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado", "Jesus Ramirez"])
-with c_fec: fecha_sel = st.date_input("Fecha", hora_actual.date())
+col_sup, col_fec = st.columns(2)
+with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado", "Jesus Ramirez"])
+with col_fec: fecha_sel = st.date_input("Fecha", hora_actual.date())
 
 def act_prod(sec, idx, key):
     nom = st.session_state[key]
@@ -222,29 +233,29 @@ def act_prod(sec, idx, key):
     st.session_state.secciones_data[sec][idx]['Descripcion'] = nom
     st.session_state.secciones_data[sec][idx]['Codigo'] = cod
 
-for sec in SECCIONES_ORDEN:
-    st.markdown(f'<div class="section-header"><h3>{sec}</h3></div>', unsafe_allow_html=True)
-    opcs = df_productos[df_productos['Seccion'] == sec]['Descripcion'].tolist()
+for seccion in SECCIONES_ORDEN:
+    st.markdown(f'<div class="section-header"><h3>{seccion}</h3></div>', unsafe_allow_html=True)
+    opcs = df_productos[df_productos['Seccion'] == seccion]['Descripcion'].tolist()
     
-    for i, item in enumerate(st.session_state.secciones_data[sec]):
-        col1, col2, col3, col4 = st.columns([1, 4, 1.5, 0.5])
-        with col1: st.write(item['Codigo'])
-        with col2:
-            key = f"sel_{sec}_{i}"
-            st.selectbox("P", opcs, index=opcs.index(item['Descripcion']), key=key, label_visibility="collapsed", on_change=act_prod, args=(sec, i, key))
-        with col3:
-            item['Cantidad'] = st.number_input("C", min_value=0, step=1, key=f"q_{sec}_{i}", label_visibility="collapsed")
-        with col4:
-            if st.button("X", key=f"x_{sec}_{i}"):
-                st.session_state.secciones_data[sec].pop(i)
+    for i, item in enumerate(st.session_state.secciones_data[seccion]):
+        c1, c2, c3, c4 = st.columns([1.5, 5, 2, 0.5])
+        with c1: st.markdown(f'<div class="codigo-box">{item["Codigo"]}</div>', unsafe_allow_html=True)
+        with c2:
+            key = f"sel_{seccion}_{i}"
+            st.selectbox("P", opcs, index=opcs.index(item['Descripcion']), key=key, label_visibility="collapsed", on_change=act_prod, args=(seccion, i, key))
+        with c3:
+            item['Cantidad'] = st.number_input("C", min_value=0, step=1, key=f"q_{seccion}_{i}", label_visibility="collapsed")
+        with c4:
+            if st.button("X", key=f"x_{seccion}_{i}"):
+                st.session_state.secciones_data[seccion].pop(i)
                 st.rerun()
 
-    if st.button(f"➕ Añadir {sec}", key=f"add_{sec}"):
-        st.session_state.secciones_data[sec].append({"Codigo": df_productos[df_productos['Seccion']==sec].iloc[0]['Codigo'], "Descripcion": opcs[0], "Cantidad": 0})
+    if st.button(f"➕ Añadir {seccion}", key=f"add_{seccion}"):
+        st.session_state.secciones_data[seccion].append({"Codigo": df_productos[df_productos['Seccion']==seccion].iloc[0]['Codigo'], "Descripcion": opcs[0], "Cantidad": 0})
         st.rerun()
 
 st.write("---")
-obs = st.text_area("Observaciones")
+obs = st.text_area("Observaciones", placeholder="Escribe aquí novedades del turno...")
 
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary"):
     conn = st.connection("gsheets", type=GSheetsConnection)
@@ -255,11 +266,18 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary"):
         for it in items:
             if it['Cantidad'] > 0:
                 filas_h.append({"ID": datetime.now(ve_tz).strftime("%Y%m%d%H%M%S"), "Supervisor": supervisor, "Fecha": f_h, "Codigo": it['Codigo'], "Producto": it['Descripcion'], "Cant": it['Cantidad'], "Obs": obs})
+                # Estructura del resumen: Código, Producto, Cantidad
                 filas_r.append({"Código": it['Codigo'], "Producto": it['Descripcion'], "Cant.": it['Cantidad']})
+    
     if filas_h:
-        df_sheet = pd.concat([conn.read(worksheet="Hoja1", ttl=0), pd.DataFrame(filas_h)], ignore_index=True)
-        conn.update(worksheet="Hoja1", data=df_sheet)
-        st.session_state.res_final = {"df": pd.DataFrame(filas_r).set_index("Código"), "supervisor": supervisor, "fecha_hora": f_h, "obs": obs}
-        st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
-        st.session_state.exito = True
-        st.rerun()
+        try:
+            df_total = pd.concat([conn.read(worksheet="Hoja1", ttl=0), pd.DataFrame(filas_h)], ignore_index=True)
+            conn.update(worksheet="Hoja1", data=df_total)
+            st.session_state.final_data = {"df": pd.DataFrame(filas_r).set_index("Código"), "supervisor": supervisor, "fecha_hora": f_h, "obs": obs}
+            st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
+            st.session_state.exito = True
+            st.rerun()
+        except Exception as e:
+            st.error(f"Error al conectar con la hoja: {e}")
+    else:
+        st.warning("Debes registrar al menos un producto con cantidad.")
