@@ -155,15 +155,22 @@ def render_header(logo_path):
 if st.session_state.exito and st.session_state.ultimo_resumen:
     render_header("logo_plaza.png")
     st.markdown('<div class="resumen-box">', unsafe_allow_html=True)
-    st.markdown("<h2 style='text-align: center; color: #36b04b;'>✓ REGISTRO COMPLETADO</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center; color: #36b04b;'>✓ REPORTE DE PRODUCCIÓN</h2>", unsafe_allow_html=True)
     st.write(f"**Supervisor:** {st.session_state.ultimo_resumen['supervisor']}")
     st.write(f"**Fecha y Hora:** {st.session_state.ultimo_resumen['fecha_hora']}")
     st.write("---")
-    df_res = pd.DataFrame(st.session_state.ultimo_resumen['productos'])
-    st.table(df_res)
+    
+    # Lógica de tabla corregida
+    if st.session_state.ultimo_resumen['productos']:
+        df_res = pd.DataFrame(st.session_state.ultimo_resumen['productos'])
+        st.table(df_res)
+    else:
+        st.warning("No se registraron productos.")
+
     if st.session_state.ultimo_resumen['obs']:
         st.info(f"**Observaciones:** {st.session_state.ultimo_resumen['obs']}")
     st.markdown('</div>', unsafe_allow_html=True)
+    
     st.write("📸 *Toma un capture de este resumen para tu reporte de WhatsApp.*")
     if st.button("Hacer otro registro"):
         st.session_state.exito = False
@@ -210,15 +217,17 @@ obs = st.text_area("Observaciones", placeholder="Notas adicionales...", key="obs
 
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
     conn = st.connection("gsheets", type=GSheetsConnection)
-    registros = []
-    resumen_list = []
+    registros_para_hoja = []
+    resumen_list_para_tabla = [] # Esta lista es la que se muestra en pantalla
+    
     ahora_ve = datetime.now(ve_tz)
     f_h = ahora_ve.strftime("%d/%m/%Y %I:%M %p")
     
     for sec, items in st.session_state.secciones_data.items():
         for it in items:
             if it['Cantidad'] > 0:
-                registros.append({
+                # 1. Preparar fila para Google Sheets
+                registros_para_hoja.append({
                     "ID_Registro": ahora_ve.strftime("%Y%m%d%H%M%S"),
                     "Supervisor": supervisor,
                     "Fecha_Hora": f_h,
@@ -227,17 +236,31 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
                     "Cantidad": it['Cantidad'],
                     "Observaciones": obs
                 })
-                resumen_list.append({"Cant": it['Cantidad'], "Producto": it['Descripcion']})
+                # 2. Preparar fila para la tabla visual (nombres de columna bonitos)
+                resumen_list_para_tabla.append({
+                    "Cant.": it['Cantidad'], 
+                    "Descripción del Producto": it['Descripcion']
+                })
 
-    if registros:
-        df_existente = conn.read(worksheet="Hoja1", ttl=0)
-        df_total = pd.concat([df_existente, pd.DataFrame(registros)], ignore_index=True)
-        conn.update(worksheet="Hoja1", data=df_total)
-        st.session_state.ultimo_resumen = {"supervisor": supervisor, "fecha_hora": f_h, "productos": resumen_list, "obs": obs}
-        st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
-        st.session_state.exito = True
-        st.rerun()
+    if registros_para_hoja:
+        try:
+            df_existente = conn.read(worksheet="Hoja1", ttl=0)
+            df_total = pd.concat([df_existente, pd.DataFrame(registros_para_hoja)], ignore_index=True)
+            conn.update(worksheet="Hoja1", data=df_total)
+            
+            # Guardamos el resumen en el estado de sesión
+            st.session_state.ultimo_resumen = {
+                "supervisor": supervisor, 
+                "fecha_hora": f_h, 
+                "productos": resumen_list_para_tabla, 
+                "obs": obs
+            }
+            # Limpiamos el formulario y activamos éxito
+            st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
+            st.session_state.exito = True
+            st.rerun()
+        except Exception as e:
+            st.error(f"Error al guardar: {e}")
     else:
-        st.warning("No hay datos para guardar.")
-
+        st.warning("No hay productos con cantidad mayor a 0 para registrar.")
 
