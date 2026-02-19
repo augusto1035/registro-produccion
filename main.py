@@ -262,4 +262,3 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
             st.error(f"Error: {e}")
     else:
         st.warning("Debes registrar al menos un producto con cantidad mayor a 0.")
-
