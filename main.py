@@ -3,45 +3,40 @@ import pandas as pd
 from datetime import datetime
 import base64
 from streamlit_gsheets import GSheetsConnection
+import pytz  # <--- Nueva librería para la zona horaria
 
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
+
+# --- AJUSTE DE HORA VENEZUELA ---
+ve_tz = pytz.timezone('America/Caracas')
+hora_actual = datetime.now(ve_tz)
 
 # --- CSS VISUAL (DISEÑO MÓVIL Y WEB) ---
 st.markdown("""
     <style>
     :root { color-scheme: light; }
     html, body, [data-testid="stAppViewContainer"] { background-color: #f8f9fa !important; color: black !important; }
-    
-    /* ESTILOS DE LOS INPUTS */
     input, textarea, select, div[data-baseweb="select"] > div {
         background-color: #ffffff !important; color: #000000 !important; border: 1px solid #ced4da !important;
     }
-
-    /* REPARACIÓN DEL CINTILLO: Aumentamos el padding-top para que no se vea cortado */
     .block-container { 
         padding-top: 3.5rem !important; 
         max-width: 100% !important; 
-        padding-left: 1rem !important;
-        padding-right: 1rem !important;
     }
-
     .codigo-box {
         background-color: #e9ecef; border: 1px solid #ced4da; color: #495057;
         font-weight: bold; padding: 5px; text-align: center; border-radius: 4px;
         font-size: 14px; min-height: 42px; display: flex; align-items: center; justify-content: center;
     }
-
     .section-header {
         background: #36b04b; color: white; padding: 8px; text-align: center;
         font-weight: bold; border-radius: 4px; margin-top: 20px; margin-bottom: 10px; font-size: 16px;
     }
-
     .stButton > button {
         background-color: #36b04b !important; color: white !important;
         font-weight: bold; border: none; width: 100%; min-height: 40px;
     }
-
     @media (max-width: 640px) {
         [data-testid="column"] { margin-bottom: 5px !important; }
         div[data-testid="column"] .stButton button { background-color: #dc3545 !important; width: 100% !important; margin-top: 5px; }
@@ -184,10 +179,10 @@ def actualizar_producto(seccion_key, index_key, selectbox_key):
     st.session_state.secciones_data[seccion_key][index_key]['Descripcion'] = nuevo_nombre
     st.session_state.secciones_data[seccion_key][index_key]['Codigo'] = nuevo_codigo
 
-# SUPERVISOR Y FECHA
+# SUPERVISOR Y FECHA (Pre-configurada con hora VE)
 col_sup, col_fec = st.columns(2)
 with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado", "Jesus Ramirez"])
-with col_fec: fecha_sel = st.date_input("Fecha", datetime.now())
+with col_fec: fecha_sel = st.date_input("Fecha", hora_actual.date())
 
 # RENDERIZADO PRODUCTOS
 for seccion in SECCIONES_ORDEN:
@@ -230,17 +225,25 @@ obs = st.text_area("", value=st.session_state.texto_obs, placeholder="Notas...",
 if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=True):
     conn = st.connection("gsheets", type=GSheetsConnection)
     registros = []
-    timestamp_id = datetime.now().strftime("%Y%m%d%H%M%S")
+    
+    # Capturamos la hora de Venezuela al momento exacto de guardar
+    timestamp_id = datetime.now(ve_tz).strftime("%Y%m%d%H%M%S")
+    hora_registro = datetime.now(ve_tz).strftime("%I:%M %p")
+    
     texto_final_obs = st.session_state.obs_input
 
     for seccion, items in st.session_state.secciones_data.items():
         for item in items:
             if item['Cantidad'] > 0:
                 registros.append({
-                    "ID_Registro": timestamp_id, "Supervisor": supervisor,
-                    "Fecha_Hora": fecha_sel.strftime("%d/%m/%Y") + " " + datetime.now().strftime("%I:%M %p"),
-                    "Codigo_Articulo": item['Codigo'], "Descripcion": item['Descripcion'],
-                    "Cantidad": item['Cantidad'], "Observaciones": texto_final_obs
+                    "ID_Registro": timestamp_id, 
+                    "Supervisor": supervisor,
+                    "Fecha": fecha_sel.strftime("%d/%m/%Y"),
+                    "Hora": hora_registro,
+                    "Codigo_Articulo": item['Codigo'], 
+                    "Descripcion": item['Descripcion'],
+                    "Cantidad": item['Cantidad'], 
+                    "Observaciones": texto_final_obs
                 })
     
     if not registros:
@@ -260,3 +263,4 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
             
         except Exception as e:
             st.error(f"Error al guardar: {e}")
+            
