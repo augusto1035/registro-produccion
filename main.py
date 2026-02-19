@@ -12,20 +12,20 @@ hora_actual = datetime.now(ve_tz)
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Producción Plaza's", layout="wide")
 
-# --- CSS BLINDADO ANTI-MODO OSCURO Y CATEGORÍAS DELGADAS ---
+# --- CSS BLINDADO (REPARACIÓN DEFINITIVA) ---
 st.markdown("""
     <style>
-    /* 1. FORZAR FONDO BLANCO EN TODA LA APP */
-    .stApp, html, body, [data-testid="stHeader"], [data-testid="stAppViewContainer"] {
+    /* 1. FORZAR FONDO BLANCO Y TEXTO NEGRO EN TODA LA APP (ANTI MODO OSCURO) */
+    html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: #ffffff !important;
     }
     
-    /* 2. FORZAR TEXTO NEGRO ABSOLUTO (Excepto en cabeceras verdes) */
-    h1, h2, h3, p, span, label, td, th, div, li {
+    /* Forzar texto negro para todo el contenido */
+    h1, h2, h3, p, span, label, td, th, div, li, input, select {
         color: #000000 !important;
     }
 
-    /* 3. CATEGORÍAS VERDES: MÁS DELGADAS Y LETRA BLANCA */
+    /* 2. CATEGORÍAS VERDES: DELGADAS Y LETRA BLANCA */
     .section-header {
         background-color: #36b04b !important;
         padding: 4px 10px !important;
@@ -39,10 +39,9 @@ st.markdown("""
         margin: 0 !important;
         font-size: 0.9rem !important;
         font-weight: bold;
-        text-transform: uppercase;
     }
 
-    /* 4. LISTAS DESPLEGABLES: FONDO BLANCO Y LETRA NEGRA */
+    /* 3. LISTAS DESPLEGABLES: FONDO BLANCO FORZADO */
     div[data-baseweb="select"] > div {
         background-color: #ffffff !important;
         border: 1px solid #36b04b !important;
@@ -51,18 +50,17 @@ st.markdown("""
         color: #000000 !important;
     }
 
-    /* 5. BOTONES: TEXTO BLANCO SIEMPRE */
+    /* 4. BOTONES: TEXTO BLANCO SIEMPRE */
     .stButton > button {
         background-color: #36b04b !important;
         border: none !important;
-        padding: 5px 15px !important;
     }
     .stButton > button p, .stButton > button span {
         color: #ffffff !important;
         font-weight: bold !important;
     }
 
-    /* 6. CUADRO DE RESUMEN (CAPTURE) */
+    /* 5. CUADRO DE RESUMEN (PARA EL CAPTURE) */
     .resumen-box {
         background-color: #ffffff !important;
         padding: 15px;
@@ -73,7 +71,7 @@ st.markdown("""
         color: #000000 !important;
     }
 
-    /* 7. QUITAR ÍNDICE DE TABLAS */
+    /* 6. QUITAR ÍNDICE DE TABLAS */
     [data-testid="stTable"] thead th:first-child, 
     [data-testid="stTable"] tbody td:first-child { 
         display: none !important; 
@@ -98,7 +96,7 @@ def render_header():
     except:
         st.markdown("<h2 style='color:#36b04b !important; margin:0;'>🟢 Registro de Producción Plaza's</h2>", unsafe_allow_html=True)
 
-# --- DATA PRODUCTOS ---
+# --- PRODUCTOS DATA (LISTA COMPLETA) ---
 PRODUCTOS_DATA = [
     {"Codigo": "27101", "Descripcion": "TORTA DE QUESO CRIOLLO PLAZAS", "Seccion": "DECORACIÓN"},
     {"Codigo": "27113", "Descripcion": "TORTA DE NARANJA GRANDE", "Seccion": "BASES, BISCOCHOS Y TARTALETAS"},
@@ -208,7 +206,7 @@ if st.session_state.exito and st.session_state.final_data:
         st.rerun()
     st.stop()
 
-# --- FORMULARIO ---
+# --- FORMULARIO PRINCIPAL ---
 render_header()
 c1, c2 = st.columns(2)
 with c1: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado", "Jesus Ramirez"])
@@ -262,3 +260,4 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary"):
         st.session_state.secciones_data = {sec: [] for sec in SECCIONES_ORDEN}
         st.session_state.exito = True
         st.rerun()
+        
