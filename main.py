@@ -3,16 +3,16 @@ import pandas as pd
 from datetime import datetime
 import base64
 from streamlit_gsheets import GSheetsConnection
-import pytz  # <--- Nueva librería para la zona horaria
+import pytz  # Asegúrate de que esta librería esté instalada
 
-# --- CONFIGURACIÓN ---
-st.set_page_config(page_title="Producción Plaza's", layout="wide")
-
-# --- AJUSTE DE HORA VENEZUELA ---
+# --- CONFIGURACIÓN DE ZONA HORARIA VENEZUELA ---
 ve_tz = pytz.timezone('America/Caracas')
 hora_actual = datetime.now(ve_tz)
 
-# --- CSS VISUAL (DISEÑO MÓVIL Y WEB) ---
+# --- CONFIGURACIÓN DE PÁGINA ---
+st.set_page_config(page_title="Producción Plaza's", layout="wide")
+
+# --- CSS VISUAL (CON REPARACIÓN DE CINTILLO) ---
 st.markdown("""
     <style>
     :root { color-scheme: light; }
@@ -65,7 +65,7 @@ if st.session_state.exito:
             }
         </script>
     """, unsafe_allow_html=True)
-    st.success("✅ ¡Registro guardado exitosamente!")
+    st.success(f"✅ ¡Registro guardado exitosamente!")
     st.balloons()
     st.session_state.exito = False
 
@@ -179,7 +179,7 @@ def actualizar_producto(seccion_key, index_key, selectbox_key):
     st.session_state.secciones_data[seccion_key][index_key]['Descripcion'] = nuevo_nombre
     st.session_state.secciones_data[seccion_key][index_key]['Codigo'] = nuevo_codigo
 
-# SUPERVISOR Y FECHA (Pre-configurada con hora VE)
+# SUPERVISOR Y FECHA
 col_sup, col_fec = st.columns(2)
 with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado", "Jesus Ramirez"])
 with col_fec: fecha_sel = st.date_input("Fecha", hora_actual.date())
@@ -226,9 +226,10 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
     conn = st.connection("gsheets", type=GSheetsConnection)
     registros = []
     
-    # Capturamos la hora de Venezuela al momento exacto de guardar
-    timestamp_id = datetime.now(ve_tz).strftime("%Y%m%d%H%M%S")
-    hora_registro = datetime.now(ve_tz).strftime("%I:%M %p")
+    # CALCULAMOS HORA VE JUSTO AL GUARDAR
+    ahora_ve = datetime.now(ve_tz)
+    timestamp_id = ahora_ve.strftime("%Y%m%d%H%M%S")
+    hora_humana = ahora_ve.strftime("%I:%M %p")
     
     texto_final_obs = st.session_state.obs_input
 
@@ -239,7 +240,7 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
                     "ID_Registro": timestamp_id, 
                     "Supervisor": supervisor,
                     "Fecha": fecha_sel.strftime("%d/%m/%Y"),
-                    "Hora": hora_registro,
+                    "Hora": hora_humana,
                     "Codigo_Articulo": item['Codigo'], 
                     "Descripcion": item['Descripcion'],
                     "Cantidad": item['Cantidad'], 
@@ -262,5 +263,5 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary", use_container_width=Tru
             st.rerun()
             
         except Exception as e:
-            st.error(f"Error al guardar: {e}")
-            
+            st.error(f"Error al guardar: {e}") 
+
