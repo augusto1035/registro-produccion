@@ -200,8 +200,8 @@ col_sup, col_fec = st.columns(2)
 with col_sup: supervisor = st.selectbox("Supervisor", ["Pedro Navarro", "Ronald Rosales", "Ervis Hurtado", "Jesus Ramirez"])
 with col_fec: fecha_sel = st.date_input("Fecha", hora_actual.date())
 
-def act_prod(sec, idx, key):
-    nom = st.session_state[key]
+def act_prod(sec, idx, key_selectbox):
+    nom = st.session_state[key_selectbox]
     cod = df_productos[df_productos['Descripcion'] == nom]['Codigo'].values[0]
     st.session_state.secciones_data[sec][idx]['Descripcion'] = nom
     st.session_state.secciones_data[sec][idx]['Codigo'] = cod
@@ -215,7 +215,7 @@ for sec in SECCIONES_ORDEN:
         with col_c: st.write(item['Codigo'])
         with col_p:
             k = f"sel_{sec}_{i}"
-            st.selectbox("P", opcs, index=opcs.index(item['Descripcion']), key=k, label_visibility="collapsed", on_change=act_prod, args=(sec, i, key))
+            st.selectbox("P", opcs, index=opcs.index(item['Descripcion']), key=k, label_visibility="collapsed", on_change=act_prod, args=(sec, i, k))
         with col_q:
             item['Cantidad'] = st.number_input("C", min_value=0, step=1, key=f"q_{sec}_{i}", label_visibility="collapsed")
         with col_x:
@@ -264,4 +264,3 @@ if st.button("FINALIZAR Y GUARDAR TODO", type="primary"):
             st.rerun()
         except Exception as e:
             st.error(f"Error al guardar: {e}")
-            
